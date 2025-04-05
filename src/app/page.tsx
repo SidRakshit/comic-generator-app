@@ -21,8 +21,10 @@ export default function Home() {
             .
           </li>
           <li className="tracking-[-.01em]">
-            Save and see your changes instantly. But let's have some fun because why not.
+            Save and see your changes instantly.
           </li>
+          <p>Let's have some fun! {/* eslint-disable-line react/no-unescaped-entities */}</p>
+
         </ol>
 
         <div className="flex gap-4 items-center flex-col sm:flex-row">
