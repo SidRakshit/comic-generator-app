@@ -4,7 +4,9 @@ import { PORT } from './config';
 import exampleRoute from './routes/example';
 
 const app = express();
-app.use(cors());
+app.use(cors({
+  origin: 'https://comic-generator-app.vercel.app',
+}));
 app.use(express.json());
 
 app.use('/', exampleRoute);
