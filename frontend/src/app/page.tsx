@@ -9,19 +9,24 @@ export default function Home() {
   useEffect(() => {
     async function fetchData() {
       try {
+        // Set the API URL from environment variable
         const apiUrl = process.env.NEXT_PUBLIC_API_URL || "URL not set";
         setApiUrl(apiUrl);
-        console.log("API URL:", apiUrl);
+        console.log("Attempting to connect to API URL:", apiUrl);
 
+        // Make the fetch request
         const response = await fetch(apiUrl);
+        console.log("Response status:", response.status); // Log the status code for debugging
+        
         if (!response.ok) {
           throw new Error(`Error: ${response.statusText}`);
         }
 
         const data = await response.json();
+        console.log("Response data:", data); // Log the data for debugging
         setMessage(data.message);
       } catch (error) {
-        console.error("Fetch error:", error);
+        console.error("Fetch error:", error);  // Log detailed error
         setMessage("Error: Unable to fetch data");
       }
     }
