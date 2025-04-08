@@ -2,7 +2,7 @@ services:
   web:
     image: nginx:latest
     environment:
-      - API_URL=https://comiccreator.info/
+      - API_URL=http://backend:8080/
       - FRONTEND_URL=https://comic-generator-app.vercel.app/
     volumes:
       - ./nginx.template:/etc/nginx/templates/nginx.conf.template
