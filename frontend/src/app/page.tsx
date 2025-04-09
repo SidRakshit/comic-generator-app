@@ -15,7 +15,12 @@ export default function Home() {
         console.log("Attempting to connect to API URL:", apiUrl);
   
         // Make the fetch request
-        const response = await fetch(apiUrl);
+        const response = await fetch(apiUrl, {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+      });
         console.log("Response status:", response.status); // Log the status code for debugging
         
         if (!response.ok) {
