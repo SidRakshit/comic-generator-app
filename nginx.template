@@ -1,0 +1,56 @@
+worker_processes 1;
+
+events {
+    worker_connections 1024;
+}
+
+http {
+    include       /etc/nginx/mime.types;
+    default_type  application/octet-stream;
+    sendfile        on;
+    keepalive_timeout  65;
+
+    server {
+        listen 80;
+        server_name comiccreator.info www.comiccreator.info;
+        
+        # Redirect HTTP to HTTPS
+        return 301 https://$host$request_uri;
+    }
+
+    server {
+        listen 443 ssl;
+        server_name comiccreator.info www.comiccreator.info;
+        
+        # SSL certificate configuration
+        ssl_certificate /etc/nginx/ssl/www.comiccreator.info_ssl_certificate.cer;
+        ssl_certificate_key /etc/nginx/ssl/www.comiccreator.info_private_key.key;
+        ssl_trusted_certificate /etc/nginx/ssl/www.comiccreator.info_chain.cer;
+        
+        # SSL settings
+        ssl_protocols TLSv1.2 TLSv1.3;
+        ssl_prefer_server_ciphers on;
+        ssl_session_cache shared:SSL:10m;
+        ssl_session_timeout 10m;
+        
+        # CORS configuration
+        add_header 'Access-Control-Allow-Origin' '${FRONTEND_URL}' always;
+        add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS, PUT, DELETE' always;
+        add_header 'Access-Control-Allow-Headers' 'Origin, X-Requested-With, Content-Type, Accept, Authorization' always;
+        add_header 'Access-Control-Allow-Credentials' 'true' always;
+        
+        if ($request_method = 'OPTIONS') {
+            return 204;
+        }
+        
+        # Proxy settings for your ExpressJS backend
+        location / {
+            proxy_pass ${API_URL};
+            proxy_http_version 1.1;
+            proxy_set_header Upgrade $http_upgrade;
+            proxy_set_header Connection 'upgrade';
+            proxy_set_header Host $host;
+            proxy_cache_bypass $http_upgrade;
+        }
+    }
+}
