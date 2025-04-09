@@ -6,9 +6,11 @@ services:
       - FRONTEND_URL=https://comic-generator-app.vercel.app/
     volumes:
       - ./nginx.template:/etc/nginx/templates/nginx.conf.template
+      - /etc/nginx/ssl:/etc/nginx/ssl
     command: /bin/bash -c "envsubst '\$API_URL \$FRONTEND_URL' < /etc/nginx/templates/nginx.conf.template > /etc/nginx/nginx.conf && nginx -g 'daemon off;'"
     ports:
       - "80:80"
+      - "443:443"
     depends_on:
       - backend
 
@@ -25,5 +27,10 @@ services:
       POSTGRES_USER: ${DB_USER}
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: mydatabase
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
     ports:
       - "5432:5432"
+
+volumes:
+  postgres_data:
