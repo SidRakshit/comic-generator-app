@@ -5,7 +5,8 @@ import exampleRoute from './routes/example';
 
 const app = express();
 app.use(cors({
-  origin: 'https://comic-generator-app.vercel.app',
+  origin: ['https://comic-generator-app.vercel.app', 'https://comiccreator.info'],
+  credentials: true
 }));
 app.use(express.json());
 

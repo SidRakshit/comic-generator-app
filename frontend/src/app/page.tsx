@@ -10,10 +10,10 @@ export default function Home() {
     async function fetchData() {
       try {
         // Set the API URL from environment variable
-        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "URL not set";
+        const apiUrl = process.env.NEXT_PUBLIC_API_URL || "https://comiccreator.info/api";
         setApiUrl(apiUrl);
         console.log("Attempting to connect to API URL:", apiUrl);
-
+  
         // Make the fetch request
         const response = await fetch(apiUrl);
         console.log("Response status:", response.status); // Log the status code for debugging
