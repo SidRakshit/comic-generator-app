@@ -7,7 +7,7 @@ services:
     volumes:
       - ./nginx.template:/etc/nginx/nginx.template
       - /etc/nginx/ssl:/etc/nginx/ssl
-    command: /bin/bash -c "envsubst '\$API_URL \$FRONTEND_URL' < /etc/nginx/nginx.template > /etc/nginx/nginx.conf && nginx -g 'daemon off;'"
+    command: /bin/bash -c "cat /etc/nginx/nginx.template > /etc/nginx/nginx.conf && nginx -g 'daemon off;'"
     ports:
       - "80:80"
       - "443:443"

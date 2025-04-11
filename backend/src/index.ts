@@ -1,18 +1,16 @@
 import express from 'express';
-import cors from 'cors';
 import { PORT } from './config';
 import exampleRoute from './routes/example';
 
 const app = express();
-app.use(cors({
-  origin: ['https://comic-generator-app.vercel.app', 'https://comiccreator.info'],
-  credentials: true
-}));
+
+// No CORS middleware here, let Nginx handle it
 app.use(express.json());
 
 app.use('/', exampleRoute);
 
-app.get('/', (req, res) => {
+// Add proper type annotations for req and res
+app.get('/', (req: express.Request, res: express.Response) => {
   res.json({ message: 'Welcome to the backend!' });
 });
 
