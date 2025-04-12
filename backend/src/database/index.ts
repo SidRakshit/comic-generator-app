@@ -7,11 +7,11 @@ const pool = new Pool(DB_CONFIG);
 
 // Test the connection
 pool.connect()
-    .then(client => {
+    .then((client: { release: () => void; }) => {
         console.log('Successfully connected to PostgreSQL');
         client.release();
     })
-    .catch(err => {
+    .catch((err: { message: any; }) => {
         console.error('Error connecting to PostgreSQL:', err.message);
     });
 
