@@ -8,12 +8,6 @@ http {
     sendfile        on;
     keepalive_timeout  65;
     
-    # Remove this map since we're not using it
-    # map $request_method $cors_method {
-    #     OPTIONS 'true';
-    #     default 'false';
-    # }
-    
     server {
         listen 80;
         server_name comiccreator.info www.comiccreator.info;
