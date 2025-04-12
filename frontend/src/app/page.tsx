@@ -1,6 +1,6 @@
 "use client"
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 
 // Define a proper interface for your user objects
 interface User {
@@ -16,33 +16,39 @@ export default function Home() {
   const [loading, setLoading] = useState<boolean>(false);
   const [error, setError] = useState<string | null>(null);
 
-  useEffect(() => {
-    const fetchUsers = async (): Promise<void> => {
-      try {
-        setLoading(true);
-        const response = await fetch('/api/users');
-        
-        if (!response.ok) {
-          throw new Error(`Failed to fetch users: ${response.status}`);
-        }
-        
-        const data = await response.json();
-        setUsers(data);
-      } catch (err) {
-        // Use type assertion to avoid 'any' type
-        setError((err as Error).message || 'Failed to fetch users');
-      } finally {
-        setLoading(false);
+  const fetchUsers = async (): Promise<void> => {
+    try {
+      setLoading(true);
+      setError(null);
+      
+      const response = await fetch('/api/users');
+      
+      if (!response.ok) {
+        throw new Error(`Failed to fetch users: ${response.status}`);
       }
-    };
-
-    fetchUsers();
-  }, []);
+      
+      const data = await response.json();
+      setUsers(data);
+    } catch (err) {
+      // Use type assertion to avoid 'any' type
+      setError((err as Error).message || 'Failed to fetch users');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
       <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm">
         <h1 className="text-4xl font-bold mb-6">User Dashboard</h1>
+        
+        <button 
+          onClick={fetchUsers}
+          className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded mb-6"
+          disabled={loading}
+        >
+          {loading ? 'Loading...' : 'Get Users'}
+        </button>
         
         {loading && <p className="text-gray-500">Loading users...</p>}
         {error && <p className="text-red-500">Error: {error}</p>}
@@ -60,8 +66,8 @@ export default function Home() {
           </div>
         )}
 
-        {!loading && !error && users.length === 0 && (
-          <p className="text-gray-500">No users found.</p>
+        {!loading && users.length === 0 && (
+          <p className="text-gray-500">No users found. Click the button to fetch users.</p>
         )}
       </div>
     </main>
