@@ -1,15 +1,16 @@
 import express from 'express';
 import { PORT } from './config';
 import exampleRoute from './routes/example';
+// import userRoute from './routes/user'; // Add this line
+import './database';
 
 const app = express();
 
-// No CORS middleware here, let Nginx handle it
 app.use(express.json());
 
-app.use('/', exampleRoute);
+app.use('/api', exampleRoute);
+// app.use('/api', userRoute); // Add this line
 
-// Add proper type annotations for req and res
 app.get('/', (req: express.Request, res: express.Response) => {
   res.json({ message: 'Welcome to the backend!' });
 });
