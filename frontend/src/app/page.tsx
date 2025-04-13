@@ -2,13 +2,12 @@
 
 import { useState } from 'react';
 
-// Define a proper interface for your user objects
 interface User {
-  id: string;
-  username?: string;
-  name?: string;
-  email?: string;
-  // Add other properties your users might have
+  id: number;
+  username: string;
+  email: string;
+  created_at: string;
+  // Add other properties based on your actual data structure
 }
 
 export default function Home() {
@@ -21,7 +20,12 @@ export default function Home() {
       setLoading(true);
       setError(null);
       
-      const response = await fetch('/api/users');
+      // Point to your backend API URL
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL_LOCAL || '/api';
+      const apiUrl = `${baseUrl}/users`;
+      console.log('Fetching users from:', apiUrl);
+      
+      const response = await fetch(apiUrl);
       
       if (!response.ok) {
         throw new Error(`Failed to fetch users: ${response.status}`);
@@ -30,7 +34,6 @@ export default function Home() {
       const data = await response.json();
       setUsers(data);
     } catch (err) {
-      // Use type assertion to avoid 'any' type
       setError((err as Error).message || 'Failed to fetch users');
     } finally {
       setLoading(false);
@@ -59,7 +62,9 @@ export default function Home() {
             <ul className="border rounded p-4">
               {users.map((user) => (
                 <li key={user.id} className="mb-2 p-2 border-b">
-                  {user.username || user.name || user.email || JSON.stringify(user)}
+                  <strong>Username:</strong> {user.username} <br />
+                  <strong>Email:</strong> {user.email} <br />
+                  <strong>Created:</strong> {new Date(user.created_at).toLocaleString()}
                 </li>
               ))}
             </ul>
@@ -67,7 +72,7 @@ export default function Home() {
         )}
 
         {!loading && users.length === 0 && (
-          <p className="text-gray-500">No users found. Click the button to fetch users.</p>
+          <p className="text-gray-500">No users found. Click the button to fetch users.</p>          
         )}
       </div>
     </main>
