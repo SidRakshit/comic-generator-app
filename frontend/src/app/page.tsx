@@ -21,7 +21,7 @@ export default function Home() {
       setError(null);
       
       // Point to your backend API URL
-      const baseUrl = process.env.NEXT_PUBLIC_API_URL_LOCAL || '/api';
+      const baseUrl = process.env.NEXT_PUBLIC_API_URL || '/api';
       const apiUrl = `${baseUrl}/users`;
       console.log('Fetching users from:', apiUrl);
       
