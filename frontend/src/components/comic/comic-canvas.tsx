@@ -92,11 +92,11 @@ function ComicPanel({ panel, panelNumber, onClick }: ComicPanelProps) {
             sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
             priority={panelNumber <= 4}
           />
-          <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-30 transition-all flex items-center justify-center group">
+          {/* <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-30 transition-all flex items-center justify-center group">
             <div className="text-white opacity-0 group-hover:opacity-100 p-2 bg-black bg-opacity-50 rounded">
               Click to edit
             </div>
-          </div>
+          </div> */}
         </div>
       ) : (
         <div className="flex flex-col items-center justify-center h-full"> <div className="mb-2"> <Plus className="h-8 w-8 text-gray-400" /> </div> <p className="text-gray-500 text-sm">Panel {panelNumber}</p> <p className="text-gray-400 text-xs mt-1">Click to add content</p> </div>
