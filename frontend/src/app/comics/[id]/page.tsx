@@ -1,5 +1,6 @@
 // src/app/comics/[id]/page.tsx
 // PURPOSE: Provide the editor interface for a specific comic identified by [id].
+// UPDATED: generateImageAPI function reflects the new curl command.
 
 'use client';
 
@@ -13,18 +14,27 @@ import { Button } from '@/components/ui/button';                 // Verify path
 import { Panel } from '@/hooks/use-comic';                        // Verify path
 import { ArrowLeft, Loader2 } from 'lucide-react';                // Verify path
 
-// --- BEGIN: API Call Function ---
-// Function to call the actual image generation API based on the curl command
+// --- BEGIN: UPDATED API Call Function ---
+// Function reflects the NEW curl command for generate-panel-image
 async function generateImageAPI(prompt: string): Promise<{ imageUrl: string }> {
-  const apiUrl = 'https://comiccreator.info/api/comics/generate';
-  console.log(`Calling API: ${apiUrl} with prompt: "${prompt}"`);
-  const requestBody = { prompt: prompt }; // Add panelCount: 1 if needed
+  // --- Use the new endpoint ---
+  const apiUrl = 'https://comiccreator.info/api/comics/generate-panel-image';
+  console.log(`Calling API: ${apiUrl} with description: "${prompt}"`);
+
+  // --- Use the new request body structure ---
+  const requestBody = {
+    panelDescription: prompt // Key is now panelDescription
+  };
 
   try {
     const response = await fetch(apiUrl, {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', /* Add Auth if needed */ },
+      headers: {
+        'Content-Type': 'application/json',
+        // Add other headers like Authorization if needed
+      },
       body: JSON.stringify(requestBody),
+       // No '-k' equivalent - uses standard browser SSL validation
     });
 
     if (!response.ok) {
@@ -33,16 +43,27 @@ async function generateImageAPI(prompt: string): Promise<{ imageUrl: string }> {
       catch (jsonError) { errorDetails += ` - ${response.statusText}` }
       throw new Error(errorDetails);
     }
+
+    // Parse the JSON response - expecting {"imageUrl": "..."}
     const data = await response.json();
-    if (!data.imageUrl) { throw new Error("API response missing imageUrl."); }
+
+    // Check if the expected field is present
+    if (!data.imageUrl) {
+      // Log the actual response if the expected field is missing
+      console.error("Actual API response data:", data);
+      throw new Error("API response did not contain the expected 'imageUrl' field.");
+    }
+
     console.log("API call successful, received imageUrl:", data.imageUrl);
+    // Return the object expected by the calling function
     return { imageUrl: data.imageUrl };
+
   } catch (error) {
     console.error('Error calling generateImageAPI:', error);
     throw error; // Re-throw to be caught by handlePromptSubmit
   }
 }
-// --- END: API Call Function ---
+// --- END: UPDATED API Call Function ---
 
 
 // --- Main Editor Page Component ---
@@ -66,7 +87,7 @@ export default function ComicEditorPage() {
     error: comicHookError // Error state from the hook
    } = useComic(comicId); // Initialize hook WITH the comic ID
 
-  // Effect to log errors from the useComic hook
+  // Effect to handle errors from the useComic hook
   useEffect(() => {
     if (comicHookError) {
         console.error("Hook Error (load/save):", comicHookError);
@@ -82,6 +103,7 @@ export default function ComicEditorPage() {
     setIsPromptModalOpen(true);
   };
 
+  // Uses the UPDATED generateImageAPI function
   const handlePromptSubmit = async (prompt: string) => {
     if (activePanel === null) return;
     const panelIndex = activePanel;
@@ -91,7 +113,7 @@ export default function ComicEditorPage() {
 
     try {
       // --- Call the actual API function ---
-      const response = await generateImageAPI(prompt);
+      const response = await generateImageAPI(prompt); // Calls the updated function
       updatePanelContent(panelIndex, { status: 'complete', imageUrl: response.imageUrl, prompt: prompt, error: undefined });
       console.log(`Panel ${panelIndex} generation success.`);
     } catch (error) {
