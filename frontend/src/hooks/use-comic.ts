@@ -31,7 +31,7 @@ interface TemplateDefinition {
 
 
 // ... (templates object remains the same) ...
-const templates: Record<string, TemplateDefinition> = { 'template-1': { id: 'template-1', name: '2x2 Grid', panelCount: 4, layout: 'grid-2x2' }, 'template-2': { id: 'template-2', name: '3x2 Grid', panelCount: 6, layout: 'grid-3x2' }, 'template-3': { id: 'template-3', name: 'Single Panel', panelCount: 1, layout: 'single' }, 'template-4': { id: 'template-4', name: '3x3 Grid', panelCount: 9, layout: 'grid-3x3' }, 'template-5': { id: 'template-5', name: 'Manga Style', panelCount: 5, layout: 'manga' } };
+export const templates: Record<string, TemplateDefinition> = { 'template-1': { id: 'template-1', name: '2x2 Grid', panelCount: 4, layout: 'grid-2x2' }, 'template-2': { id: 'template-2', name: '3x2 Grid', panelCount: 6, layout: 'grid-3x2' }, 'template-3': { id: 'template-3', name: 'Single Panel', panelCount: 1, layout: 'single' }, 'template-4': { id: 'template-4', name: '3x3 Grid', panelCount: 9, layout: 'grid-3x3' }, 'template-5': { id: 'template-5', name: 'Manga Style', panelCount: 5, layout: 'manga' } };
 
 
 // Hook for managing comic state
