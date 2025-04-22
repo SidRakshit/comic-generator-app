@@ -1,10 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import ComicCanvas from '@/components/comic/ComicCanvas';
-import TemplateSelector from '@/components/comic/TemplateSelector';
-import PanelPromptModal from '@/components/comic/PanelPromptModal';
-import { useComic } from '@/hooks/useComic';
+import ComicCanvas from '@/components/comic/comic-canvas';
+import TemplateSelector from '@/components/comic/template-selector';
+import PanelPromptModal from '@/components/comic/panel-prompt-modal';
+import { useComic } from '@/hooks/use-comic';
 import { Button } from '@/components/ui/button';
 
 export default function CreateComicPage() {
