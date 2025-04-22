@@ -83,7 +83,7 @@ function ComicPanel({ panel, panelNumber, onClick }: ComicPanelProps) {
       ) : panel.status === 'error' ? (
         <div className="flex flex-col items-center justify-center h-full"> <ImageOff className="h-10 w-10 text-red-500 mb-2" /> <p className="text-sm text-red-500">{panel.error || 'Error generating image'}</p> <p className="text-xs text-red-400 mt-1">Click to try again</p> </div>
       ) : panel.status === 'complete' && panel.imageUrl ? (
-        <div className="relative h-full">
+        <div className="relative h-full +    bg-pink-500 opacity-50">
           <Image
             src={panel.imageUrl}
             alt={`Panel ${panelNumber}`}
