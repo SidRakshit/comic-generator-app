@@ -1,6 +1,6 @@
 // src/components/comic/image-zoom-modal.tsx
-// PURPOSE: Displays a selected image in a larger centered modal view.
-// FIXED: Moved useEffect hook to comply with Rules of Hooks.
+// PURPOSE: Displays a selected image in a lightbox style (centered on overlay).
+// UPDATED: Revised structure for lightbox effect.
 
 'use client';
 
@@ -16,81 +16,82 @@ interface ImageZoomModalProps {
 
 const ImageZoomModal: React.FC<ImageZoomModalProps> = ({ isOpen, onClose, imageUrl }) => {
 
-  // --- MOVED HOOK HERE ---
-  // Handle Escape key press to close the modal
+  // useEffect for Escape key remains the same
   React.useEffect(() => {
-    // Function to handle key down event
     const handleKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
         onClose();
       }
     };
-
-    // Only add the event listener if the modal is open
     if (isOpen) {
       document.addEventListener('keydown', handleKeyDown);
     }
-
-    // Cleanup listener on component unmount or when modal closes/isOpen changes
     return () => {
       document.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isOpen, onClose]); // Dependencies: run effect if isOpen or onClose changes
+  }, [isOpen, onClose]);
 
-
-  // --- Early return remains the same ---
-  // Don't render anything if the modal is not open or there's no image URL
+  // Early return if not open or no image
   if (!isOpen || !imageUrl) {
     return null;
   }
 
-  // Handle clicks on the backdrop to close the modal
+  // Handle clicks on the backdrop (outside the image container)
   const handleBackdropClick = (e: React.MouseEvent<HTMLDivElement>) => {
+    // Check if the click target is the backdrop itself
     if (e.target === e.currentTarget) {
       onClose();
     }
   };
 
-
   return (
-    // Backdrop / Overlay
+    // Full screen overlay - uses flex to center the content
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-75 p-4 transition-opacity duration-300 ease-in-out"
-      onClick={handleBackdropClick}
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-85 p-4 transition-opacity duration-300 ease-in-out" // Slightly darker overlay maybe?
+      onClick={handleBackdropClick} // Close on backdrop click
       role="dialog"
       aria-modal="true"
-      aria-labelledby="image-zoom-title"
+      aria-labelledby="image-zoom-title" // Still good for accessibility
     >
-      {/* Modal Content Container */}
-      <div className="relative max-w-3xl max-h-[80vh] bg-white rounded-lg shadow-xl overflow-hidden">
-        {/* Close Button */}
+      {/* --- MODIFIED: Image and Button Wrapper --- */}
+      {/* This div wraps the image and button, allowing relative positioning
+          and preventing backdrop click from closing when clicking the image itself */}
+      <div
+        className="relative max-w-[90vw] max-h-[85vh] flex" // Use flex for centering, limit size
+        onClick={(e) => e.stopPropagation()} // Prevent backdrop click when clicking wrapper/image
+      >
+        {/* Image Display */}
+        <Image
+          src={imageUrl}
+          alt="Zoomed comic panel"
+          width={1200} // Provide large base width/height hints
+          height={1200}
+          style={{
+              maxWidth: '100%',    // Ensure it fits horizontally
+              maxHeight: '100%',   // Ensure it fits vertically within the wrapper's max-h
+              width: 'auto',       // Scale width automatically
+              height: 'auto',      // Scale height automatically
+              objectFit: 'contain', // Ensure entire image is visible
+              display: 'block'     // Prevents extra space below image
+          }}
+          // priority // Consider adding priority if LCP is affected
+        />
+
+        {/* Close Button - Positioned relative to the wrapper (which sizes to the image) */}
         <button
           type="button"
           onClick={onClose}
-          className="absolute top-2 right-2 z-10 p-1.5 bg-gray-700 text-white rounded-full hover:bg-gray-900 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-500"
+          // Position top-right corner of the wrapper div. Adjust offsets as needed.
+          className="absolute -top-2 -right-2 z-10 p-1.5 bg-gray-800 text-white rounded-full hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-offset-gray-800 focus:ring-white shadow-lg"
           aria-label="Close image view"
         >
           <X className="h-5 w-5" />
         </button>
 
-        {/* Image */}
-        <div className="relative w-full h-full max-h-[inherit]">
-           <Image
-             src={imageUrl}
-             alt="Zoomed comic panel"
-            width={800}
-            height={800}
-            style={{
-                maxWidth: '100%',
-                maxHeight: '80vh',
-                width: 'auto',
-                height: 'auto',
-                objectFit: 'contain'
-            }}
-           />
-        </div>
-         {/* <h2 id="image-zoom-title" className="sr-only">Zoomed Image View</h2> */}
+        {/* Optional: Invisible title for aria-labelledby */}
+        {/* <h2 id="image-zoom-title" className="sr-only">Zoomed Image View</h2> */}
       </div>
+      {/* --- END MODIFIED SECTION --- */}
     </div>
   );
 };
