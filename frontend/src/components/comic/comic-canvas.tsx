@@ -1,24 +1,23 @@
 // src/components/comic/comic-canvas.tsx
-// UPDATED: Added edit icon for completed panels and separate click handlers.
+// UPDATED: Added max-width to the container to make the panel grid smaller.
 
 'use client';
 
 import Image from 'next/image';
-import { Panel } from '@/hooks/use-comic'; //
-// Import Edit icon, Plus is already imported
+import { Panel } from '@/hooks/use-comic';
 import { Loader2, ImageOff, Plus, Edit } from 'lucide-react';
 
-// --- 1. Add onEditPanelClick to props ---
 interface ComicCanvasProps {
   panels: Panel[];
-  onPanelClick: (index: number) => void; // Handles zoom for completed, add for others
-  onEditPanelClick: (index: number) => void; // Handles edit click for completed
+  onPanelClick: (index: number) => void;
+  onEditPanelClick: (index: number) => void;
   layout: string | null;
 }
 
-// getGridClass function remains the same as your provided code
+// getGridClass function remains the same
 const getGridClass = (layout: string | null, panels: Panel[]): string => {
-  switch (layout) {
+    // ... (implementation remains the same as before) ...
+      switch (layout) {
     case 'grid-2x2':
       return 'grid-cols-2 grid-rows-2';
     case 'grid-3x2':
@@ -39,21 +38,25 @@ const getGridClass = (layout: string | null, panels: Panel[]): string => {
   }
 };
 
-export default function ComicCanvas({ panels, onPanelClick, onEditPanelClick, layout }: ComicCanvasProps) { // Destructure new prop
+export default function ComicCanvas({ panels, onPanelClick, onEditPanelClick, layout }: ComicCanvasProps) {
 
   const gridClass = getGridClass(layout, panels);
 
   return (
-    <div className="comic-canvas w-full">
-      <div className={`grid ${gridClass} gap-4 mb-4`}>
+    // --- MODIFIED: Added max-width and centering to this container ---
+    <div className="comic-canvas w-full max-w-3xl mx-auto"> {/* Example: max-w-3xl */}
+    {/* You can adjust max-w-3xl (e.g., max-w-2xl, max-w-4xl) to make it smaller/larger */}
+    {/* mx-auto keeps it centered if it's not full width */}
+
+      {/* The grid itself remains inside this container */}
+      <div className={`grid ${gridClass} gap-2 md:gap-4 mb-4`}> {/* Reduced gap slightly */}
         {panels.map((panel, index) => (
           <ComicPanel
             key={panel.id || index}
             panel={panel}
             panelNumber={index + 1}
-            // --- 2. Pass BOTH handlers down to ComicPanel ---
-            onClick={() => onPanelClick(index)} // This will be the main click (zoom/add)
-            onEditClick={() => onEditPanelClick(index)} // This is for the edit icon
+            onClick={() => onPanelClick(index)}
+            onEditClick={() => onEditPanelClick(index)}
           />
         ))}
       </div>
@@ -61,18 +64,17 @@ export default function ComicCanvas({ panels, onPanelClick, onEditPanelClick, la
   );
 }
 
-// --- 3. Add onEditClick to ComicPanelProps ---
+// --- ComicPanel component remains unchanged ---
 interface ComicPanelProps {
   panel: Panel;
   panelNumber: number;
-  onClick: () => void;      // Main click handler (zoom/add)
-  onEditClick: () => void; // Edit icon click handler
+  onClick: () => void;
+  onEditClick: () => void;
 }
 
-// --- 4. Modify ComicPanel component ---
-function ComicPanel({ panel, panelNumber, onClick, onEditClick }: ComicPanelProps) { // Destructure new prop
-
-  return (
+function ComicPanel({ panel, panelNumber, onClick, onEditClick }: ComicPanelProps) {
+  // ... (ComicPanel implementation is the same as the previous version with the edit icon) ...
+    return (
     <div
       className={`
         group aspect-square border-2 rounded-md overflow-hidden cursor-pointer relative
@@ -81,57 +83,50 @@ function ComicPanel({ panel, panelNumber, onClick, onEditClick }: ComicPanelProp
           panel.status === 'complete' ? 'border-green-400' :
           'border-gray-200 bg-gray-50 hover:border-blue-200'}
       `}
-      // The main onClick handler remains on the panel div
       onClick={onClick}
     >
-      {/* Panel content based on status */}
       {panel.status === 'loading' ? (
-        <div className="flex flex-col items-center justify-center h-full pointer-events-none"> {/* Prevent clicks during load */}
-           <Loader2 className="h-10 w-10 text-blue-500 animate-spin mb-2" />
-           <p className="text-sm text-blue-500">Generating...</p>
+        <div className="flex flex-col items-center justify-center h-full pointer-events-none">
+           <Loader2 className="h-8 w-8 md:h-10 md:w-10 text-blue-500 animate-spin mb-1 md:mb-2" />
+           <p className="text-xs md:text-sm text-blue-500">Generating...</p> {/* Slightly smaller text */}
         </div>
       ) : panel.status === 'error' ? (
-        // Error state also uses the main onClick (to try again)
-        <div className="flex flex-col items-center justify-center h-full text-center p-2">
-           <ImageOff className="h-10 w-10 text-red-500 mb-2" />
-           <p className="text-sm text-red-500">{panel.error || 'Error generating image'}</p>
+        <div className="flex flex-col items-center justify-center h-full text-center p-1 md:p-2">
+           <ImageOff className="h-8 w-8 md:h-10 md:w-10 text-red-500 mb-1 md:mb-2" />
+           <p className="text-xs md:text-sm text-red-500">{panel.error || 'Error'}</p> {/* Shorter error text */}
            <p className="text-xs text-red-400 mt-1">Click to try again</p>
         </div>
       ) : panel.status === 'complete' && panel.imageUrl ? (
-        // --- Completed Panel: Image + Edit Button ---
         <>
-          {/* Image remains the same */}
-          <div className="relative h-full w-full"> {/* Ensure wrapper takes full space */}
+          <div className="relative h-full w-full">
             <Image
               src={panel.imageUrl}
               alt={`Panel ${panelNumber}`}
               fill
               style={{ objectFit: 'cover' }}
-              sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
+              sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw" // Adjust sizes if needed based on new max-width
               priority={panelNumber <= 4}
-              className="pointer-events-none" // Make image non-interactive for clicks if needed, parent div handles click
+              className="pointer-events-none"
             />
           </div>
-          {/* --- Edit Button --- */}
           <button
-            type="button" // Good practice for buttons not submitting forms
-            className="absolute top-2 right-2 z-10 p-1.5 bg-black bg-opacity-50 text-white rounded-full opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity hover:bg-opacity-75"
+            type="button"
+            className="absolute top-1 right-1 md:top-2 md:right-2 z-10 p-1 md:p-1.5 bg-black bg-opacity-50 text-white rounded-full opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity hover:bg-opacity-75"
             onClick={(e) => {
-              e.stopPropagation(); // IMPORTANT: Prevent triggering the parent div's onClick (which opens zoom)
-              onEditClick(); // Call the specific edit handler
+              e.stopPropagation();
+              onEditClick();
             }}
             aria-label={`Edit Panel ${panelNumber}`}
             title={`Edit Panel ${panelNumber}`}
           >
-            <Edit className="h-4 w-4" /> {/* Use Edit Icon */}
+            <Edit className="h-3 w-3 md:h-4 md:w-4" /> {/* Slightly smaller icon */}
           </button>
         </>
       ) : (
-         // Empty state uses the main onClick (to add content)
         <div className="flex flex-col items-center justify-center h-full">
-           <div className="mb-2"> <Plus className="h-8 w-8 text-gray-400" /> </div>
-           <p className="text-gray-500 text-sm">Panel {panelNumber}</p>
-           <p className="text-gray-400 text-xs mt-1">Click to add content</p>
+           <div className="mb-1 md:mb-2"> <Plus className="h-6 w-6 md:h-8 md:w-8 text-gray-400" /> </div>
+           <p className="text-xs md:text-sm text-gray-500">Panel {panelNumber}</p>
+           <p className="text-xs text-gray-400 mt-1">Click to add content</p>
         </div>
       )}
     </div>
