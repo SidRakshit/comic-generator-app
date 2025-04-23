@@ -125,6 +125,27 @@ function NewComicEditorContent() {
         const panelIndex = activePanel;
         const currentPanel = comic.panels[panelIndex];
 
+        let metadataPrefix = '';
+        if (comic.title) {
+            metadataPrefix += `Comic Title: ${comic.title}. `;
+        }
+        if (comic.genre) {
+            metadataPrefix += `Genre: ${comic.genre}. `;
+        }
+        if (comic.characters && comic.characters.length > 0) {
+            metadataPrefix += 'Characters: ';
+            comic.characters.forEach(char => {
+                if (char.name && char.description) {
+                    metadataPrefix += `(${char.name}: ${char.description}) `;
+                } else if (char.name) {
+                     metadataPrefix += `(${char.name}) `;
+                }
+            });
+        }
+        metadataPrefix = metadataPrefix.trim();
+
+        const fullPrompt = metadataPrefix ? `${metadataPrefix}\n\nPanel Prompt: ${prompt}` : prompt;
+
         // Close modal and reset active state immediately
         setIsPromptModalOpen(false);
         setActivePanel(null);
@@ -133,13 +154,14 @@ function NewComicEditorContent() {
         updatePanelContent(panelIndex, { status: 'loading', prompt: prompt, error: undefined }); // Clear previous error
 
         try {
-            // Call the API
-            const response = await generateImageAPI(prompt);
+            console.log("Sending prompt to API:", fullPrompt); // Log the full prompt being sent
+            const response = await generateImageAPI(fullPrompt); // <-- USE fullPrompt HERE
+
             // Update panel state on success
             updatePanelContent(panelIndex, {
                 status: 'complete',
                 imageUrl: response.imageUrl,
-                prompt: prompt, // Keep the successful prompt
+                prompt: prompt, // Keep the *original user* prompt in the state
                 error: undefined // Ensure error is cleared
             });
             console.log(`Panel ${panelIndex + 1} generation success.`);
@@ -149,7 +171,7 @@ function NewComicEditorContent() {
             updatePanelContent(panelIndex, {
                 status: 'error',
                 error: error instanceof Error ? error.message : 'Image generation failed.',
-                prompt: prompt, // Keep the prompt that failed
+                prompt: prompt, // Keep the *original user* prompt that failed
                 imageUrl: undefined // Clear image URL on error
             });
              // Optionally re-open the prompt or show a specific error message
