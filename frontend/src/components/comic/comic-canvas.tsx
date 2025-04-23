@@ -1,20 +1,23 @@
-// src/components/comic/comic-canvas.tsx (or wherever this component lives)
+// src/components/comic/comic-canvas.tsx
+// UPDATED: Added max-width to the container to make the panel grid smaller.
 
 'use client';
 
 import Image from 'next/image';
 import { Panel } from '@/hooks/use-comic';
-import { Loader2, ImageOff, Plus } from 'lucide-react';
+import { Loader2, ImageOff, Plus, Edit } from 'lucide-react';
 
 interface ComicCanvasProps {
   panels: Panel[];
-  onPanelClick: (panelId: number) => void;
+  onPanelClick: (index: number) => void;
+  onEditPanelClick: (index: number) => void;
   layout: string | null;
 }
 
-// --- Step 1: Modify getGridClass signature to accept panels ---
-const getGridClass = (layout: string | null, panels: Panel[]): string => { // Added 'panels' parameter
-  switch (layout) {
+// getGridClass function remains the same
+const getGridClass = (layout: string | null, panels: Panel[]): string => {
+    // ... (implementation remains the same as before) ...
+      switch (layout) {
     case 'grid-2x2':
       return 'grid-cols-2 grid-rows-2';
     case 'grid-3x2':
@@ -26,30 +29,34 @@ const getGridClass = (layout: string | null, panels: Panel[]): string => { // Ad
     case 'manga':
       return 'grid-cols-2 manga-layout'; // Placeholder
     default:
-      // --- Use the passed 'panels' parameter for fallback ---
       const count = panels.length;
       if (count <= 1) return 'grid-cols-1';
       if (count <= 4) return 'grid-cols-2 grid-rows-2';
       if (count <= 6) return 'grid-cols-3 grid-rows-2';
       if (count <= 9) return 'grid-cols-3 grid-rows-3';
-      return 'grid-cols-2 grid-rows-2'; // Final fallback
+      return 'grid-cols-2 grid-rows-2';
   }
 };
 
-export default function ComicCanvas({ panels, onPanelClick, layout }: ComicCanvasProps) {
+export default function ComicCanvas({ panels, onPanelClick, onEditPanelClick, layout }: ComicCanvasProps) {
 
-  // --- Step 2: Pass 'panels' when calling getGridClass ---
-  const gridClass = getGridClass(layout, panels); // Pass 'panels' here
+  const gridClass = getGridClass(layout, panels);
 
   return (
-    <div className="comic-canvas w-full">
-      <div className={`grid ${gridClass} gap-4 mb-4`}>
+    // --- MODIFIED: Added max-width and centering to this container ---
+    <div className="comic-canvas w-full max-w-3xl mx-auto"> {/* Example: max-w-3xl */}
+    {/* You can adjust max-w-3xl (e.g., max-w-2xl, max-w-4xl) to make it smaller/larger */}
+    {/* mx-auto keeps it centered if it's not full width */}
+
+      {/* The grid itself remains inside this container */}
+      <div className={`grid ${gridClass} gap-2 md:gap-4 mb-4`}> {/* Reduced gap slightly */}
         {panels.map((panel, index) => (
           <ComicPanel
             key={panel.id || index}
             panel={panel}
             panelNumber={index + 1}
             onClick={() => onPanelClick(index)}
+            onEditClick={() => onEditPanelClick(index)}
           />
         ))}
       </div>
@@ -62,14 +69,15 @@ interface ComicPanelProps {
   panel: Panel;
   panelNumber: number;
   onClick: () => void;
+  onEditClick: () => void;
 }
 
-function ComicPanel({ panel, panelNumber, onClick }: ComicPanelProps) {
-  // ... (ComicPanel implementation is the same) ...
-  return (
+function ComicPanel({ panel, panelNumber, onClick, onEditClick }: ComicPanelProps) {
+  // ... (ComicPanel implementation is the same as the previous version with the edit icon) ...
+    return (
     <div
       className={`
-        aspect-square border-2 rounded-md overflow-hidden cursor-pointer relative
+        group aspect-square border-2 rounded-md overflow-hidden cursor-pointer relative
         ${panel.status === 'loading' ? 'border-blue-400 bg-blue-50' :
           panel.status === 'error' ? 'border-red-400 bg-red-50' :
           panel.status === 'complete' ? 'border-green-400' :
@@ -77,29 +85,49 @@ function ComicPanel({ panel, panelNumber, onClick }: ComicPanelProps) {
       `}
       onClick={onClick}
     >
-      {/* Panel content based on status */}
       {panel.status === 'loading' ? (
-        <div className="flex flex-col items-center justify-center h-full"> <Loader2 className="h-10 w-10 text-blue-500 animate-spin mb-2" /> <p className="text-sm text-blue-500">Generating...</p> </div>
-      ) : panel.status === 'error' ? (
-        <div className="flex flex-col items-center justify-center h-full"> <ImageOff className="h-10 w-10 text-red-500 mb-2" /> <p className="text-sm text-red-500">{panel.error || 'Error generating image'}</p> <p className="text-xs text-red-400 mt-1">Click to try again</p> </div>
-      ) : panel.status === 'complete' && panel.imageUrl ? (
-        <div className="relative h-full +    bg-pink-500 opacity-50">
-          <Image
-            src={panel.imageUrl}
-            alt={`Panel ${panelNumber}`}
-            fill
-            style={{ objectFit: 'cover' }}
-            sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
-            priority={panelNumber <= 4}
-          />
-          {/* <div className="absolute inset-0 bg-black bg-opacity-0 hover:bg-opacity-30 transition-all flex items-center justify-center group">
-            <div className="text-white opacity-0 group-hover:opacity-100 p-2 bg-black bg-opacity-50 rounded">
-              Click to edit
-            </div>
-          </div> */}
+        <div className="flex flex-col items-center justify-center h-full pointer-events-none">
+           <Loader2 className="h-8 w-8 md:h-10 md:w-10 text-blue-500 animate-spin mb-1 md:mb-2" />
+           <p className="text-xs md:text-sm text-blue-500">Generating...</p> {/* Slightly smaller text */}
         </div>
+      ) : panel.status === 'error' ? (
+        <div className="flex flex-col items-center justify-center h-full text-center p-1 md:p-2">
+           <ImageOff className="h-8 w-8 md:h-10 md:w-10 text-red-500 mb-1 md:mb-2" />
+           <p className="text-xs md:text-sm text-red-500">{panel.error || 'Error'}</p> {/* Shorter error text */}
+           <p className="text-xs text-red-400 mt-1">Click to try again</p>
+        </div>
+      ) : panel.status === 'complete' && panel.imageUrl ? (
+        <>
+          <div className="relative h-full w-full">
+            <Image
+              src={panel.imageUrl}
+              alt={`Panel ${panelNumber}`}
+              fill
+              style={{ objectFit: 'cover' }}
+              sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw" // Adjust sizes if needed based on new max-width
+              priority={panelNumber <= 4}
+              className="pointer-events-none"
+            />
+          </div>
+          <button
+            type="button"
+            className="absolute top-1 right-1 md:top-2 md:right-2 z-10 p-1 md:p-1.5 bg-black bg-opacity-50 text-white rounded-full opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity hover:bg-opacity-75"
+            onClick={(e) => {
+              e.stopPropagation();
+              onEditClick();
+            }}
+            aria-label={`Edit Panel ${panelNumber}`}
+            title={`Edit Panel ${panelNumber}`}
+          >
+            <Edit className="h-3 w-3 md:h-4 md:w-4" /> {/* Slightly smaller icon */}
+          </button>
+        </>
       ) : (
-        <div className="flex flex-col items-center justify-center h-full"> <div className="mb-2"> <Plus className="h-8 w-8 text-gray-400" /> </div> <p className="text-gray-500 text-sm">Panel {panelNumber}</p> <p className="text-gray-400 text-xs mt-1">Click to add content</p> </div>
+        <div className="flex flex-col items-center justify-center h-full">
+           <div className="mb-1 md:mb-2"> <Plus className="h-6 w-6 md:h-8 md:w-8 text-gray-400" /> </div>
+           <p className="text-xs md:text-sm text-gray-500">Panel {panelNumber}</p>
+           <p className="text-xs text-gray-400 mt-1">Click to add content</p>
+        </div>
       )}
     </div>
   );

@@ -1,109 +1,219 @@
 // src/app/comics/create/page.tsx
-// PURPOSE: Allow users to select a template to start a new comic creation process.
-//          Creates a new comic entry via API and navigates to the editor page.
+// UPDATED: Multi-step form for metadata and template selection.
 
 'use client';
 
 import { useRouter } from 'next/navigation';
-import TemplateSelector from '@/components/comic/template-selector'; // Verify path
-import { useState } from 'react';
-import { Button } from '@/components/ui/button'; // If needed for other UI elements
-import { Loader2 } from 'lucide-react'; // For loading indicator
-
-// Mock function to simulate creating a new comic entry in the backend
-// Replace this with your actual API call logic.
-async function createNewComicAPI(templateId: string): Promise<{ id: string }> {
-  console.log(`API CALL (MOCK): Creating comic with template: ${templateId}`);
-  await new Promise(resolve => setTimeout(resolve, 700)); // Simulate network delay
-  const newId = `comic_${templateId}_${Date.now()}`; // Example ID generation
-  console.log(`API CALL (MOCK): Received new comic ID: ${newId}`);
-  // --- IMPORTANT: Replace with your actual API call ---
-  // Example using fetch:
-  // const response = await fetch('/api/comics', { // Your backend endpoint
-  //   method: 'POST',
-  //   headers: { 'Content-Type': 'application/json', /* Add Auth headers if needed */ },
-  //   body: JSON.stringify({ templateId: templateId })
-  // });
-  // if (!response.ok) {
-  //   throw new Error(`Failed to create comic: ${response.statusText}`);
-  // }
-  // const data = await response.json(); // Expects { id: '...' }
-  // return data;
-  // --- End Replace ---
-  return { id: newId }; // Return mock ID for now
-}
-
+import TemplateSelector from '@/components/comic/template-selector';
+import { useState, ChangeEvent } from 'react'; // Import ChangeEvent
+import { Button } from '@/components/ui/button';
+import { Loader2, Plus, Trash2 } from 'lucide-react';
+// --- MODIFIED: Import useComic and character management functions ---
+import { useComicContext } from '@/context/comic-context';
+import { Input } from '@/components/ui/input'; // Assuming you have ShadCN UI Input
+import { Label } from '@/components/ui/label'; // Assuming you have ShadCN UI Label
+import { Textarea } from '@/components/ui/textarea'; // Assuming you have ShadCN UI Textarea
 
 export default function CreateComicPage() {
   const router = useRouter();
-  const [isCreating, setIsCreating] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  // --- Step state ---
+  const [step, setStep] = useState<'metadata' | 'template'>('metadata');
+  // --- Use the hook directly ---
+  const {
+    comic,
+    setTemplate,
+    updateComicMetadata,
+    addCharacter,
+    removeCharacter,
+    updateCharacter,
+} = useComicContext(); // Initialize without ID or templateId
+
+  const [isNavigating, setIsNavigating] = useState(false);
+  // const [error, setError] = useState<string | null>(null); // Maybe use hookError if needed later
+
+  // --- Handlers ---
+
+  const handleMetadataChange = (
+      e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement> // Added Select
+  ) => {
+      updateComicMetadata({ [e.target.name]: e.target.value });
+  };
+
+  const handleCharacterChange = (
+      id: string,
+      field: 'name' | 'description',
+      value: string
+  ) => {
+      updateCharacter(id, field, value);
+  };
+
+  const goToNextStep = () => {
+      // Optional: Add validation for required metadata fields here
+      if (!comic.title) {
+          alert("Please enter a title for the comic.");
+          return;
+      }
+      setStep('template');
+  };
+
+  const goToPreviousStep = () => {
+      setStep('metadata');
+  };
 
   // Called when a template is selected in TemplateSelector
-  const handleTemplateSelect = async (templateId: string) => {
-    if (isCreating) return;
-
+  const handleTemplateSelect = (templateId: string) => {
+    if (isNavigating) return;
     console.log(`Template selected: ${templateId}`);
-    setIsCreating(true);
-    setError(null);
 
+    // 1. Set template in context state
+    setTemplate(templateId); // This updates the shared state
+
+    // 2. Navigate to the generic editor page (no query param needed now)
+    setIsNavigating(true);
     try {
-      // Step 1: Call API to create the new comic entry
-      const newComic = await createNewComicAPI(templateId);
-      const newComicId = newComic.id;
-
-      if (!newComicId) {
-          throw new Error("Failed to get a valid ID for the new comic.");
-      }
-
-      // Step 2: Navigate to the dedicated editor page for this new comic
-      console.log(`Navigating to editor page: /comics/${newComicId}`);
-      router.push(`/comics/${newComicId}`); // <--- NAVIGATION HAPPENS HERE
-
+      const editorUrl = `/comics/editor`; // Navigate to the editor page
+      console.log(`Navigating to new comic editor: ${editorUrl}`);
+      router.push(editorUrl);
     } catch (err) {
-      console.error("Failed to create comic or navigate:", err);
-      setError(err instanceof Error ? err.message : 'An unexpected error occurred.');
-      setIsCreating(false); // Re-enable UI on error
+      console.error("Failed to navigate:", err);
+      setIsNavigating(false);
     }
   };
 
   return (
     <div className="container mx-auto py-8">
-      {/* Page Header */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Create New Comic</h1>
-        {/* Remove Save/Publish buttons - they belong on the editor page */}
       </div>
 
-      {/* Template Selection Area */}
       <div className="bg-white rounded-lg shadow p-6">
-        <h2 className="text-xl font-semibold mb-4">1. Choose a Template</h2>
-        <p className="text-gray-600 mb-6">Select a layout to begin.</p>
 
-        {/* Display error message if creation/navigation fails */}
-        {error && (
-            <div className="mb-4 p-3 bg-red-100 text-red-700 border border-red-300 rounded">
-                <strong>Error:</strong> {error}
+        {/* --- Step 1: Metadata --- */}
+        {step === 'metadata' && (
+          <div>
+            <h2 className="text-xl font-semibold mb-4">1. Enter Comic Details</h2>
+            <div className="space-y-4">
+              {/* Title */}
+              <div>
+                <Label htmlFor="title">Title</Label>
+                <Input
+                  id="title"
+                  name="title"
+                  value={comic.title}
+                  onChange={handleMetadataChange}
+                  placeholder="Your Awesome Comic Title"
+                  required
+                />
+              </div>
+              {/* Genre */}
+              <div>
+                <Label htmlFor="genre">Genre (Optional)</Label>
+                <Input
+                  id="genre"
+                  name="genre"
+                  value={comic.genre || ''}
+                  onChange={handleMetadataChange}
+                  placeholder="e.g., Superhero, Sci-Fi, Slice of Life"
+                />
+              </div>
+              {/* Description */}
+               <div>
+                <Label htmlFor="description">Description (Optional)</Label>
+                <Textarea
+                  id="description"
+                  name="description"
+                  value={comic.description || ''}
+                  onChange={handleMetadataChange}
+                  placeholder="Brief description of your comic"
+                />
+              </div>
+
+              {/* Characters */}
+              <div>
+                 <h3 className="text-lg font-semibold mb-2 border-t pt-4">Characters</h3>
+                 {comic.characters?.map((char, index) => (
+                     <div key={char.id} className="p-3 border rounded mb-3 space-y-2 relative bg-gray-50">
+                         <Label className="font-medium">Character {index + 1}</Label>
+                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
+                              <div>
+                                 <Label htmlFor={`char-name-${char.id}`} className="text-sm">Name</Label>
+                                 <Input
+                                     id={`char-name-${char.id}`}
+                                     value={char.name}
+                                     onChange={(e) => handleCharacterChange(char.id, 'name', e.target.value)}
+                                     placeholder="Character Name"
+                                 />
+                             </div>
+                              <div>
+                                 <Label htmlFor={`char-desc-${char.id}`} className="text-sm">Description</Label>
+                                 <Input // Or Textarea if preferred
+                                     id={`char-desc-${char.id}`}
+                                     value={char.description}
+                                     onChange={(e) => handleCharacterChange(char.id, 'description', e.target.value)}
+                                     placeholder="Brief description (e.g., appearance, role)"
+                                 />
+                             </div>
+                         </div>
+                         {/* Remove Button - only show if more than 1 character */}
+                         {(comic.characters?.length ?? 0) > 1 && (
+                             <Button
+                                 type="button"
+                                 variant="ghost"
+                                 size="icon"
+                                 className="absolute top-1 right-1 h-6 w-6 text-red-500 hover:text-red-700"
+                                 onClick={() => removeCharacter(char.id)}
+                                 aria-label="Remove Character"
+                             >
+                                 <Trash2 className="h-4 w-4" />
+                             </Button>
+                         )}
+                     </div>
+                 ))}
+                 {/* Add Character Button */}
+                 <Button type="button" variant="outline" size="sm" onClick={addCharacter} className="mt-2">
+                     <Plus className="h-4 w-4 mr-1" /> Add Character
+                 </Button>
+              </div>
+
             </div>
+            {/* Navigation Button */}
+            <div className="mt-6 text-right">
+              <Button onClick={goToNextStep}>Next: Choose Template</Button>
+            </div>
+          </div>
         )}
 
-        {/* TemplateSelector component needs 'disabled' and 'onSelect' props */}
-        {/* Ensure TemplateSelector component definition includes the 'disabled' prop */}
-        <TemplateSelector
-            onSelect={handleTemplateSelect}
-            disabled={isCreating} // Disable while processing the selection
-        />
+        {/* --- Step 2: Template Selection --- */}
+        {step === 'template' && (
+           <div>
+             <h2 className="text-xl font-semibold mb-4">2. Choose a Template</h2>
+             <p className="text-gray-600 mb-6">Select a layout to begin.</p>
 
-        {/* Loading indicator while creating/navigating */}
-        {isCreating && (
-            <div className="mt-4 flex justify-center items-center text-gray-500">
-                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Creating comic space...
-            </div>
+             {/* TemplateSelector component */}
+             <TemplateSelector
+                 onSelect={handleTemplateSelect}
+                 disabled={isNavigating} // Disable while processing selection
+             />
+
+             {/* Loading indicator */}
+             {isNavigating && (
+                 <div className="mt-4 flex justify-center items-center text-gray-500">
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                     Loading editor...
+                 </div>
+             )}
+
+             {/* Navigation Buttons */}
+              <div className="mt-6 flex justify-between">
+                 <Button variant="outline" onClick={goToPreviousStep} disabled={isNavigating}>
+                     Back to Details
+                 </Button>
+                 {/* No "Next" button here, selection triggers navigation */}
+             </div>
+           </div>
         )}
+
       </div>
-
-      {/* NOTE: No ComicCanvas or PanelPromptModal is rendered here anymore */}
     </div>
   );
 }

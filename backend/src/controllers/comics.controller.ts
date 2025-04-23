@@ -12,16 +12,20 @@ export class ComicController {
     generateScript = async (req: Request, res: Response): Promise<void> => {
         try {
             const { prompt } = req.body;
+<<<<<<< HEAD
             if (!prompt || typeof prompt !== 'string' || prompt.trim() === '') {
                 res.status(400).json({ error: 'Prompt is required and must be a non-empty string.' });
                 return;
             }
             const scriptPanel = await this.comicService.generateSinglePanelScript(prompt);
+=======
+>>>>>>> refs/remotes/origin/main
 
             if (!scriptPanel) {
                 throw new Error('Failed to parse generated panel content.');
             }
 
+<<<<<<< HEAD
             res.status(200).json(scriptPanel);
 
         } catch (error: any) {
@@ -31,6 +35,13 @@ export class ComicController {
             } else {
                 res.status(500).json({ error: error.message || 'Failed to generate panel script.' });
             }
+=======
+            const comic = await this.comicService.generateComic(prompt);
+            res.json(comic);
+        } catch (error) {
+            console.error('Error generating comic:', error);
+            res.status(500).json({ error: 'Failed to generate comic' });
+>>>>>>> refs/remotes/origin/main
         }
     };
 
