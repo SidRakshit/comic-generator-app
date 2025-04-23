@@ -21,7 +21,7 @@ export interface Comic {
 }
 
 export class ComicService {
-    async generateComic(prompt: string, panelCount: number): Promise<Comic> {
+    async generateComic(prompt: string): Promise<Comic> {
         // 1. Generate story/text with LLM
         const storyResponse = await axios.post(
             'https://api.openai.com/v1/chat/completions',
@@ -34,7 +34,7 @@ export class ComicService {
                     },
                     {
                         role: 'user',
-                        content: `Create a ${panelCount}-panel comic about: ${prompt}`
+                        content: `Create a panel about: ${prompt}`
                     }
                 ]
             },
