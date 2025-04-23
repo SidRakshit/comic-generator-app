@@ -9,23 +9,52 @@ export class ComicController {
         this.comicService = new ComicService();
     }
 
-    // Remove the Promise<void> return type or change it to match what you're returning
-    generateComic = async (req: Request, res: Response) => {
+    generateScript = async (req: Request, res: Response): Promise<void> => {
         try {
-            const { prompt, panelCount = 3 } = req.body;
+            const { prompt } = req.body;
+            if (!prompt || typeof prompt !== 'string' || prompt.trim() === '') {
+                res.status(400).json({ error: 'Prompt is required and must be a non-empty string.' });
+                return;
+            }
+            const scriptPanel = await this.comicService.generateSinglePanelScript(prompt);
 
-            if (!prompt) {
-                res.status(400).json({ error: 'Prompt is required' });
-                return; // Use return without a value
+            if (!scriptPanel) {
+                throw new Error('Failed to parse generated panel content.');
             }
 
-            const comic = await this.comicService.generateComic(prompt, panelCount);
-            res.json(comic);
-        } catch (error) {
-            console.error('Error generating comic:', error);
-            res.status(500).json({ error: 'Failed to generate comic' });
+            res.status(200).json(scriptPanel);
+
+        } catch (error: any) {
+            console.error('Error in generateScript controller:', error.message);
+            if (error.message.includes('OpenAI API key')) {
+                res.status(500).json({ error: 'Server configuration error regarding API key.' });
+            } else {
+                res.status(500).json({ error: error.message || 'Failed to generate panel script.' });
+            }
         }
-    }
+    };
+
+    generateImage = async (req: Request, res: Response): Promise<void> => {
+        try {
+            const { panelDescription } = req.body;
+            if (!panelDescription || typeof panelDescription !== 'string' || panelDescription.trim() === '') {
+                res.status(400).json({ error: 'panelDescription is required and must be a non-empty string.' });
+                return;
+            }
+            const panelImage = await this.comicService.generatePanelImage(panelDescription);
+            res.status(200).json(panelImage);
+        } catch (error: any) {
+            console.error('Error in generateImage controller:', error.message);
+            if (error.message.includes('OpenAI API key')) {
+                res.status(500).json({ error: 'Server configuration error regarding API key.' });
+            } else if (error.message.includes('content policy violation')) {
+                res.status(400).json({ error: 'Image generation failed due to content policy violation.' });
+            }
+            else {
+                res.status(500).json({ error: error.message || 'Failed to generate panel image.' });
+            }
+        }
+    };
 }
 
 export const comicController = new ComicController();

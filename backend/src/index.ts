@@ -19,23 +19,8 @@ app.get('/', (req, res) => {
   res.json({ message: 'Welcome to the backend!' });
 });
 
-// Direct test routes - ensure they're before other middleware
-app.get('/test', (req, res) => {
-  console.log('Test route accessed');
-  res.json({ message: 'Test route works!' });
-});
-
-app.get('/direct-test', (req, res) => {
-  console.log('Direct test route accessed');
-  res.json({ message: 'Direct test route works!' });
-});
-
-// Register modular routers
-console.log('Registering /api routes...');
 app.use('/api', exampleRoute);
 app.use('/api', userRoute);
-
-console.log('Registering /api/comics routes...');
 app.use('/api/comics', comicRoute);
 
 // 404 handler
