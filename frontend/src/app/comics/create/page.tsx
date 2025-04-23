@@ -1,146 +1,109 @@
+// src/app/comics/create/page.tsx
+// PURPOSE: Allow users to select a template to start a new comic creation process.
+//          Creates a new comic entry via API and navigates to the editor page.
+
 'use client';
 
+import { useRouter } from 'next/navigation';
+import TemplateSelector from '@/components/comic/template-selector'; // Verify path
 import { useState } from 'react';
-import ComicCanvas from '@/components/comic/comic-canvas';
-import TemplateSelector from '@/components/comic/template-selector';
-import PanelPromptModal from '@/components/comic/panel-prompt-modal';
-import { useComic } from '@/hooks/use-comic';
-import { Button } from '@/components/ui/button';
+import { Button } from '@/components/ui/button'; // If needed for other UI elements
+import { Loader2 } from 'lucide-react'; // For loading indicator
+
+// Mock function to simulate creating a new comic entry in the backend
+// Replace this with your actual API call logic.
+async function createNewComicAPI(templateId: string): Promise<{ id: string }> {
+  console.log(`API CALL (MOCK): Creating comic with template: ${templateId}`);
+  await new Promise(resolve => setTimeout(resolve, 700)); // Simulate network delay
+  const newId = `comic_${templateId}_${Date.now()}`; // Example ID generation
+  console.log(`API CALL (MOCK): Received new comic ID: ${newId}`);
+  // --- IMPORTANT: Replace with your actual API call ---
+  // Example using fetch:
+  // const response = await fetch('/api/comics', { // Your backend endpoint
+  //   method: 'POST',
+  //   headers: { 'Content-Type': 'application/json', /* Add Auth headers if needed */ },
+  //   body: JSON.stringify({ templateId: templateId })
+  // });
+  // if (!response.ok) {
+  //   throw new Error(`Failed to create comic: ${response.statusText}`);
+  // }
+  // const data = await response.json(); // Expects { id: '...' }
+  // return data;
+  // --- End Replace ---
+  return { id: newId }; // Return mock ID for now
+}
+
 
 export default function CreateComicPage() {
-  const { comic, setTemplate, updatePanelContent, saveComic, isSaving } = useComic();
-  const [activePanel, setActivePanel] = useState<number | null>(null);
-  const [isPromptModalOpen, setIsPromptModalOpen] = useState(false);
+  const router = useRouter();
+  const [isCreating, setIsCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // Handle template selection
-  const handleTemplateSelect = (templateId: string) => {
-    setTemplate(templateId);
-  };
+  // Called when a template is selected in TemplateSelector
+  const handleTemplateSelect = async (templateId: string) => {
+    if (isCreating) return;
 
-  // Open prompt modal for a specific panel
-  const handlePanelClick = (panelId: number) => {
-    setActivePanel(panelId);
-    setIsPromptModalOpen(true);
-  };
+    console.log(`Template selected: ${templateId}`);
+    setIsCreating(true);
+    setError(null);
 
-  // Handle prompt submission
-  const handlePromptSubmit = async (prompt: string) => {
-    if (activePanel === null) return;
-    
     try {
-      // Show loading state in the panel
-      updatePanelContent(activePanel, {
-        status: 'loading',
-        prompt: prompt
-      });
-      
-      setIsPromptModalOpen(false);
-      
-      // Placeholder for API call
-      // In a real implementation, this would call your AI image generation service
-      const response = await mockGenerateImage(prompt);
-      
-      // Update panel with generated content
-      updatePanelContent(activePanel, {
-        status: 'complete',
-        prompt: prompt,
-        imageUrl: response.imageUrl
-      });
-    } catch (error) {
-      console.error('Failed to generate panel:', error);
-      updatePanelContent(activePanel, {
-        status: 'error',
-        prompt: prompt,
-        error: 'Failed to generate image. Please try again.'
-      });
-    }
-  };
+      // Step 1: Call API to create the new comic entry
+      const newComic = await createNewComicAPI(templateId);
+      const newComicId = newComic.id;
 
-  // Placeholder function for API call
-  const mockGenerateImage = async (prompt: string) => {
-    // Simulate API delay
-    await new Promise(resolve => setTimeout(resolve, 1500));
-    
-    // Return mock data
-    return {
-      imageUrl: `/api/mock-image?prompt=${encodeURIComponent(prompt)}`,
-      // In your real implementation, this would be the actual image from your backend
-    };
-  };
+      if (!newComicId) {
+          throw new Error("Failed to get a valid ID for the new comic.");
+      }
 
-  // Handle save comic
-  const handleSaveComic = async () => {
-    try {
-      await saveComic();
-      // Redirect to comic view or dashboard
-      // window.location.href = '/comics';
-    } catch (error) {
-      console.error('Failed to save comic:', error);
+      // Step 2: Navigate to the dedicated editor page for this new comic
+      console.log(`Navigating to editor page: /comics/${newComicId}`);
+      router.push(`/comics/${newComicId}`); // <--- NAVIGATION HAPPENS HERE
+
+    } catch (err) {
+      console.error("Failed to create comic or navigate:", err);
+      setError(err instanceof Error ? err.message : 'An unexpected error occurred.');
+      setIsCreating(false); // Re-enable UI on error
     }
   };
 
   return (
     <div className="container mx-auto py-8">
+      {/* Page Header */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Create New Comic</h1>
-        <div className="flex gap-3">
-          <Button variant="outline" onClick={() => console.log('Draft saved')}>
-            Save Draft
-          </Button>
-          <Button onClick={handleSaveComic} disabled={isSaving}>
-            {isSaving ? 'Saving...' : 'Publish Comic'}
-          </Button>
-        </div>
+        {/* Remove Save/Publish buttons - they belong on the editor page */}
       </div>
 
-      {!comic.template ? (
-        // Step 1: Select a template
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">Choose a Template</h2>
-          <TemplateSelector onSelect={handleTemplateSelect} />
-        </div>
-      ) : (
-        // Step 2: Fill panels with content
-        <div className="bg-white rounded-lg shadow p-6">
-          <h2 className="text-xl font-semibold mb-4">
-            Fill Your Panels
-          </h2>
-          <p className="text-gray-600 mb-6">
-            Click on each panel and enter a prompt to generate an image.
-          </p>
-          
-          <ComicCanvas 
-            panels={comic.panels} 
-            onPanelClick={handlePanelClick} 
-          />
-          
-          <div className="mt-6 flex justify-between">
-            <Button 
-              variant="outline" 
-              onClick={() => setTemplate(null)}
-            >
-              Change Template
-            </Button>
-            <Button 
-              onClick={handleSaveComic} 
-              disabled={isSaving || comic.panels.some(p => p.status !== 'complete')}
-            >
-              {isSaving ? 'Saving...' : 'Publish Comic'}
-            </Button>
-          </div>
-        </div>
-      )}
+      {/* Template Selection Area */}
+      <div className="bg-white rounded-lg shadow p-6">
+        <h2 className="text-xl font-semibold mb-4">1. Choose a Template</h2>
+        <p className="text-gray-600 mb-6">Select a layout to begin.</p>
 
-      {/* Prompt Modal */}
-      <PanelPromptModal 
-        isOpen={isPromptModalOpen}
-        onClose={() => setIsPromptModalOpen(false)}
-        onSubmit={handlePromptSubmit}
-        panelNumber={activePanel !== null ? activePanel + 1 : 0}
-        initialPrompt={activePanel !== null && comic.panels[activePanel] 
-          ? comic.panels[activePanel].prompt || '' 
-          : ''}
-      />
+        {/* Display error message if creation/navigation fails */}
+        {error && (
+            <div className="mb-4 p-3 bg-red-100 text-red-700 border border-red-300 rounded">
+                <strong>Error:</strong> {error}
+            </div>
+        )}
+
+        {/* TemplateSelector component needs 'disabled' and 'onSelect' props */}
+        {/* Ensure TemplateSelector component definition includes the 'disabled' prop */}
+        <TemplateSelector
+            onSelect={handleTemplateSelect}
+            disabled={isCreating} // Disable while processing the selection
+        />
+
+        {/* Loading indicator while creating/navigating */}
+        {isCreating && (
+            <div className="mt-4 flex justify-center items-center text-gray-500">
+                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                Creating comic space...
+            </div>
+        )}
+      </div>
+
+      {/* NOTE: No ComicCanvas or PanelPromptModal is rendered here anymore */}
     </div>
   );
 }

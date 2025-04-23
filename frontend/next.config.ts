@@ -1,7 +1,15 @@
+// next.config.js Example
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  reactStrictMode: true,
-  output: 'standalone',
+  // ... other config
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'oaidalleapiprodscus.blob.core.windows.net',
+      },
+      // Add any other external domains you use
+    ],
+  },
 };
-
-export default nextConfig;
+module.exports = nextConfig;

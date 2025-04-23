@@ -1,254 +1,215 @@
+// src/app/comics/[id]/page.tsx
+// PURPOSE: Provide the editor interface for a specific comic identified by [id].
+// UPDATED: generateImageAPI function reflects the new curl command.
+
 'use client';
 
-import { useState, useEffect, use, useCallback } from 'react';
+import { useParams, useRouter } from 'next/navigation';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import Image from 'next/image'; // Import the Next.js Image component
-import { notFound } from 'next/navigation';
-import { Heart, Share2, Download, Flag, Edit, ArrowLeft } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import ComicCanvas from '@/components/comic/comic-canvas';         // Verify path
+import PanelPromptModal from '@/components/comic/panel-prompt-modal'; // Verify path
+import { useComic } from '@/hooks/use-comic';                     // Verify path
+import { Button } from '@/components/ui/button';                 // Verify path
+import { Panel } from '@/hooks/use-comic';                        // Verify path
+import { ArrowLeft, Loader2 } from 'lucide-react';                // Verify path
 
-// ... (Keep the Comic and PageParams interfaces as they were) ...
-interface Comic {
-  id: string;
-  title: string;
-  author: {
-    id: string;
-    name: string;
-    avatar: string; // e.g., /api/placeholder/50/50?text=JD
+// --- BEGIN: UPDATED API Call Function ---
+// Function reflects the NEW curl command for generate-panel-image
+async function generateImageAPI(prompt: string): Promise<{ imageUrl: string }> {
+  // --- Use the new endpoint ---
+  const apiUrl = 'https://comiccreator.info/api/comics/generate-panel-image';
+  console.log(`Calling API: ${apiUrl} with description: "${prompt}"`);
+
+  // --- Use the new request body structure ---
+  const requestBody = {
+    panelDescription: prompt // Key is now panelDescription
   };
-  description: string;
-  panels: {
-    id: string;
-    imageUrl: string; // e.g., /api/placeholder/600/600?text=Panel+1
-  }[];
-  createdAt: string;
-  likes: number;
-  views: number;
-  isLiked: boolean;
-  isAuthor: boolean;
-}
 
-interface PageParams {
-  id: string;
-}
+  try {
+    const response = await fetch(apiUrl, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        // Add other headers like Authorization if needed
+      },
+      body: JSON.stringify(requestBody),
+       // No '-k' equivalent - uses standard browser SSL validation
+    });
 
-
-export default function ComicPage({ params }: { params: Promise<PageParams> }) {
-  const awaitedParams = use(params);
-  const id = awaitedParams.id; 
-
-  const [comic, setComic] = useState<Comic | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  
-  const fetchComic = useCallback(async (comicId: string) => {
-    // ... (fetchComic implementation remains the same) ...
-    setIsLoading(true);
-    setError(null);
-    try {
-      const response = await mockFetchComic(comicId);
-      setComic(response);
-    } catch (error) {
-      console.error('Failed to fetch comic:', error);
-      setError('Failed to load comic');
-    } finally {
-      setIsLoading(false);
+    if (!response.ok) {
+      let errorDetails = `HTTP error! Status: ${response.status}`;
+      try { const errorData = await response.json(); errorDetails += ` - ${JSON.stringify(errorData)}`; }
+      catch (jsonError) { errorDetails += ` - ${response.statusText}` }
+      throw new Error(errorDetails);
     }
-  }, []); 
 
+    // Parse the JSON response - expecting {"imageUrl": "..."}
+    const data = await response.json();
+
+    // Check if the expected field is present
+    if (!data.imageUrl) {
+      // Log the actual response if the expected field is missing
+      console.error("Actual API response data:", data);
+      throw new Error("API response did not contain the expected 'imageUrl' field.");
+    }
+
+    console.log("API call successful, received imageUrl:", data.imageUrl);
+    // Return the object expected by the calling function
+    return { imageUrl: data.imageUrl };
+
+  } catch (error) {
+    console.error('Error calling generateImageAPI:', error);
+    throw error; // Re-throw to be caught by handlePromptSubmit
+  }
+}
+// --- END: UPDATED API Call Function ---
+
+
+// --- Main Editor Page Component ---
+export default function ComicEditorPage() {
+  const params = useParams();
+  const router = useRouter();
+  const comicId = params.id as string; // Get ID from dynamic route parameter
+
+  // State for the editor UI interaction
+  const [activePanel, setActivePanel] = useState<number | null>(null);
+  const [isPromptModalOpen, setIsPromptModalOpen] = useState(false);
+
+  // Fetching and managing comic state using the custom hook, keyed by comicId
+  const {
+    comic,
+    updatePanelContent,
+    updateComicMetadata, // Use if you add title/desc editing
+    saveComic, // Hook function to save/publish
+    isLoading, // Loading state from the hook
+    isSaving, // Saving state from the hook
+    error: comicHookError // Error state from the hook
+   } = useComic(comicId); // Initialize hook WITH the comic ID
+
+  // Effect to handle errors from the useComic hook
   useEffect(() => {
-    // ... (useEffect remains the same) ...
-     if (id) {
-      fetchComic(id);
+    if (comicHookError) {
+        console.error("Hook Error (load/save):", comicHookError);
+        // Optional: Show user notification
     }
-  }, [id, fetchComic]); 
-  
-  // ... (mockFetchComic, toggleLike, mockToggleLike, formatDate remain the same) ...
-  const mockFetchComic = async (comicId: string) => {
-    await new Promise(resolve => setTimeout(resolve, 1000));
-    const panelCount = Math.floor(Math.random() * 6) + 2;
-    return {
-      id: comicId,
-      title: `Comic #${comicId}`,
-      author: { id: 'user-1', name: 'John Doe', avatar: `/api/placeholder/50/50?text=JD` },
-      description: 'This is a sample comic description. Enjoy!',
-      panels: Array(panelCount).fill(null).map((_, i) => ({ id: `panel-${i}`, imageUrl: `/api/placeholder/600/600?text=Panel+${i + 1}` })),
-      createdAt: new Date().toISOString(),
-      likes: Math.floor(Math.random() * 100),
-      views: Math.floor(Math.random() * 1000),
-      isLiked: Math.random() > 0.5,
-      isAuthor: Math.random() > 0.7
-    };
+  }, [comicHookError]);
+
+
+  // --- Editor Handlers ---
+  const handlePanelClick = (panelIndex: number) => {
+    if (isSaving) return;
+    setActivePanel(panelIndex);
+    setIsPromptModalOpen(true);
   };
-  const toggleLike = async () => {
-    if (!comic) return;
-    setComic({ ...comic, isLiked: !comic.isLiked, likes: comic.isLiked ? comic.likes - 1 : comic.likes + 1 });
+
+  // Uses the UPDATED generateImageAPI function
+  const handlePromptSubmit = async (prompt: string) => {
+    if (activePanel === null) return;
+    const panelIndex = activePanel;
+    setIsPromptModalOpen(false);
+    setActivePanel(null);
+    updatePanelContent(panelIndex, { status: 'loading', prompt: prompt }); // Show loading
+
     try {
-      await mockToggleLike(comic.id, !comic.isLiked);
+      // --- Call the actual API function ---
+      const response = await generateImageAPI(prompt); // Calls the updated function
+      updatePanelContent(panelIndex, { status: 'complete', imageUrl: response.imageUrl, prompt: prompt, error: undefined });
+      console.log(`Panel ${panelIndex} generation success.`);
     } catch (error) {
-      console.error('Failed to toggle like:', error);
-      setComic({ ...comic, isLiked: comic.isLiked, likes: comic.isLiked ? comic.likes : comic.likes - 1 });
+      console.error(`Panel ${panelIndex} generation failed:`, error);
+      updatePanelContent(panelIndex, { status: 'error', error: error instanceof Error ? error.message : 'Generation failed.', prompt: prompt });
     }
   };
-  const mockToggleLike = async (comicId: string, liked: boolean) => {
-    await new Promise(resolve => setTimeout(resolve, 500));
-    return { success: true };
-  };
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+
+  const handleSaveComic = async () => {
+    if (isSaving) return;
+    console.log("Attempting to publish comic...");
+    try {
+      const savedComic = await saveComic(); // Assume hook handles API call
+      console.log("Publish successful!", savedComic);
+      router.push('/comics'); // Navigate after success
+    } catch (error) {
+      console.error('Failed to publish comic:', error);
+      // Error already logged by hook effect
+    }
   };
 
-
-  // ... (Conditional rendering for loading/error states remains the same) ...
-  if (isLoading && !comic) { 
+  // --- Render Logic ---
+  if (isLoading && !comic) {
     return (
-      <div className="container mx-auto py-8">
-        <div className="flex justify-center items-center h-96">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-        </div>
+      <div className="container mx-auto py-8 flex justify-center items-center h-screen">
+        <Loader2 className="h-16 w-16 text-blue-500 animate-spin" />
+        <span className="ml-4 text-xl text-gray-600">Loading Editor...</span>
       </div>
     );
   }
-  if (error) { 
-     return notFound(); 
+
+  if (comicHookError && !comic) {
+    return (
+      <div className="container mx-auto py-8 text-center">
+        <h2 className="text-2xl text-red-600 mb-4">Error Loading Comic</h2>
+        <p className="text-gray-700 mb-4">{comicHookError}</p>
+        <Link href="/comics/create"><Button variant="outline">Create New</Button></Link>
+      </div>
+    );
   }
-  if (!comic) { 
-      return notFound();
+
+  if (!comic) {
+     return (
+      <div className="container mx-auto py-8 text-center">
+        <h2 className="text-2xl text-gray-600 mb-4">Comic Not Found</h2>
+        <p className="text-gray-700 mb-4">Cannot find comic with ID: {comicId}</p>
+        <Link href="/comics/create"><Button variant="outline">Create New</Button></Link>
+      </div>
+     );
   }
-  
-  // Main component JSX with <Image> replacements
+
+  const canPublish = comic.panels.every(p => p.status === 'complete');
+
+  // --- Main Editor JSX ---
   return (
     <div className="container mx-auto py-8">
-      <div className="mb-6">
-        <Link 
-          href="/comics" 
-          className="inline-flex items-center text-blue-600 hover:text-blue-800"
-        >
-          <ArrowLeft className="h-4 w-4 mr-1" />
-          Back to Comics
+      {/* Back Navigation */}
+       <div className="mb-6">
+        <Link href="/comics" className="inline-flex items-center text-blue-600 hover:text-blue-800">
+          <ArrowLeft className="h-4 w-4 mr-1" /> Back to Comics List
         </Link>
       </div>
-      
-      <div className="bg-white rounded-lg shadow overflow-hidden">
-        {/* Comic header */}
-        <div className="p-6 border-b">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between">
-            <div>
-              <h1 className="text-3xl font-bold">{comic.title}</h1>
-              <div className="flex items-center mt-2">
-                {/* Replaced img with Image */}
-                <Image 
-                  src={comic.author.avatar} 
-                  alt={comic.author.name} 
-                  width={24} // Corresponds to w-6, h-6 (assuming 1rem=16px, 1.5rem=24px)
-                  height={24}
-                  className="rounded-full mr-2" 
-                />
-                <span className="text-sm text-gray-600">
-                  By <Link href={`/profile/${comic.author.id}`} className="text-blue-600 hover:underline">{comic.author.name}</Link>
-                </span>
-                <span className="text-sm text-gray-400 mx-2">•</span>
-                <span className="text-sm text-gray-600">{formatDate(comic.createdAt)}</span>
-              </div>
-            </div>
-            {/* ... (Action buttons remain the same) ... */}
-             <div className="flex items-center mt-4 md:mt-0 space-x-2">
-              <Button 
-                variant={comic.isLiked ? "default" : "outline"} 
-                size="sm"
-                onClick={toggleLike}
-              >
-                <Heart className={`h-4 w-4 mr-1 ${comic.isLiked ? 'fill-current' : ''}`} />
-                {comic.likes}
-              </Button>
-              
-              <Button variant="outline" size="sm">
-                <Share2 className="h-4 w-4 mr-1" />
-                Share
-              </Button>
-              
-              {comic.isAuthor && (
-                <Button variant="outline" size="sm">
-                  <Edit className="h-4 w-4 mr-1" />
-                  Edit
-                </Button>
-              )}
-            </div>
-          </div>
-          
-          {comic.description && (
-            <p className="mt-4 text-gray-600">{comic.description}</p>
-          )}
-        </div>
-        
-        {/* Comic content */}
-        <div className="p-6">
-          <div className="max-w-3xl mx-auto">
-            {comic.panels.map((panel, index) => (
-              <div key={panel.id} className="mb-4 border border-gray-200 relative" style={{ width: '100%', aspectRatio: '1 / 1' }}> {/* Added relative and aspect ratio for Image fill */}
-                {/* Replaced img with Image */}
-                {/* Using fill requires the parent to have position relative and defined dimensions or aspect ratio */}
-                <Image 
-                  src={panel.imageUrl} 
-                  alt={`Panel ${index + 1}`} 
-                  fill // Use fill layout
-                  style={{ objectFit: 'cover' }} // Maintain aspect ratio coverage
-                  sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 600px" // Optional: Optimize image loading based on viewport
-                  priority={index < 2} // Optional: Prioritize loading the first few images
-                />
-              </div>
-            ))}
-          </div>
-        </div>
-        
-        {/* Comic footer */}
-        <div className="p-6 bg-gray-50 border-t">
-          <div className="flex justify-between items-center">
-            {/* ... (Views/Likes remain the same) ... */}
-            <div className="text-sm text-gray-500">
-              <span>{comic.views} views</span>
-              <span className="mx-2">•</span>
-              <span>{comic.likes} likes</span>
-            </div>
-            
-            {/* ... (Download/Report buttons remain the same) ... */}
-             <div className="flex space-x-2">
-              <Button variant="ghost" size="sm">
-                <Download className="h-4 w-4 mr-1" />
-                Download
-              </Button>
-              <Button variant="ghost" size="sm">
-                <Flag className="h-4 w-4 mr-1" />
-                Report
-              </Button>
-            </div>
-          </div>
-          
-          {/* Author info */}
-          <div className="mt-6 pt-6 border-t">
-            <div className="flex items-center">
-               {/* Replaced img with Image */}
-              <Image 
-                src={comic.author.avatar} 
-                alt={`${comic.author.name} avatar`} 
-                width={48} // Corresponds to w-12, h-12 (assuming 1rem=16px, 3rem=48px)
-                height={48}
-                className="rounded-full mr-4" 
-              />
-              <div>
-                <h3 className="text-lg font-medium">{comic.author.name}</h3>
-                <Link 
-                  href={`/profile/${comic.author.id}`}
-                  className="text-sm text-blue-600 hover:underline"
-                >
-                  View Profile
-                </Link>
-              </div>
-            </div>
-          </div>
-        </div>
+
+      {/* Header Section */}
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+         <h1 className="text-3xl font-bold">{comic.title || 'Edit Comic'}</h1>
+         <div className="flex gap-3">
+            {/* Publish Button */}
+            <Button onClick={handleSaveComic} disabled={isSaving || !canPublish} title={!canPublish ? "All panels must be complete." : "Publish"}>
+                {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                {isSaving ? 'Publishing...' : 'Publish Comic'}
+            </Button>
+         </div>
       </div>
+
+       {/* Editor Area */}
+       <div className="bg-white rounded-lg shadow p-6">
+         <h2 className="text-xl font-semibold mb-4">Edit Panels ({comic.panels.length} total)</h2>
+         <p className="text-gray-600 mb-6">Click a panel to generate its image.</p>
+
+         {/* Comic Canvas component - Ensure it accepts 'layout' prop */}
+         <ComicCanvas
+           panels={comic.panels}
+           onPanelClick={handlePanelClick}
+           layout={comic.template} // Pass template string as layout
+         />
+       </div>
+
+      {/* Modal - Ensure it accepts all these props */}
+      <PanelPromptModal
+        isOpen={isPromptModalOpen}
+        onClose={() => setIsPromptModalOpen(false)}
+        onSubmit={handlePromptSubmit} // Connects to function containing API call
+        panelNumber={activePanel !== null ? activePanel + 1 : 0}
+        initialPrompt={activePanel !== null && comic.panels[activePanel] ? comic.panels[activePanel].prompt || '' : ''}
+      />
     </div>
   );
 }
