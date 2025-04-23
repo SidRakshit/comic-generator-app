@@ -18,7 +18,7 @@ import { ArrowLeft, Loader2 } from 'lucide-react';
 async function generateImageAPI(prompt: string): Promise<{ imageUrl: string }> {    
     const apiUrl = 'https://comiccreator.info/api/comics/generate-panel-image';
     console.log(`Calling API: ${apiUrl} with prompt: "${prompt}"`);
-    const requestBody = { prompt: prompt };
+    const requestBody = { panelDescription: prompt };
 
     try {
         const response = await fetch(apiUrl, {
