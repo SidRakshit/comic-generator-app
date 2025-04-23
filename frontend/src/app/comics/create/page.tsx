@@ -9,7 +9,7 @@ import { useState, ChangeEvent } from 'react'; // Import ChangeEvent
 import { Button } from '@/components/ui/button';
 import { Loader2, Plus, Trash2 } from 'lucide-react';
 // --- MODIFIED: Import useComic and character management functions ---
-import { useComic } from '@/hooks/use-comic';
+import { useComicContext } from '@/context/comic-context';
 import { Input } from '@/components/ui/input'; // Assuming you have ShadCN UI Input
 import { Label } from '@/components/ui/label'; // Assuming you have ShadCN UI Label
 import { Textarea } from '@/components/ui/textarea'; // Assuming you have ShadCN UI Textarea
@@ -20,15 +20,13 @@ export default function CreateComicPage() {
   const [step, setStep] = useState<'metadata' | 'template'>('metadata');
   // --- Use the hook directly ---
   const {
-      comic,
-      setTemplate,
-      updateComicMetadata,
-      addCharacter,
-      removeCharacter,
-      updateCharacter,
-      // isLoading, // We might not need isLoading from the hook here anymore
-      // error: hookError // Hook errors might not be relevant here yet
-  } = useComic(); // Initialize without ID or templateId
+    comic,
+    setTemplate,
+    updateComicMetadata,
+    addCharacter,
+    removeCharacter,
+    updateCharacter,
+} = useComicContext(); // Initialize without ID or templateId
 
   const [isNavigating, setIsNavigating] = useState(false);
   // const [error, setError] = useState<string | null>(null); // Maybe use hookError if needed later
@@ -67,18 +65,17 @@ export default function CreateComicPage() {
     if (isNavigating) return;
     console.log(`Template selected: ${templateId}`);
 
-    // 1. Set the template in the hook's state
-    setTemplate(templateId);
+    // 1. Set template in context state
+    setTemplate(templateId); // This updates the shared state
 
-    // 2. Navigate to the editor, passing the chosen templateId
+    // 2. Navigate to the generic editor page (no query param needed now)
     setIsNavigating(true);
     try {
-      const editorUrl = `/comics/editor?templateId=${encodeURIComponent(templateId)}`;
+      const editorUrl = `/comics/editor`; // Navigate to the editor page
       console.log(`Navigating to new comic editor: ${editorUrl}`);
       router.push(editorUrl);
     } catch (err) {
       console.error("Failed to navigate:", err);
-      // Handle navigation error (e.g., show message)
       setIsNavigating(false);
     }
   };

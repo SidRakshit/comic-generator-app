@@ -10,7 +10,7 @@ import Link from 'next/link';
 import ComicCanvas from '@/components/comic/comic-canvas';         // Verify path
 import PanelPromptModal from '@/components/comic/panel-prompt-modal'; // Verify path
 import ImageZoomModal from '@/components/comic/image-zoom-modal';   // <--- UPDATED: Corrected path for the Zoom Modal component
-import { useComic } from '@/hooks/use-comic';                     // Verify path
+import { useComicContext } from '@/context/comic-context';                  // Verify path
 import { Button } from '@/components/ui/button';                 // Verify path
 import { Panel } from '@/hooks/use-comic';                        // Verify path
 import { ArrowLeft, Loader2 } from 'lucide-react';                // Verify path
@@ -66,12 +66,14 @@ export default function ComicEditorPage() {
   const {
     comic,
     updatePanelContent,
-    updateComicMetadata,
+    updateComicMetadata, // Might allow metadata edits here too
     saveComic,
     isLoading,
     isSaving,
-    error: comicHookError
-   } = useComic(comicId);
+    error: comicHookError,
+    // Get character functions if needed here
+    // addCharacter, removeCharacter, updateCharacter
+} = useComicContext();
 
   // Effect to handle errors from the useComic hook
   useEffect(() => {
