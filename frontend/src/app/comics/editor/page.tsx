@@ -143,9 +143,7 @@ function NewComicEditorContent() {
             });
         }
         metadataPrefix = metadataPrefix.trim();
-
         const fullPrompt = metadataPrefix ? `${metadataPrefix}\n\nPanel Prompt: ${prompt}` : prompt;
-
         // Close modal and reset active state immediately
         setIsPromptModalOpen(false);
         setActivePanel(null);
