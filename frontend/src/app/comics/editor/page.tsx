@@ -15,33 +15,33 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 
 // --- API Call Function (generateImageAPI) ---
-async function generateImageAPI(prompt: string): Promise<{ imageUrl: string }> {
-    // Make sure this points to your actual backend endpoint
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL + '/api/comics/generate-panel-image' || '/api/comics/generate-panel-image';
-    console.log(`Calling API: ${apiUrl} with description: "${prompt}"`);
-    const requestBody = { panelDescription: prompt };
+async function generateImageAPI(prompt: string): Promise<{ imageUrl: string }> {    
+    const apiUrl = 'https://comiccreator.info/api/comics/generate';
+    console.log(`Calling API: ${apiUrl} with prompt: "${prompt}"`);
+    const requestBody = { prompt: prompt };
+
     try {
         const response = await fetch(apiUrl, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json'},
             body: JSON.stringify(requestBody),
         });
         if (!response.ok) {
             let errorDetails = `HTTP error! Status: ${response.status}`;
-            try {
+            try {                
                 const errorData = await response.json();
                 errorDetails += ` - ${errorData.message || JSON.stringify(errorData)}`;
-            } catch (jsonError) {
+            } catch (jsonError) {                
                 errorDetails += ` - ${response.statusText}`;
             }
             throw new Error(errorDetails);
         }
         const data = await response.json();
         if (!data.imageUrl) {
-            console.error("API response missing 'imageUrl':", data);
+            console.error("API response missing 'imageUrl' or expected field:", data);            
             throw new Error("API response did not contain the expected 'imageUrl' field.");
         }
-        console.log("API call successful, received imageUrl:", data.imageUrl);
+        console.log("API call successful, received data:", data);        
         return { imageUrl: data.imageUrl };
     } catch (error) {
         console.error('Error calling generateImageAPI:', error);
