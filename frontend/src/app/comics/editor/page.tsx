@@ -15,33 +15,33 @@ import { Button } from '@/components/ui/button';
 import { ArrowLeft, Loader2 } from 'lucide-react';
 
 // --- API Call Function (generateImageAPI) ---
-async function generateImageAPI(prompt: string): Promise<{ imageUrl: string }> {
-    // Make sure this points to your actual backend endpoint
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL + '/api/comics/generate-panel-image' || '/api/comics/generate-panel-image';
-    console.log(`Calling API: ${apiUrl} with description: "${prompt}"`);
+async function generateImageAPI(prompt: string): Promise<{ imageUrl: string }> {    
+    const apiUrl = 'https://comiccreator.info/api/comics/generate-panel-image';
+    console.log(`Calling API: ${apiUrl} with prompt: "${prompt}"`);
     const requestBody = { panelDescription: prompt };
+
     try {
         const response = await fetch(apiUrl, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 'Content-Type': 'application/json'},
             body: JSON.stringify(requestBody),
         });
         if (!response.ok) {
             let errorDetails = `HTTP error! Status: ${response.status}`;
-            try {
+            try {                
                 const errorData = await response.json();
                 errorDetails += ` - ${errorData.message || JSON.stringify(errorData)}`;
-            } catch (jsonError) {
+            } catch (jsonError) {                
                 errorDetails += ` - ${response.statusText}`;
             }
             throw new Error(errorDetails);
         }
         const data = await response.json();
         if (!data.imageUrl) {
-            console.error("API response missing 'imageUrl':", data);
+            console.error("API response missing 'imageUrl' or expected field:", data);            
             throw new Error("API response did not contain the expected 'imageUrl' field.");
         }
-        console.log("API call successful, received imageUrl:", data.imageUrl);
+        console.log("API call successful, received data:", data);        
         return { imageUrl: data.imageUrl };
     } catch (error) {
         console.error('Error calling generateImageAPI:', error);
@@ -125,6 +125,25 @@ function NewComicEditorContent() {
         const panelIndex = activePanel;
         const currentPanel = comic.panels[panelIndex];
 
+        let metadataPrefix = '';
+        if (comic.title) {
+            metadataPrefix += `Comic Title: ${comic.title}. `;
+        }
+        if (comic.genre) {
+            metadataPrefix += `Genre: ${comic.genre}. `;
+        }
+        if (comic.characters && comic.characters.length > 0) {
+            metadataPrefix += 'Characters: ';
+            comic.characters.forEach(char => {
+                if (char.name && char.description) {
+                    metadataPrefix += `(${char.name}: ${char.description}) `;
+                } else if (char.name) {
+                     metadataPrefix += `(${char.name}) `;
+                }
+            });
+        }
+        metadataPrefix = metadataPrefix.trim();
+        const fullPrompt = metadataPrefix ? `${metadataPrefix}\n\nPanel Prompt: ${prompt}` : prompt;
         // Close modal and reset active state immediately
         setIsPromptModalOpen(false);
         setActivePanel(null);
@@ -133,13 +152,14 @@ function NewComicEditorContent() {
         updatePanelContent(panelIndex, { status: 'loading', prompt: prompt, error: undefined }); // Clear previous error
 
         try {
-            // Call the API
-            const response = await generateImageAPI(prompt);
+            console.log("Sending prompt to API:", fullPrompt); // Log the full prompt being sent
+            const response = await generateImageAPI(fullPrompt); // <-- USE fullPrompt HERE
+
             // Update panel state on success
             updatePanelContent(panelIndex, {
                 status: 'complete',
                 imageUrl: response.imageUrl,
-                prompt: prompt, // Keep the successful prompt
+                prompt: prompt, // Keep the *original user* prompt in the state
                 error: undefined // Ensure error is cleared
             });
             console.log(`Panel ${panelIndex + 1} generation success.`);
@@ -149,7 +169,7 @@ function NewComicEditorContent() {
             updatePanelContent(panelIndex, {
                 status: 'error',
                 error: error instanceof Error ? error.message : 'Image generation failed.',
-                prompt: prompt, // Keep the prompt that failed
+                prompt: prompt, // Keep the *original user* prompt that failed
                 imageUrl: undefined // Clear image URL on error
             });
              // Optionally re-open the prompt or show a specific error message
