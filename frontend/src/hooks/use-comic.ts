@@ -1,141 +1,152 @@
 // src/hooks/use-comic.ts
-// UPDATED: Added genre, characters, and character management functions
-
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { generateId } from '@/lib/utils'; // Assuming you have a utility for IDs
+import { generateId } from '@/lib/utils';
+import { apiRequest } from '@/lib/api'; // Import the API utility
 
-// --- Interfaces ---
+// --- Interfaces (Keep existing interfaces) ---
 export type PanelStatus = 'empty' | 'loading' | 'complete' | 'error';
 export interface Panel {
     id: string;
     status: PanelStatus;
     prompt?: string;
-    imageUrl?: string;
+    imageUrl?: string; // This should be the *permanent* S3 URL after save
     error?: string;
+    // Add fields needed by the backend save endpoint if different from ComicDataFromRequest
+    panelNumber?: number;
+    layoutPosition?: object;
+    generatedImageUrl?: string; // Keep track of the temp URL for saving
 }
-// ADDED: Interface for Character
-export interface ComicCharacter {
-    id: string; // Unique ID for React keys
-    name: string;
-    description: string;
-}
+export interface ComicCharacter { id: string; name: string; description: string; }
 export interface Comic {
-    id?: string; // Will be assigned on actual save
+    id?: string; // Backend assigns this on create
     title: string;
-    description?: string; // Keep description if needed, or remove
-    genre?: string; // ADDED: Genre
-    characters?: ComicCharacter[]; // ADDED: Characters array
+    description?: string;
+    genre?: string;
+    characters?: ComicCharacter[];
     template: string | null;
     panels: Panel[];
     createdAt?: string;
     updatedAt?: string;
-    published: boolean;
+    published?: boolean; // Backend might set this
 }
-interface TemplateDefinition {
-    id: string;
-    name: string;
-    panelCount: number;
-    layout: string;
-}
+interface TemplateDefinition { id: string; name: string; panelCount: number; layout: string; }
 
-// --- Templates Definition (ensure this is complete in your actual file) ---
-export const templates: Record<string, TemplateDefinition> = {
-    'template-1': { id: 'template-1', name: '2x2 Grid', panelCount: 4, layout: 'grid-2x2' },
-    'template-2': { id: 'template-2', name: '3x2 Grid', panelCount: 6, layout: 'grid-3x2' },
-    'template-3': { id: 'template-3', name: 'Single Panel', panelCount: 1, layout: 'single' },
-    'template-4': { id: 'template-4', name: '3x3 Grid', panelCount: 9, layout: 'grid-3x3' },
-    'template-5': { id: 'template-5', name: 'Manga Style', panelCount: 5, layout: 'manga' }
-};
+// --- Templates Definition ---
+export const templates: Record<string, TemplateDefinition> = { /* ... as before ... */ 'template-1': { id: 'template-1', name: '2x2 Grid', panelCount: 4, layout: 'grid-2x2' }, 'template-2': { id: 'template-2', name: '3x2 Grid', panelCount: 6, layout: 'grid-3x2' }, 'template-3': { id: 'template-3', name: 'Single Panel', panelCount: 1, layout: 'single' }, 'template-4': { id: 'template-4', name: '3x3 Grid', panelCount: 9, layout: 'grid-3x3' }, 'template-5': { id: 'template-5', name: 'Manga Style', panelCount: 5, layout: 'manga' } };
 
 // --- Hook ---
 export function useComic(initialComicId?: string, initialTemplateId?: string | null) {
 
-    // --- MODIFIED: Initial State with default characters ---
-    const [comic, setComic] = useState<Comic>({
-        title: 'Untitled Comic',
-        description: '',
-        genre: '', // Default genre
-        characters: [ // Default with 2 characters
-            { id: generateId('char'), name: '', description: '' },
-            { id: generateId('char'), name: '', description: '' },
-        ],
-        template: null,
-        panels: [],
-        published: false
-    });
-    // --- END MODIFIED ---
-
+    // --- State (Keep existing state) ---
+    const [comic, setComic] = useState<Comic>({ title: 'Untitled Comic', description: '', genre: '', characters: [{ id: generateId('char'), name: '', description: '' }, { id: generateId('char'), name: '', description: '' }], template: null, panels: [], published: false });
     const [isSaving, setIsSaving] = useState(false);
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    // --- Mock fetch / loadComic / useEffect remain the same as previous version ---
-    const mockFetchComic = async (comicId: string): Promise<Comic> => { /* ... as before ... */  console.warn("Using MOCK fetch for comic:", comicId); await new Promise(resolve => setTimeout(resolve, 1000)); return { id: comicId, title: `Comic #${comicId}`, description: 'A sample comic description', template: 'template-1', panels: Array(4).fill(null).map((_, i) => ({ id: `panel-${i}`, status: 'empty' as PanelStatus })), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), published: false }; };
-    const loadComic = useCallback(async (comicId: string) => { setIsLoading(true); setError(null); try { const response = await mockFetchComic(comicId); setComic(response); } catch (err) { console.error('Failed to load comic:', err); setError('Failed to load comic. Please try again.'); } finally { setIsLoading(false); } }, []);
+    // --- Mock fetch / loadComic / setTemplate / useEffect (Keep existing) ---
+    const mockFetchComic = async (comicId: string): Promise<Comic> => { /* ... */ console.warn("Using MOCK fetch for comic:", comicId); await new Promise(resolve => setTimeout(resolve, 1000)); return { id: comicId, title: `Comic #${comicId}`, description: 'A sample comic description', template: 'template-1', panels: Array(4).fill(null).map((_, i) => ({ id: `panel-${i}`, status: 'empty' as PanelStatus })), createdAt: new Date().toISOString(), updatedAt: new Date().toISOString(), published: false }; };
+    const loadComic = useCallback(async (comicId: string) => { setIsLoading(true); setError(null); try { const response = await mockFetchComic(comicId); setComic(response); } catch (err) { console.error('Failed to load comic:', err); setError('Failed to load comic.'); } finally { setIsLoading(false); } }, []);
+    const setTemplate = useCallback((templateId: string | null) => { if (!templateId) { setComic(prev => ({ ...prev, template: null, panels: [] })); return; } const template = templates[templateId]; if (!template) { console.error(`Template ${templateId} not found`); return; } const newPanels: Panel[] = Array(template.panelCount).fill(null).map((_, index) => ({ id: `panel-${index}-${Date.now()}`, status: 'empty', panelNumber: index + 1 /* Add panelNumber here */ })); setComic(prev => ({ ...prev, template: templateId, panels: newPanels })); console.log(`Template set to: ${templateId}, Panels created: ${newPanels.length}`); }, []);
+    useEffect(() => { if (initialTemplateId && templates[initialTemplateId]) { setTemplate(initialTemplateId); } else if (initialComicId) { loadComic(initialComicId); } }, [initialComicId, initialTemplateId, loadComic, setTemplate]);
 
 
-    // --- setTemplate remains the same ---
-    const setTemplate = useCallback((templateId: string | null) => {
-        if (!templateId) { setComic(prev => ({ ...prev, template: null, panels: [] })); return; }
-        const template = templates[templateId];
-        if (!template) { console.error(`Template ${templateId} not found`); return; }
-        const newPanels: Panel[] = Array(template.panelCount).fill(null).map((_, index) => ({
-            id: `panel-${index}-${Date.now()}`, status: 'empty'
-        }));
-        setComic(prev => ({ ...prev, template: templateId, panels: newPanels }));
-        console.log(`Template set to: ${templateId}, Panels created: ${newPanels.length}`);
-    }, []); // No change needed here
-
-    // --- useEffect for initialization remains the same ---
-    useEffect(() => {
-        if (initialTemplateId && templates[initialTemplateId]) { console.log("Initializing comic with template ID:", initialTemplateId); setIsLoading(true); setTemplate(initialTemplateId); setIsLoading(false); }
-        else if (initialComicId) { console.log("Loading comic by ID:", initialComicId); loadComic(initialComicId); }
-        else { console.log("useComic initialized without ID or template."); }
-    }, [initialComicId, initialTemplateId, loadComic, setTemplate]);
-
-
-    // --- updatePanelContent remains the same ---
-    const updatePanelContent = (panelIndex: number, updates: Partial<Panel>) => { setComic(prev => { const updatedPanels = [...prev.panels]; updatedPanels[panelIndex] = { ...updatedPanels[panelIndex], ...updates }; return { ...prev, panels: updatedPanels }; }); };
-
-    // --- updateComicMetadata remains the same (used for title, description, genre) ---
-    const updateComicMetadata = (updates: Partial<Omit<Comic, 'panels' | 'characters'>>) => { // Ensure it doesn't overwrite panels/characters directly
-        setComic(prev => ({ ...prev, ...updates }));
+    // --- updatePanelContent (Modify to store generatedImageUrl) ---
+    const updatePanelContent = (panelIndex: number, updates: Partial<Panel>) => {
+        setComic(prev => {
+            const updatedPanels = [...prev.panels];
+            // Store the temporary URL when generation is complete
+            if (updates.status === 'complete' && updates.imageUrl) {
+                updatedPanels[panelIndex] = {
+                    ...updatedPanels[panelIndex],
+                    ...updates,
+                    generatedImageUrl: updates.imageUrl // Store temp URL for saving
+                };
+            } else {
+                updatedPanels[panelIndex] = { ...updatedPanels[panelIndex], ...updates };
+            }
+            return { ...prev, panels: updatedPanels };
+        });
     };
 
-    // --- ADDED: Character Management Functions ---
-    const addCharacter = () => {
-        setComic(prev => ({
-            ...prev,
-            characters: [
-                ...(prev.characters || []),
-                { id: generateId('char'), name: '', description: '' } // Add new empty character
-            ]
-        }));
-    };
-
-    const removeCharacter = (idToRemove: string) => {
-        setComic(prev => ({
-            ...prev,
-            characters: (prev.characters || []).filter(char => char.id !== idToRemove)
-        }));
-    };
-
-    const updateCharacter = (idToUpdate: string, field: keyof Omit<ComicCharacter, 'id'>, value: string) => {
-        setComic(prev => ({
-            ...prev,
-            characters: (prev.characters || []).map(char =>
-                char.id === idToUpdate ? { ...char, [field]: value } : char
-            )
-        }));
-    };
-    // --- END ADDED ---
+    // --- updateComicMetadata / Character Functions (Keep existing) ---
+    const updateComicMetadata = (updates: Partial<Omit<Comic, 'panels' | 'characters'>>) => { setComic(prev => ({ ...prev, ...updates })); };
+    const addCharacter = () => { setComic(prev => ({ ...prev, characters: [...(prev.characters || []), { id: generateId('char'), name: '', description: '' }] })); };
+    const removeCharacter = (idToRemove: string) => { setComic(prev => ({ ...prev, characters: (prev.characters || []).filter(char => char.id !== idToRemove) })); };
+    const updateCharacter = (idToUpdate: string, field: keyof Omit<ComicCharacter, 'id'>, value: string) => { setComic(prev => ({ ...prev, characters: (prev.characters || []).map(char => char.id === idToUpdate ? { ...char, [field]: value } : char) })); };
 
 
-    // --- saveComic / mockSaveComic remain the same (still needs implementation) ---
-    const saveComic = async () => { /* ... */ throw new Error("Save comic not implemented without backend"); };
-    const mockSaveComic = async (comicData: Comic) => { /* ... */ return { ...comicData, id: comicData.id || `comic-${Date.now()}`, published: true, createdAt: comicData.createdAt || new Date().toISOString(), updatedAt: new Date().toISOString() }; };
+    // --- saveComic - IMPLEMENTED ---
+    const saveComic = useCallback(async (): Promise<Comic | undefined> => {
+        setIsSaving(true);
+        setError(null);
+
+        // Prepare data for the backend, matching ComicDataFromRequest structure
+        // Map frontend Panel state to PanelDataFromRequest expected by backend
+        const pagesData = [{ // Assuming single page for now, adjust if multi-page needed
+            pageNumber: 1,
+            panels: comic.panels.map((panel, index) => ({
+                panelNumber: panel.panelNumber ?? index + 1, // Use stored or calculate
+                prompt: panel.prompt || '',
+                dialogue: '', // Add dialogue if you store it in panel state
+                layoutPosition: panel.layoutPosition || {}, // Add layout if stored
+                // CRITICAL: Send the temporary URL for backend to process
+                generatedImageUrl: panel.generatedImageUrl || panel.imageUrl || '', // Prioritize temp URL
+            }))
+        }];
+
+        const comicPayload = {
+            title: comic.title,
+            description: comic.description,
+            characters: comic.characters,
+            setting: { description: '', style: comic.genre || '' }, // Adapt if setting is more complex
+            pages: pagesData,
+        };
+
+        try {
+            let savedData: { id: string }; // Expect backend to return at least the ID
+
+            if (comic.id) {
+                // --- UPDATE existing comic ---
+                console.log(`Saving (UPDATE) comic ID: ${comic.id}`);
+                savedData = await apiRequest<{ id: string }>(
+                    `/comics/${comic.id}`,
+                    'PUT',
+                    comicPayload
+                );
+            } else {
+                // --- CREATE new comic ---
+                console.log("Saving (CREATE) new comic");
+                savedData = await apiRequest<{ id: string }>(
+                    '/comics',
+                    'POST',
+                    comicPayload
+                );
+            }
+
+            console.log("Backend save response:", savedData);
+
+            if (!savedData || !savedData.id) {
+                throw new Error("Save operation did not return a valid comic ID.");
+            }
+
+            // Update local comic state with the ID received from backend
+            // Optionally re-fetch the full comic data from backend after save
+            const updatedComicData = { ...comic, id: savedData.id };
+            setComic(updatedComicData);
+
+            setIsSaving(false);
+            return updatedComicData; // Return the updated comic state
+
+        } catch (err) {
+            console.error("Failed to save comic:", err);
+            const errorMsg = err instanceof Error ? err.message : 'An unknown error occurred during save.';
+            setError(errorMsg);
+            setIsSaving(false);
+            throw err; // Re-throw error for the component to handle
+        }
+    }, [comic]); // Dependency: comic state
 
 
     return {
@@ -146,9 +157,9 @@ export function useComic(initialComicId?: string, initialTemplateId?: string | n
         setTemplate,
         updatePanelContent,
         updateComicMetadata,
-        addCharacter, // EXPORT
-        removeCharacter, // EXPORT
-        updateCharacter, // EXPORT
-        saveComic
+        addCharacter,
+        removeCharacter,
+        updateCharacter,
+        saveComic // Export the implemented save function
     };
 }
