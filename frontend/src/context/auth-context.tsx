@@ -2,7 +2,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { Hub, HubCapsule } from 'aws-amplify/utils'; // Import HubCapsule for payload typing
+import { Hub, HubCapsule } from 'aws-amplify/utils';
 import { getCurrentUser, fetchAuthSession, signOut, type AuthUser } from 'aws-amplify/auth';
 import { configureAmplify } from '@/lib/amplify-config';
 
@@ -15,7 +15,21 @@ interface AuthContextType {
     handleSignOut: () => Promise<void>;
 }
 
-const AuthContext = createContext<AuthContextType | null>(null);
+// Define a default state for the context, especially for SSR/build phase
+const defaultAuthContextValue: AuthContextType = {
+    user: null,
+    userId: null,
+    isLoading: true, // Default to loading on server/initial state
+    error: null,
+    getAccessToken: async () => null,
+    handleSignOut: async () => {},
+};
+
+
+// Create context with a default value that matches the type
+// *** EXPORT the context itself ***
+export const AuthContext = createContext<AuthContextType>(defaultAuthContextValue);
+
 
 export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     const [user, setUser] = useState<AuthUser | null>(null);
@@ -34,12 +48,13 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }, [isAmplifyConfigured]);
 
     // Define handleSignOut first as it's used in the Hub listener effect dependency array
-    const handleSignOut = useCallback(async () => { // Make it useCallback
+    const handleSignOut = useCallback(async () => {
          if (!isAmplifyConfigured) {
               console.error("handleSignOut: Amplify not configured.");
               return;
          }
         setIsLoading(true);
+        setError(null);
         try {
             await signOut({ global: true });
             setUser(null);
@@ -51,7 +66,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         } finally {
              setIsLoading(false);
         }
-    }, [isAmplifyConfigured]); // Dependency: isAmplifyConfigured
+    }, [isAmplifyConfigured]);
 
 
     const checkCurrentUser = useCallback(async () => {
@@ -61,9 +76,9 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
              return;
         }
         console.log("checkCurrentUser: Checking current user...");
-        setIsLoading(true);
         setError(null);
         try {
+            // Don't set loading true here, let the initial state handle it
             const currentUser = await getCurrentUser();
             setUser(currentUser);
             setUserId(currentUser.userId);
@@ -76,6 +91,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                  setError(err);
             }
         } finally {
+            // Set loading false only after the *initial* check is complete
             setIsLoading(false);
         }
     }, [isAmplifyConfigured]);
@@ -97,6 +113,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
             console.error("Error fetching auth session/token:", error);
             setUser(null);
             setUserId(null);
+            setError(error instanceof Error ? error : new Error('Failed to fetch session'));
             return null;
         }
     }, [isAmplifyConfigured]);
@@ -107,11 +124,11 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
         if (isAmplifyConfigured) {
             checkCurrentUser(); // Initial check
 
-            const hubListenerCancel = Hub.listen('auth', ({ payload }) => {
-                console.log("Amplify Auth Hub event:", payload.event);
+            const hubListenerCancel = Hub.listen('auth', ({ payload }: HubCapsule<'auth', any>) => {
+                console.log("Amplify Auth Hub event:", payload.event, payload.data);
                 switch (payload.event) {
                     case 'signedIn':
-                    case 'signInWithRedirect': // Handle completion of hosted UI redirect
+                    case 'signInWithRedirect':
                         console.log("Hub: signedIn or signInWithRedirect detected, checking user...");
                         checkCurrentUser();
                         break;
@@ -129,44 +146,36 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
                         handleSignOut();
                         break;
                     default:
-                         // Use a type assertion if you need to access specific properties of payload.data for unhandled events
-                         // const eventData = payload.data as { someProperty?: string }; // Example
                          console.log("Hub: Unhandled auth event:", payload.event);
                          break;
                 }
             });
 
-            // Cleanup listener on unmount
             return () => {
                 console.log("Cleaning up Hub listener.");
                 hubListenerCancel();
             };
         }
-    }, [isAmplifyConfigured, checkCurrentUser, handleSignOut]); // Added handleSignOut to dependency array
+    }, [isAmplifyConfigured, checkCurrentUser, handleSignOut]);
 
 
-    const value = {
+    // Memoize the context value
+    const value = React.useMemo(() => ({
         user,
         userId,
         isLoading: !isAmplifyConfigured || isLoading,
         error,
         getAccessToken,
         handleSignOut,
-    };
+    }), [user, userId, isAmplifyConfigured, isLoading, error, getAccessToken, handleSignOut]);
 
-    // Render children only after Amplify is configured
+    // Render children immediately, value.isLoading handles loading state
     return (
          <AuthContext.Provider value={value}>
-            {isAmplifyConfigured ? children : <div>Loading Authentication...</div>}
+            {children}
          </AuthContext.Provider>
     );
 };
 
-// Custom hook to use the auth context
-export const useAuth = (): AuthContextType => {
-    const context = useContext(AuthContext);
-    if (!context) {
-        throw new Error('useAuth must be used within an AuthProvider');
-    }
-    return context;
-};
+// --- REMOVED the useAuth hook export from this file ---
+// export const useAuth = (): AuthContextType => { ... };
