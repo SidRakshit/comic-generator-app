@@ -122,7 +122,7 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     useEffect(() => {
         if (isAmplifyConfigured) {
             checkCurrentUser(); // Initial check
-
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
             const hubListenerCancel = Hub.listen('auth', ({ payload }: HubCapsule<'auth', any>) => {
                 console.log("Amplify Auth Hub event:", payload.event, payload.data);
                 switch (payload.event) {
