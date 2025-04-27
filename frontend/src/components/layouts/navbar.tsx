@@ -9,46 +9,52 @@ import { Button } from '@/components/ui/button';
 
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false); // State for mobile menu
-  const { user, userId, isLoading, handleSignOut } = useAuth(); // Get auth state and functions
+  // Get auth state and functions from the context
+  // Destructure isLoading FIRST to use it for conditional rendering
+  const { isLoading, user, handleSignOut } = useAuth();
 
   const closeMobileMenu = () => setIsOpen(false);
 
+  // Helper function to render authentication-related links/buttons
   const renderAuthLinks = (isMobile = false) => {
+    // Show loading indicator OR null during initial load or configuration phase
+    // This prevents rendering auth buttons before context is ready, especially during build/SSR attempts
     if (isLoading) {
       return (
-        <div className={`flex items-center ${isMobile ? 'px-4 py-2' : 'ml-6'}`}>
+        <div className={`flex items-center ${isMobile ? 'px-4 py-2 h-[36px]' : 'ml-6 h-[36px]'}`}> {/* Ensure consistent height */}
           <Loader2 className="h-5 w-5 animate-spin text-gray-500" />
         </div>
       );
+      // Alternatively return null: return null;
     }
 
+    // If user object exists, the user is logged in
     if (user) {
-      // --- User is Logged In ---
       return (
         <>
+          {/* Profile Link */}
           <Link
-            href="/profile" // Link to the user's profile page
+            href="/profile"
             onClick={closeMobileMenu}
             className={isMobile
-              ? "block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
-              : "inline-flex items-center px-2 py-1 text-sm font-medium text-gray-500 hover:text-gray-700 rounded-md ml-4" // Added ml-4 for spacing
+              ? "flex items-center pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
+              : "inline-flex items-center px-2 py-1 text-sm font-medium text-gray-500 hover:text-gray-700 rounded-md ml-4"
             }
           >
             <User className="h-4 w-4 mr-1" />
             Profile
           </Link>
+          {/* Sign Out Button */}
           <Button
-            variant={isMobile ? "ghost" : "ghost"}
+            variant="ghost"
             size="sm"
             onClick={async () => {
                 closeMobileMenu();
-                await handleSignOut(); // Call sign out function from context
-                // Optionally redirect after sign out (handled in context or here)
-                // router.push('/');
+                await handleSignOut();
             }}
             className={isMobile
-              ? "w-full text-left block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
-              : "ml-2" // Added margin for desktop
+              ? "w-full text-left flex items-center pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
+              : "ml-2"
             }
           >
             <LogOut className="h-4 w-4 mr-1" />
@@ -60,23 +66,25 @@ export default function Navbar() {
       // --- User is Logged Out ---
       return (
         <>
+          {/* Login Link/Button */}
           <Link
             href="/login"
             onClick={closeMobileMenu}
             className={isMobile
-                ? "block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
-                : "inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-gray-700 bg-gray-100 hover:bg-gray-200 ml-4" // Style as a subtle button
+                ? "flex items-center pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
+                : "inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-gray-700 bg-gray-100 hover:bg-gray-200 ml-4"
             }
           >
             <LogIn className="h-4 w-4 mr-1" />
             Login
           </Link>
+          {/* Sign Up Link/Button */}
           <Link
             href="/signup"
             onClick={closeMobileMenu}
             className={isMobile
-                ? "block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
-                : "inline-flex items-center px-3 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 ml-2" // Style as primary button
+                ? "flex items-center pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"
+                : "inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 ml-2"
             }
           >
              <UserPlus className="h-4 w-4 mr-1" />
@@ -87,8 +95,52 @@ export default function Navbar() {
     }
   };
 
+  // Helper function to render the 'Create' link/placeholder
+  const renderCreateLink = (isMobile = false) => {
+     // Also check isLoading here before deciding based on user
+     if (isLoading) {
+         return (
+             <span className={isMobile
+                 ? "flex items-center pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-400 cursor-not-allowed"
+                 : "inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-400 cursor-not-allowed"
+             }>
+                 <PlusCircle className="h-4 w-4 mr-1" /> Create
+             </span>
+         );
+     }
+
+     if (user) {
+         return (
+             <Link
+                href="/comics/create"
+                onClick={closeMobileMenu}
+                className={isMobile
+                    ? "flex items-center pl-3 pr-4 py-2 border-l-4 border-blue-500 bg-blue-50 text-base font-medium text-blue-700"
+                    : "inline-flex items-center px-1 pt-1 border-b-2 border-blue-500 text-sm font-medium text-blue-600"
+                }
+             >
+                <PlusCircle className="h-4 w-4 mr-1" /> Create
+             </Link>
+         );
+     } else {
+         // Render disabled/non-clickable Create link if logged out
+         return (
+             <span
+                className={isMobile
+                    ? "flex items-center pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-400 cursor-not-allowed"
+                    : "inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-400 cursor-not-allowed"
+                }
+                title="Login to create comics"
+             >
+                <PlusCircle className="h-4 w-4 mr-1" /> Create
+             </span>
+         );
+     }
+  };
+
+
   return (
-    <nav className="bg-white shadow-sm sticky top-0 z-50"> {/* Increased z-index */}
+    <nav className="bg-white shadow-sm sticky top-0 z-50">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex justify-between h-16">
           {/* Left side: Logo and main links */}
@@ -99,32 +151,11 @@ export default function Navbar() {
               </Link>
             </div>
             <div className="hidden sm:ml-6 sm:flex sm:space-x-8">
-              {/* Consider hiding 'Create' if user is not logged in */}
-              {/* Or redirect to login if clicked when logged out */}
-              <Link
-                href="/"
-                className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              >
-                <Home className="h-4 w-4 mr-1" />
-                Home
-              </Link>
-              <Link
-                href="/comics" // Link to browse comics page (assuming it exists)
-                className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300"
-              >
-                <BookOpen className="h-4 w-4 mr-1" />
-                Browse
-              </Link>
-              {/* Only show Create link prominently if logged in, maybe? */}
-              {user && (
-                 <Link
-                    href="/comics/create"
-                    className="inline-flex items-center px-1 pt-1 border-b-2 border-blue-500 text-sm font-medium text-blue-600"
-                 >
-                    <PlusCircle className="h-4 w-4 mr-1" />
-                    Create
-                 </Link>
-              )}
+              {/* Standard navigation links */}
+              <Link href="/" className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300"> <Home className="h-4 w-4 mr-1" /> Home </Link>
+              <Link href="/comics" className="inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300"> <BookOpen className="h-4 w-4 mr-1" /> Browse </Link>
+              {/* Render Create link/placeholder */}
+              {renderCreateLink(false)}
             </div>
           </div>
 
@@ -138,28 +169,24 @@ export default function Navbar() {
             <button
               onClick={() => setIsOpen(!isOpen)}
               className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+              aria-controls="mobile-menu"
               aria-expanded={isOpen}
             >
               <span className="sr-only">Open main menu</span>
-              {isOpen ? (
-                <X className="block h-6 w-6" aria-hidden="true" />
-              ) : (
-                <Menu className="block h-6 w-6" aria-hidden="true" />
-              )}
+              {isOpen ? <X className="block h-6 w-6" aria-hidden="true" /> : <Menu className="block h-6 w-6" aria-hidden="true" />}
             </button>
           </div>
         </div>
       </div>
 
       {/* Mobile menu */}
-      <div className={`${isOpen ? 'block' : 'hidden'} sm:hidden border-t border-gray-200`}>
+      <div className={`${isOpen ? 'block' : 'hidden'} sm:hidden border-t border-gray-200`} id="mobile-menu">
         <div className="pt-2 pb-3 space-y-1">
           {/* Mobile navigation links */}
-          <Link href="/" onClick={closeMobileMenu} className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"> <Home className="inline-block h-4 w-4 mr-1" /> Home </Link>
-          <Link href="/comics" onClick={closeMobileMenu} className="block pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"> <BookOpen className="inline-block h-4 w-4 mr-1" /> Browse </Link>
-          {user && ( // Only show Create if logged in on mobile too
-             <Link href="/comics/create" onClick={closeMobileMenu} className="block pl-3 pr-4 py-2 border-l-4 border-blue-500 bg-blue-50 text-base font-medium text-blue-700"> <PlusCircle className="inline-block h-4 w-4 mr-1" /> Create </Link>
-          )}
+          <Link href="/" onClick={closeMobileMenu} className="flex items-center pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"> <Home className="inline-block h-4 w-4 mr-1" /> Home </Link>
+          <Link href="/comics" onClick={closeMobileMenu} className="flex items-center pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800"> <BookOpen className="inline-block h-4 w-4 mr-1" /> Browse </Link>
+          {/* Render Create link/placeholder for mobile */}
+          {renderCreateLink(true)}
         </div>
         {/* Mobile authentication links */}
         <div className="pt-4 pb-3 border-t border-gray-200">
