@@ -2,7 +2,7 @@
 'use client';
 
 import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
-import { Hub, HubCapsule } from 'aws-amplify/utils';
+import { Hub, HubCapsule } from 'aws-amplify/utils'; // Import HubCapsule for payload typing
 import { getCurrentUser, fetchAuthSession, signOut, type AuthUser } from 'aws-amplify/auth';
 import { configureAmplify } from '@/lib/amplify-config';
 
@@ -27,7 +27,6 @@ const defaultAuthContextValue: AuthContextType = {
 
 
 // Create context with a default value that matches the type
-// *** EXPORT the context itself ***
 export const AuthContext = createContext<AuthContextType>(defaultAuthContextValue);
 
 
@@ -159,7 +158,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     }, [isAmplifyConfigured, checkCurrentUser, handleSignOut]);
 
 
-    // Memoize the context value
     const value = React.useMemo(() => ({
         user,
         userId,
@@ -177,5 +175,18 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({ children }) =>
     );
 };
 
-// --- REMOVED the useAuth hook export from this file ---
-// export const useAuth = (): AuthContextType => { ... };
+export const useAuth = (): AuthContextType => {
+    const context = useContext(AuthContext);
+    if (context === null) {
+        console.warn("useAuth called outside of AuthProvider during SSR/build? Returning default state.");
+         return {
+             user: null,
+             userId: null,
+             isLoading: true,
+             error: null,
+             getAccessToken: async () => null,
+             handleSignOut: async () => {},
+         };
+    }
+    return context;
+};
