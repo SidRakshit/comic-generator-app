@@ -2,26 +2,24 @@
 'use client';
 
 import Link from 'next/link';
-import { useState, useContext } from 'react'; // Import useContext
-import { AuthContext } from '@/context/auth-context'; // Import the AuthContext directly
+import { useState, useContext } from 'react';
+import { AuthContext } from '@/context/auth-context';
 import { Menu, X, User, LogOut, LogIn, UserPlus, BookOpen, Home, PlusCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 
 export default function Navbar() {
-  const [isOpen, setIsOpen] = useState(false); // State for mobile menu
+  const [isOpen, setIsOpen] = useState(false);
 
   // *** Use useContext directly ***
   const authContextValue = useContext(AuthContext);
 
-  // Destructure values, handling potential null during initial SSR/build if necessary
-  // Although AuthProvider provides a default, being defensive here is good.
+
   const { isLoading, user, handleSignOut } = authContextValue || {
-      isLoading: true, // Default to loading if context is somehow null
+      isLoading: true,
       user: null,
       handleSignOut: async () => {}
   };
-  console.log("Navbar rendering - isLoading:", isLoading, "user:", user); // <-- Add this log
-
+  console.log("Navbar rendering - isLoading:", isLoading, "user:", user);
 
   const closeMobileMenu = () => setIsOpen(false);
 

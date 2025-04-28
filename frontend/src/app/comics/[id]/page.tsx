@@ -8,7 +8,7 @@ import { useParams, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import ComicCanvas from '@/components/comic/comic-canvas';         // Verify path
-import PanelPromptModal from '@/components/comic/panel-prompt-modal'; // Verify path
+import PanelPromptModal from '@/components/comic/panel-prompt'; // Verify path
 import ImageZoomModal from '@/components/comic/image-zoom-modal';   // <--- UPDATED: Corrected path for the Zoom Modal component
 import { useComicContext } from '@/context/comic-context';                  // Verify path
 import { Button } from '@/components/ui/button';                 // Verify path
@@ -44,38 +44,27 @@ async function generateImageAPI(prompt: string): Promise<{ imageUrl: string }> {
     throw error;
   }
 }
-// --- END: API Call Function ---
 
-
-// --- Main Editor Page Component ---
 export default function ComicEditorPage() {
   const params = useParams();
   const router = useRouter();
   const comicId = params.id as string;
 
-  // State for the editor UI interaction
   const [activePanel, setActivePanel] = useState<number | null>(null);
   const [isPromptModalOpen, setIsPromptModalOpen] = useState(false);
-  // --- ADDED: State for Image Zoom Modal ---
   const [isZoomModalOpen, setIsZoomModalOpen] = useState(false);
   const [zoomedImageUrl, setZoomedImageUrl] = useState<string | null>(null);
-  // --- END: Added State ---
 
-
-  // Fetching and managing comic state using the custom hook
   const {
     comic,
     updatePanelContent,
-    updateComicMetadata, // Might allow metadata edits here too
+    updateComicMetadata,
     saveComic,
     isLoading,
     isSaving,
     error: comicHookError,
-    // Get character functions if needed here
-    // addCharacter, removeCharacter, updateCharacter
 } = useComicContext();
 
-  // Effect to handle errors from the useComic hook
   useEffect(() => {
     if (comicHookError) {
         console.error("Hook Error (load/save):", comicHookError);
@@ -83,52 +72,39 @@ export default function ComicEditorPage() {
   }, [comicHookError]);
 
 
-  // --- Editor Handlers ---
-
-  // --- UPDATED: handlePanelClick now primarily handles ZOOM or opening prompt for EMPTY panels ---
   const handlePanelClick = (panelIndex: number) => {
     if (isSaving || !comic) return;
 
     const panel = comic.panels[panelIndex];
 
     if (panel.status === 'complete' && panel.imageUrl) {
-      // If panel is complete, open zoom modal
       setZoomedImageUrl(panel.imageUrl);
       setIsZoomModalOpen(true);
     } else if (panel.status !== 'loading') {
-      // If panel is empty or has an error, open prompt modal
       setActivePanel(panelIndex);
       setIsPromptModalOpen(true);
     }
-    // Do nothing if panel is currently loading
   };
-  // --- END: Updated handlePanelClick ---
 
-  // --- ADDED: handleEditPanelClick handles opening prompt modal for COMPLETED panels ---
   const handleEditPanelClick = (panelIndex: number) => {
     if (isSaving || !comic || comic.panels[panelIndex]?.status !== 'complete') return;
-    // This function is specifically for editing existing images
     setActivePanel(panelIndex);
     setIsPromptModalOpen(true);
   };
-  // --- END: Added handleEditPanelClick ---
-
-
-  // Uses the generateImageAPI function - unchanged
+  
   const handlePromptSubmit = async (prompt: string) => {
     if (activePanel === null) return;
     const panelIndex = activePanel;
 
-    // Close modals and reset active panel
     setIsPromptModalOpen(false);
-    setIsZoomModalOpen(false); // Close zoom modal if it was somehow open
+    setIsZoomModalOpen(false);
     setActivePanel(null);
     setZoomedImageUrl(null);
 
-    updatePanelContent(panelIndex, { status: 'loading', prompt: prompt }); // Show loading
+    updatePanelContent(panelIndex, { status: 'loading', prompt: prompt });
 
     try {
-      const response = await generateImageAPI(prompt); // Calls the updated function
+      const response = await generateImageAPI(prompt);
       updatePanelContent(panelIndex, { status: 'complete', imageUrl: response.imageUrl, prompt: prompt, error: undefined });
       console.log(`Panel ${panelIndex} generation success.`);
     } catch (error) {
@@ -137,7 +113,6 @@ export default function ComicEditorPage() {
     }
   };
 
-  // handleSaveComic remains the same
   const handleSaveComic = async () => {
     if (isSaving) return;
     console.log("Attempting to publish comic...");
@@ -150,7 +125,6 @@ export default function ComicEditorPage() {
     }
   };
 
-  // --- Render Logic (Loading/Error states remain the same) ---
   if (isLoading && !comic) {
     return (
       <div className="container mx-auto py-8 flex justify-center items-center h-screen">
@@ -159,7 +133,6 @@ export default function ComicEditorPage() {
       </div>
     );
   }
-  // ... (Error and Not Found states remain the same) ...
    if (comicHookError && !comic) {
     return (
       <div className="container mx-auto py-8 text-center">
@@ -193,7 +166,7 @@ export default function ComicEditorPage() {
         </Link>
       </div>
 
-      {/* Header Section (remains the same) */}
+      {/* Header Section */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
          <h1 className="text-3xl font-bold">{comic.title || 'Edit Comic'}</h1>
          <div className="flex gap-3">
@@ -209,7 +182,7 @@ export default function ComicEditorPage() {
          <h2 className="text-xl font-semibold mb-4">Edit Panels ({comic.panels.length} total)</h2>
          <p className="text-gray-600 mb-6">Click an empty panel to add content. Click an existing image to zoom, or use the edit icon to change it.</p>
 
-         {/* Comic Canvas component - Needs 'onEditPanelClick' prop */}
+         {/* Comic Canvas component */}
          <ComicCanvas
            panels={comic.panels}
            onPanelClick={handlePanelClick} // Now triggers zoom or prompt for empty
@@ -218,23 +191,20 @@ export default function ComicEditorPage() {
          />
        </div>
 
-      {/* Prompt Modal (remains mostly the same) */}
+      {/* Prompt Modal */}
       <PanelPromptModal
         isOpen={isPromptModalOpen}
         onClose={() => setIsPromptModalOpen(false)}
         onSubmit={handlePromptSubmit}
         panelNumber={activePanel !== null ? activePanel + 1 : 0}
-        // Pre-fill prompt if editing an existing panel
         initialPrompt={activePanel !== null && comic.panels[activePanel] ? comic.panels[activePanel].prompt || '' : ''}
       />
 
-      {/* --- ADDED: Image Zoom Modal --- */}
       <ImageZoomModal
         isOpen={isZoomModalOpen}
         onClose={() => setIsZoomModalOpen(false)}
         imageUrl={zoomedImageUrl}
       />
-      {/* --- END: Added Image Zoom Modal --- */}
     </div>
   );
 }

@@ -5,16 +5,14 @@ const API_BASE_URL = process.env.NEXT_PUBLIC_API_BASE_URL || 'http://localhost:8
 
 // Interface for expected successful backend responses (adjust if needed)
 interface SuccessResponse<T> {
-    id?: string; // Often returned on POST/PUT
+    id?: string;
     message?: string;
-    data?: T; // If data is nested under a 'data' key
-    // Add other potential success fields
+    data?: T;
 }
 
 // Interface for expected backend error responses
 interface ErrorResponse {
-    error: string; // Expect an 'error' message string
-    // Add other potential error fields
+    error: string;
 }
 
 /**
@@ -30,17 +28,15 @@ interface ErrorResponse {
 export async function apiRequest<T = unknown>( // Keep generic T for flexibility in expected data shape
     endpoint: string,
     method: 'GET' | 'POST' | 'PUT' | 'DELETE' = 'GET',
-    body?: Record<string, unknown> | null // Body type remains flexible
-): Promise<T> { // Return type remains T
+    body?: Record<string, unknown> | null
+): Promise<T> {
     let token: string | undefined;
 
     try {
         const session = await fetchAuthSession({ forceRefresh: false });
         token = session.tokens?.accessToken?.toString();
-    } catch (error: unknown) { // Use unknown
+    } catch (error: unknown) {
         console.warn("User is likely not authenticated or session expired:", error);
-        // Handle error if needed, e.g., redirect to login
-        // Or just proceed, letting the API call fail if token is required
     }
 
     const headers: HeadersInit = {
@@ -79,24 +75,20 @@ export async function apiRequest<T = unknown>( // Keep generic T for flexibility
                 // If not JSON, but status is OK, maybe return empty object or handle differently
                 if (response.ok) return {} as T;
             }
-        } catch (jsonError: unknown) { // Use unknown
+        } catch (jsonError: unknown) {
             console.warn(`Could not parse JSON response for ${method} ${url}`, jsonError);
-            // If parsing failed but status is OK, something is wrong with backend response format
             if (response.ok) throw new Error("Received OK status but failed to parse JSON response.");
-            // Otherwise, let the !response.ok check handle it below
         }
 
         if (!response.ok) {
-            // Try to extract error message from parsed JSON or use status text
             const errorMessage = (responseData && typeof responseData === 'object' && 'error' in responseData)
-                ? responseData.error // Use error field if present
+                ? responseData.error
                 : `HTTP error ${response.status}: ${response.statusText}`;
 
             console.error(`API Error Response (${method} ${url}):`, response.status, responseData || '<No JSON Body>');
 
             if (response.status === 401) {
                 console.error("API returned 401 Unauthorized. User might need to log in again.");
-                // Consider global sign-out or redirect here
             }
 
             throw new Error(errorMessage);

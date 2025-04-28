@@ -29,28 +29,21 @@ export default function LoginPage() {
 
             console.log("Sign in result:", { isSignedIn, nextStep });
 
-            if (isSignedIn) {
-                // Login successful, Amplify Hub listener in AuthContext will update state
+            if (isSignedIn) {                
                 console.log("Login successful, redirecting...");
-                router.push('/profile'); // Redirect to profile or dashboard
-            } else if (nextStep.signInStep === 'CONFIRM_SIGN_UP') {
-                 // This case might happen if user didn't confirm email
-                 console.log("User needs to confirm sign up.");
-                 // Redirect to confirmation page, passing email
+                router.push('/profile');
+            } else if (nextStep.signInStep === 'CONFIRM_SIGN_UP') {                 
+                 console.log("User needs to confirm sign up.");                 
                  router.push(`/confirm-signup?email=${encodeURIComponent(email)}`);
             } else if (nextStep.signInStep === 'RESET_PASSWORD') {
-                 setError("You need to reset your password.");
-                 // Handle password reset flow if needed
-            } else {
-                 // Handle other steps like MFA if configured
+                 setError("You need to reset your password.");                 
+            } else {                 
                  setError(`Unhandled sign-in step: ${nextStep.signInStep}`);
             }
 
-        } catch (err: unknown) { // Use unknown instead of any
+        } catch (err: unknown) {
             console.error('Error signing in:', err);
-            // Type check before accessing properties
             if (err instanceof Error) {
-                 // Customize error messages based on Amplify error names if desired
                  if (err.name === 'UserNotFoundException' || err.name === 'NotAuthorizedException') {
                      setError('Invalid email or password.');
                  } else {

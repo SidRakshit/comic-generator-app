@@ -16,9 +16,7 @@ import { Textarea } from '@/components/ui/textarea'; // Assuming you have ShadCN
 
 export default function CreateComicPage() {
   const router = useRouter();
-  // --- Step state ---
   const [step, setStep] = useState<'metadata' | 'template'>('metadata');
-  // --- Use the hook directly ---
   const {
     comic,
     setTemplate,
@@ -26,13 +24,10 @@ export default function CreateComicPage() {
     addCharacter,
     removeCharacter,
     updateCharacter,
-} = useComicContext(); // Initialize without ID or templateId
+} = useComicContext();
 
   const [isNavigating, setIsNavigating] = useState(false);
-  // const [error, setError] = useState<string | null>(null); // Maybe use hookError if needed later
-
   // --- Handlers ---
-
   const handleMetadataChange = (
       e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement> // Added Select
   ) => {
@@ -48,7 +43,6 @@ export default function CreateComicPage() {
   };
 
   const goToNextStep = () => {
-      // Optional: Add validation for required metadata fields here
       if (!comic.title) {
           alert("Please enter a title for the comic.");
           return;
@@ -60,18 +54,15 @@ export default function CreateComicPage() {
       setStep('metadata');
   };
 
-  // Called when a template is selected in TemplateSelector
   const handleTemplateSelect = (templateId: string) => {
     if (isNavigating) return;
     console.log(`Template selected: ${templateId}`);
 
-    // 1. Set template in context state
-    setTemplate(templateId); // This updates the shared state
+    setTemplate(templateId);
 
-    // 2. Navigate to the generic editor page (no query param needed now)
     setIsNavigating(true);
     try {
-      const editorUrl = `/comics/editor`; // Navigate to the editor page
+      const editorUrl = `/comics/editor`;
       console.log(`Navigating to new comic editor: ${editorUrl}`);
       router.push(editorUrl);
     } catch (err) {
@@ -88,7 +79,6 @@ export default function CreateComicPage() {
 
       <div className="bg-white rounded-lg shadow p-6">
 
-        {/* --- Step 1: Metadata --- */}
         {step === 'metadata' && (
           <div>
             <h2 className="text-xl font-semibold mb-4">1. Enter Comic Details</h2>
@@ -146,7 +136,7 @@ export default function CreateComicPage() {
                              </div>
                               <div>
                                  <Label htmlFor={`char-desc-${char.id}`} className="text-sm">Description</Label>
-                                 <Input // Or Textarea if preferred
+                                 <Input
                                      id={`char-desc-${char.id}`}
                                      value={char.description}
                                      onChange={(e) => handleCharacterChange(char.id, 'description', e.target.value)}
@@ -183,7 +173,6 @@ export default function CreateComicPage() {
           </div>
         )}
 
-        {/* --- Step 2: Template Selection --- */}
         {step === 'template' && (
            <div>
              <h2 className="text-xl font-semibold mb-4">2. Choose a Template</h2>
@@ -192,7 +181,7 @@ export default function CreateComicPage() {
              {/* TemplateSelector component */}
              <TemplateSelector
                  onSelect={handleTemplateSelect}
-                 disabled={isNavigating} // Disable while processing selection
+                 disabled={isNavigating}
              />
 
              {/* Loading indicator */}
@@ -208,7 +197,6 @@ export default function CreateComicPage() {
                  <Button variant="outline" onClick={goToPreviousStep} disabled={isNavigating}>
                      Back to Details
                  </Button>
-                 {/* No "Next" button here, selection triggers navigation */}
              </div>
            </div>
         )}

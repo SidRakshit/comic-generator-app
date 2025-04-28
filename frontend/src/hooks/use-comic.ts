@@ -11,16 +11,15 @@ export interface Panel {
     id: string;
     status: PanelStatus;
     prompt?: string;
-    imageUrl?: string; // This should be the *permanent* S3 URL after save
+    imageUrl?: string;
     error?: string;
-    // Add fields needed by the backend save endpoint if different from ComicDataFromRequest
     panelNumber?: number;
     layoutPosition?: object;
-    generatedImageUrl?: string; // Keep track of the temp URL for saving
+    generatedImageUrl?: string;
 }
 export interface ComicCharacter { id: string; name: string; description: string; }
 export interface Comic {
-    id?: string; // Backend assigns this on create
+    id?: string;
     title: string;
     description?: string;
     genre?: string;
@@ -29,7 +28,7 @@ export interface Comic {
     panels: Panel[];
     createdAt?: string;
     updatedAt?: string;
-    published?: boolean; // Backend might set this
+    published?: boolean;
 }
 interface TemplateDefinition { id: string; name: string; panelCount: number; layout: string; }
 
@@ -146,7 +145,7 @@ export function useComic(initialComicId?: string, initialTemplateId?: string | n
             setIsSaving(false);
             throw err; // Re-throw error for the component to handle
         }
-    }, [comic]); // Dependency: comic state
+    }, [comic]);
 
 
     return {
@@ -160,6 +159,6 @@ export function useComic(initialComicId?: string, initialTemplateId?: string | n
         addCharacter,
         removeCharacter,
         updateCharacter,
-        saveComic // Export the implemented save function
+        saveComic
     };
 }

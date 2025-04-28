@@ -10,7 +10,6 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
 export default function SignupPage() {
-    // Removed username state - using email as Cognito username
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [error, setError] = useState<string | null>(null);
@@ -22,14 +21,11 @@ export default function SignupPage() {
         setIsLoading(true);
         setError(null);
 
-        // Add password policy validation here if desired (e.g., length, complexity)
-        // Example: Match Cognito default policy (min 8 chars)
         if (password.length < 8) {
              setError("Password must be at least 8 characters long.");
              setIsLoading(false);
              return;
         }
-        // Add more complex regex checks if needed
 
         try {
             const { isSignUpComplete, userId, nextStep } = await signUp({
@@ -48,23 +44,19 @@ export default function SignupPage() {
 
             console.log("Sign up result:", { isSignUpComplete, userId, nextStep });
 
-            if (isSignUpComplete) {
-                // This usually only happens if email/phone verification is turned OFF in Cognito
+            if (isSignUpComplete) {            
                 console.log("Signup complete and auto-verified.");
-                router.push('/profile'); // Or wherever logged-in users go
+                router.push('/profile');
             } else if (nextStep.signUpStep === 'CONFIRM_SIGN_UP') {
                 console.log("Signup successful, confirmation required.");
-                // Redirect to confirmation page, passing email as username
                 router.push(`/confirm-signup?email=${encodeURIComponent(email)}`);
             } else {
-                 // Handle other potential next steps if applicable
                  setError(`Unhandled sign up step: ${nextStep.signUpStep}`);
                  console.error("Unhandled sign up step:", nextStep);
             }
 
-        } catch (err: unknown) { // Use unknown instead of any
+        } catch (err: unknown) {
             console.error('Error signing up:', err);
-            // Type check and handle specific Amplify error names
             if (err instanceof Error) {
                  if (err.name === 'UsernameExistsException') {
                      setError('An account with this email already exists.');
@@ -90,15 +82,13 @@ export default function SignupPage() {
                 <h2 className="text-2xl font-bold text-center">Create Account</h2>
                 {error && <p className="text-red-500 text-sm text-center">{error}</p>}
                 <form onSubmit={handleSignup} className="space-y-4">
-                    {/* Removed optional Username field for simplicity */}
                     <div>
                         <Label htmlFor="email">Email</Label>
                         <Input id="email" type="email" value={email} onChange={(e) => setEmail(e.target.value)} required placeholder="you@example.com" disabled={isLoading} />
                     </div>
                     <div>
                         <Label htmlFor="password">Password</Label>
-                        <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="********" disabled={isLoading} />
-                         {/* Display password requirements based on your Cognito policy */}
+                        <Input id="password" type="password" value={password} onChange={(e) => setPassword(e.target.value)} required placeholder="********" disabled={isLoading} />                         
                          <p className="text-xs text-gray-500 mt-1">Min. 8 characters. Consider adding complexity requirements.</p>
                     </div>
                     <Button type="submit" className="w-full" disabled={isLoading}>

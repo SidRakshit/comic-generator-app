@@ -9,27 +9,23 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
-// Component containing the actual logic, to allow use of hooks
 function ConfirmSignupContent() {
     const router = useRouter();
     const searchParams = useSearchParams();
-    // Get email from query parameter passed from signup page
     const initialEmail = searchParams.get('email') || '';
 
-    const [email, setEmail] = useState(initialEmail); // Use email as Cognito username
+    const [email, setEmail] = useState(initialEmail);
     const [confirmationCode, setConfirmationCode] = useState('');
     const [error, setError] = useState<string | null>(null);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [isLoading, setIsLoading] = useState(false);
     const [canResend, setCanResend] = useState(true);
-    const [resendTimer, setResendTimer] = useState(0); // Timer state
+    const [resendTimer, setResendTimer] = useState(0);
 
-    // Update email state if query param changes
     useEffect(() => {
         setEmail(initialEmail);
     }, [initialEmail]);
 
-     // Timer effect for resend button
      useEffect(() => {
         let interval: NodeJS.Timeout | null = null;
         if (resendTimer > 0) {
@@ -37,10 +33,10 @@ function ConfirmSignupContent() {
                 setResendTimer((prev) => prev - 1);
             }, 1000);
         } else if (resendTimer === 0) {
-            setCanResend(true); // Enable resend when timer hits 0
+            setCanResend(true);
             if (interval) clearInterval(interval);
         }
-        return () => { // Cleanup interval on component unmount or timer reset
+        return () => {
             if (interval) clearInterval(interval);
         };
     }, [resendTimer]);
@@ -59,7 +55,7 @@ function ConfirmSignupContent() {
 
         try {
             const { isSignUpComplete, nextStep } = await confirmSignUp({
-                username: email, // Use email as the Cognito username
+                username: email,
                 confirmationCode: confirmationCode,
             });
 
@@ -67,26 +63,23 @@ function ConfirmSignupContent() {
 
             if (isSignUpComplete) {
                 setSuccessMessage("Account confirmed successfully! Redirecting to login...");
-                // Redirect to login after a short delay
                 setTimeout(() => {
                     router.push('/login');
                 }, 2000);
             } else {
-                // This path might indicate other steps remaining, though usually confirmation is the last step
                 console.warn("Confirmation step might not be fully complete:", nextStep.signUpStep);
                 setError(`Confirmation processed, but next step is: ${nextStep.signUpStep}`);
             }
 
-        } catch (err: unknown) { // Use unknown instead of any
-            console.error('Error confirming sign up:', err);
-             // Type check and handle specific Amplify error names
+        } catch (err: unknown) {
+            console.error('Error confirming sign up:', err);             
              if (err instanceof Error) {
                  if (err.name === 'CodeMismatchException') {
                      setError('Invalid confirmation code. Please try again.');
                  } else if (err.name === 'ExpiredCodeException') {
                      setError('Confirmation code has expired. Please request a new one.');
-                     setCanResend(true); // Allow resend immediately
-                     setResendTimer(0); // Reset timer
+                     setCanResend(true);
+                     setResendTimer(0);
                  } else if (err.name === 'UserNotFoundException') {
                       setError('User not found. Please check the email or sign up again.');
                  } else if (err.name === 'AliasExistsException') {
@@ -104,23 +97,20 @@ function ConfirmSignupContent() {
 
     const handleResendCode = async () => {
         if (!email || !canResend) return;
-        setIsLoading(true); // Consider separate loading state for resend
+        setIsLoading(true);
         setError(null);
         setSuccessMessage(null);
-        setCanResend(false); // Disable button immediately
-        setResendTimer(60); // Start 60 second timer
+        setCanResend(false);
+        setResendTimer(60);
 
         try {
             await resendSignUpCode({ username: email });
             setSuccessMessage("Confirmation code resent successfully. Check your email.");
-            // Timer will re-enable button via useEffect
-        } catch (err: unknown) { // Use unknown instead of any
-            console.error('Error resending code:', err);
-             // Type check and handle specific Amplify error names
+        } catch (err: unknown) {
+            console.error('Error resending code:', err);             
              if (err instanceof Error) {
                  if (err.name === 'LimitExceededException') {
-                     setError('Attempt limit exceeded. Please try again later.');
-                      // Keep button disabled longer maybe
+                     setError('Attempt limit exceeded. Please try again later.');                      
                  } else if (err.name === 'UserNotFoundException'){
                       setError('Cannot resend code: User not found with this email.');
                  }
@@ -130,10 +120,10 @@ function ConfirmSignupContent() {
              } else {
                  setError('An unknown error occurred while resending the code.');
              }
-            setCanResend(true); // Re-enable immediately on error
-             setResendTimer(0); // Reset timer on error
+            setCanResend(true);
+             setResendTimer(0);
         } finally {
-            setIsLoading(false); // Reset loading state for main button
+            setIsLoading(false);
         }
     };
 
@@ -157,7 +147,6 @@ function ConfirmSignupContent() {
                             onChange={(e) => setEmail(e.target.value)}
                             required
                             placeholder="you@example.com"
-                            // Make email read-only if passed via query param, allow editing otherwise
                             readOnly={!!initialEmail}
                             disabled={isLoading}
                             className={!!initialEmail ? "bg-gray-100" : ""}

@@ -22,19 +22,17 @@ async function createNewComicAPI(templateId: string): Promise<{ id: string }> {
 
 export default function CreateComicPage() {
   const router = useRouter();
-  const [isCreating, setIsCreating] = useState(false); // State to handle loading/disabling UI
-  const [error, setError] = useState<string | null>(null); // State for error messages
+  const [isCreating, setIsCreating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
   // This function is called when a template is selected in the TemplateSelector component
   const handleTemplateSelect = async (templateId: string) => {
-    if (isCreating) return; // Prevent multiple clicks
-
+    if (isCreating) return;
     console.log(`Template selected by user: ${templateId}`);
-    setIsCreating(true); // Indicate loading state
-    setError(null); // Clear previous errors
+    setIsCreating(true);
+    setError(null);
 
     try {
-      // --- Step 1: Call the backend to create a new comic entry ---
       const newComic = await createNewComicAPI(templateId);
       const newComicId = newComic.id;
 
@@ -42,46 +40,38 @@ export default function CreateComicPage() {
           throw new Error("Failed to get a valid ID from the backend.");
       }
 
-      // --- Step 2: Navigate to the editor page for the new comic ---
       console.log(`Navigating to editor page: /comics/${newComicId}`);
       router.push(`/comics/${newComicId}`);
 
     } catch (err) {
       console.error("Failed to create comic or navigate:", err);
       setError(err instanceof Error ? err.message : 'An unexpected error occurred. Please try again.');
-      setIsCreating(false); // Re-enable UI on error
+      setIsCreating(false);
     }
-    // No need to set isCreating back to false on success, as the page navigates away.
   };
 
   return (
     <div className="container mx-auto py-8">
-      {/* Page Header */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold">Create New Comic</h1>
-        {/* Add any other header elements if needed */}
       </div>
 
-      {/* Template Selection Area */}
+  
       <div className="bg-white rounded-lg shadow p-6">
         <h2 className="text-xl font-semibold mb-4">1. Choose a Template</h2>
         <p className="text-gray-600 mb-6">Select a layout to start your comic.</p>
 
-        {/* Display error message if creation fails */}
         {error && (
             <div className="mb-4 p-3 bg-red-100 text-red-700 border border-red-300 rounded">
                 <strong>Error:</strong> {error}
             </div>
         )}
 
-        {/* The TemplateSelector component handles displaying templates */}
-        {/* It needs an onSelect prop that triggers handleTemplateSelect */}
         <TemplateSelector
             onSelect={handleTemplateSelect}
-            disabled={isCreating} // Disable selector while processing
+            disabled={isCreating}
         />
-
-        {/* Optional: Show a loading indicator */}
+        
         {isCreating && (
             <div className="mt-4 text-center text-gray-500">
                 Creating your comic space...

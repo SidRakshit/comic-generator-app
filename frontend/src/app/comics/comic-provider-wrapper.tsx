@@ -1,12 +1,11 @@
 // src/app/comics/comic-provider-wrapper.tsx
-'use client'; // Mark this new component as a client component
+'use client';
 
 import React from 'react';
 import { ComicProvider } from '@/context/comic-context';
 import { useParams, useSearchParams } from 'next/navigation';
 
 export default function ComicProviderWrapper({ children }: { children: React.ReactNode }) {
-  // Move the hooks and logic inside this component
   const params = useParams();
   const searchParams = useSearchParams();
 

@@ -15,6 +15,7 @@ interface PanelPromptModalProps {
   onSubmit: (prompt: string) => void;
   panelNumber: number;
   initialPrompt: string;
+  isRegenerating?: boolean
 }
 
 export default function PanelPromptModal({
@@ -22,7 +23,8 @@ export default function PanelPromptModal({
   onClose,
   onSubmit,
   panelNumber,
-  initialPrompt
+  initialPrompt,
+  isRegenerating
 }: PanelPromptModalProps) {
   const [prompt, setPrompt] = useState(initialPrompt || '');
   const [promptType, setPromptType] = useState<'text' | 'image'>('text');
@@ -134,7 +136,6 @@ export default function PanelPromptModal({
                 id="image-upload"
                 type="file"
                 accept="image/*"
-                // This would be connected to state in a full implementation
               />
             </div>
             <p className="text-sm text-gray-500">

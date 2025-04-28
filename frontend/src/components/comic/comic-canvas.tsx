@@ -1,6 +1,4 @@
 // src/components/comic/comic-canvas.tsx
-// UPDATED: Added max-width to the container to make the panel grid smaller.
-
 'use client';
 
 import Image from 'next/image';
@@ -14,9 +12,7 @@ interface ComicCanvasProps {
   layout: string | null;
 }
 
-// getGridClass function remains the same
 const getGridClass = (layout: string | null, panels: Panel[]): string => {
-    // ... (implementation remains the same as before) ...
       switch (layout) {
     case 'grid-2x2':
       return 'grid-cols-2 grid-rows-2';
@@ -27,7 +23,7 @@ const getGridClass = (layout: string | null, panels: Panel[]): string => {
     case 'grid-3x3':
       return 'grid-cols-3 grid-rows-3';
     case 'manga':
-      return 'grid-cols-2 manga-layout'; // Placeholder
+      return 'grid-cols-2 manga-layout';
     default:
       const count = panels.length;
       if (count <= 1) return 'grid-cols-1';
@@ -43,13 +39,8 @@ export default function ComicCanvas({ panels, onPanelClick, onEditPanelClick, la
   const gridClass = getGridClass(layout, panels);
 
   return (
-    // --- MODIFIED: Added max-width and centering to this container ---
-    <div className="comic-canvas w-full max-w-3xl mx-auto"> {/* Example: max-w-3xl */}
-    {/* You can adjust max-w-3xl (e.g., max-w-2xl, max-w-4xl) to make it smaller/larger */}
-    {/* mx-auto keeps it centered if it's not full width */}
-
-      {/* The grid itself remains inside this container */}
-      <div className={`grid ${gridClass} gap-2 md:gap-4 mb-4`}> {/* Reduced gap slightly */}
+    <div className="comic-canvas w-full max-w-3xl mx-auto">      
+      <div className={`grid ${gridClass} gap-2 md:gap-4 mb-4`}>
         {panels.map((panel, index) => (
           <ComicPanel
             key={panel.id || index}
@@ -64,7 +55,6 @@ export default function ComicCanvas({ panels, onPanelClick, onEditPanelClick, la
   );
 }
 
-// --- ComicPanel component remains unchanged ---
 interface ComicPanelProps {
   panel: Panel;
   panelNumber: number;
@@ -73,7 +63,6 @@ interface ComicPanelProps {
 }
 
 function ComicPanel({ panel, panelNumber, onClick, onEditClick }: ComicPanelProps) {
-  // ... (ComicPanel implementation is the same as the previous version with the edit icon) ...
     return (
     <div
       className={`
@@ -88,12 +77,12 @@ function ComicPanel({ panel, panelNumber, onClick, onEditClick }: ComicPanelProp
       {panel.status === 'loading' ? (
         <div className="flex flex-col items-center justify-center h-full pointer-events-none">
            <Loader2 className="h-8 w-8 md:h-10 md:w-10 text-blue-500 animate-spin mb-1 md:mb-2" />
-           <p className="text-xs md:text-sm text-blue-500">Generating...</p> {/* Slightly smaller text */}
+           <p className="text-xs md:text-sm text-blue-500">Generating...</p>
         </div>
       ) : panel.status === 'error' ? (
         <div className="flex flex-col items-center justify-center h-full text-center p-1 md:p-2">
            <ImageOff className="h-8 w-8 md:h-10 md:w-10 text-red-500 mb-1 md:mb-2" />
-           <p className="text-xs md:text-sm text-red-500">{panel.error || 'Error'}</p> {/* Shorter error text */}
+           <p className="text-xs md:text-sm text-red-500">{panel.error || 'Error'}</p>
            <p className="text-xs text-red-400 mt-1">Click to try again</p>
         </div>
       ) : panel.status === 'complete' && panel.imageUrl ? (
@@ -104,7 +93,7 @@ function ComicPanel({ panel, panelNumber, onClick, onEditClick }: ComicPanelProp
               alt={`Panel ${panelNumber}`}
               fill
               style={{ objectFit: 'cover' }}
-              sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw" // Adjust sizes if needed based on new max-width
+              sizes="(max-width: 768px) 50vw, (max-width: 1024px) 33vw, 25vw"
               priority={panelNumber <= 4}
               className="pointer-events-none"
             />
@@ -119,7 +108,7 @@ function ComicPanel({ panel, panelNumber, onClick, onEditClick }: ComicPanelProp
             aria-label={`Edit Panel ${panelNumber}`}
             title={`Edit Panel ${panelNumber}`}
           >
-            <Edit className="h-3 w-3 md:h-4 md:w-4" /> {/* Slightly smaller icon */}
+            <Edit className="h-3 w-3 md:h-4 md:w-4" />
           </button>
         </>
       ) : (

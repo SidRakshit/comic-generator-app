@@ -2,8 +2,8 @@
 'use client';
 
 import React, { createContext, useContext, ReactNode } from 'react';
-import { useComic } from '@/hooks/use-comic'; // Import your existing hook
-import type { Comic, Panel, ComicCharacter } from '@/hooks/use-comic'; // Import types
+import { useComic } from '@/hooks/use-comic';
+import type { Comic, Panel, ComicCharacter } from '@/hooks/use-comic';
 
 // Define the shape of the context value (what consumers will get)
 // This mirrors the return value of your useComic hook
@@ -18,8 +18,7 @@ interface ComicContextType {
   addCharacter: () => void;
   removeCharacter: (idToRemove: string) => void;
   updateCharacter: (idToUpdate: string, field: keyof Omit<ComicCharacter, 'id'>, value: string) => void;
-  saveComic: () => Promise<Comic | undefined>; // Keep saveComic signature
-  // Add any other functions/state from useComic you need globally
+  saveComic: () => Promise<Comic | undefined>;
 }
 
 // Create the context with a default value (usually null or a minimal state)
@@ -29,17 +28,12 @@ const ComicContext = createContext<ComicContextType | null>(null);
 // Create the Provider component
 interface ComicProviderProps {
   children: ReactNode;
-  // --- Add props to handle initialization based on route ---
   initialComicId?: string;
   initialTemplateId?: string;
 }
 
-export function ComicProvider({ children, initialComicId, initialTemplateId }: ComicProviderProps) {
-  // Use your existing hook INSIDE the provider
-  // Pass the initialization props down to the hook
+export function ComicProvider({ children, initialComicId, initialTemplateId }: ComicProviderProps) {  
   const comicHookData = useComic(initialComicId, initialTemplateId);
-
-  // The value provided by the context is the data returned from the hook
   return (
     <ComicContext.Provider value={comicHookData}>
       {children}
