@@ -6,11 +6,7 @@ import mainApiRouter from './routes/index';
 // import './database';
 
 const app = express();
-// const PORT = process.env.PORT || 8080; // Define PORT directly
 
-// --- Middleware ---
-// Comment out ALL app.use() middleware for now
-// app.use(cors({ /* ... */ })); 
 app.use(express.json());
 
 // --- Routes ---
@@ -20,11 +16,6 @@ app.use('/api', mainApiRouter); // Still commented out
 app.get('/', (req, res) => {
   res.send('Minimal OK');
 });
-
-// --- Error Handling ---
-// Comment out error handlers for now
-// app.use('*', (req, res) => { /* ... */ }); 
-// app.use((err: any, req, res, next) => { /* ... */ }); 
 
 // --- Start Server ---
 app.listen(PORT, () => {

@@ -1,8 +1,7 @@
 // src/routes/comics.ts
 import express from 'express';
 import { comicController } from '../controllers/comics.controller';
-// Import your authentication middleware (replace with your actual middleware)
-import { authenticateToken } from '../middleware/auth.middleware'; // Example middleware
+import { authenticateToken } from '../middleware/auth.middleware';
 
 const router = express.Router();
 

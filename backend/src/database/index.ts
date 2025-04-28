@@ -5,7 +5,6 @@ import { DB_CONFIG } from '../config';
 // Create a connection pool
 const pool = new Pool(DB_CONFIG);
 
-// Test the connection
 pool.connect()
     .then((client: { release: () => void; }) => {
         console.log('Successfully connected to PostgreSQL');

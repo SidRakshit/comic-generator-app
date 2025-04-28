@@ -4,13 +4,13 @@
 import { PutObjectCommand } from "@aws-sdk/client-s3";
 import axios from 'axios';
 import crypto from 'crypto';
-import { Pool, PoolClient } from 'pg'; // Import Pool and PoolClient from pg
+import { Pool, PoolClient } from 'pg';
 
 // --- Configuration Import ---
-import { s3Client, S3_BUCKET, OPENAI_API_KEY } from '../config'; // Assuming DB_CONFIG is used by the pool import
+import { s3Client, S3_BUCKET, OPENAI_API_KEY } from '../config';
 
 // --- Database Pool Import ---
-import pool from '../database'; // Import the configured Pool instance
+import pool from '../database';
 
 // --- Interfaces (Keep existing interfaces: Dialogue, ScriptPanel, PanelImage) ---
 export interface Dialogue { character: string; text: string; }
@@ -21,9 +21,9 @@ export interface PanelImage { imageUrl: string; }
 interface PanelDataFromRequest {
     panelNumber: number;
     prompt: string;
-    dialogue?: string; // Storing dialogue as a simple string for this example
-    layoutPosition: object; // Stricter: { x: number; y: number; width: number; height: number; }
-    generatedImageUrl: string; // Temporary OpenAI URL
+    dialogue?: string;
+    layoutPosition: object;
+    generatedImageUrl: string;
 }
 interface PageDataFromRequest {
     pageNumber: number;
@@ -32,8 +32,8 @@ interface PageDataFromRequest {
 interface ComicDataFromRequest {
     title: string;
     description?: string;
-    characters?: object[]; // Stricter: { name: string; description?: string }[]
-    setting?: object; // Stricter: { description: string; style: string }
+    characters?: object[];
+    setting?: object;
     pages: PageDataFromRequest[];
 }
 
@@ -171,7 +171,7 @@ export class ComicService {
             let contentType = response.headers['content-type'] || 'application/octet-stream';
             let fileExtension = 'bin';
             if (contentType.startsWith('image/')) {
-                fileExtension = contentType.split('/')[1].split('+')[0]; // e.g., jpeg, png, gif
+                fileExtension = contentType.split('/')[1].split('+')[0];
             } else {
                 console.warn(`Unexpected content type "${contentType}", using default extension.`);
                 contentType = 'application/octet-stream';
@@ -204,18 +204,17 @@ export class ComicService {
      * @returns The saved/updated comic object (adjust return type as needed).
      */
     async saveComicWithPanels(
-        internalUserId: string, // This should be the user's internal UUID from your users table
+        internalUserId: string,
         comicData: ComicDataFromRequest,
         existingComicId?: string
-    ): Promise<any> { // Replace 'any' with your actual Comic return type { id: string; message: string; }
+    ): Promise<any> {
 
-        const client: PoolClient = await pool.connect(); // Get client from pool for transaction
+        const client: PoolClient = await pool.connect();
         console.log(`Starting saveComicWithPanels for user: ${internalUserId}, comicId: ${existingComicId || 'NEW'}`);
 
         try {
-            await client.query('BEGIN'); // Start transaction
+            await client.query('BEGIN');
 
-            // 1. Verify User Exists (using internal user_id UUID)
             const userCheckResult = await client.query('SELECT user_id FROM users WHERE user_id = $1', [internalUserId]);
             if (userCheckResult.rows.length === 0) {
                 console.error(`User not found for internal ID: ${internalUserId}`);
@@ -223,29 +222,25 @@ export class ComicService {
             }
             console.log(`User ${internalUserId} verified.`);
 
-            // 2. Create or Find/Update Comic Metadata
             let comicId: string;
 
             if (existingComicId) {
-                comicId = existingComicId; // Use existing ID for updates
+                comicId = existingComicId;
                 console.log(`Updating existing comic: ${comicId}`);
 
-                // Verify ownership
                 const comicCheckResult = await client.query(
-                    'SELECT comic_id FROM comics WHERE comic_id = $1 AND user_id = $2 FOR UPDATE', // Add FOR UPDATE for locking if needed
+                    'SELECT comic_id FROM comics WHERE comic_id = $1 AND user_id = $2 FOR UPDATE',
                     [comicId, internalUserId]
                 );
                 if (comicCheckResult.rows.length === 0) {
                     throw new Error("Comic not found or user mismatch");
                 }
 
-                // Update comic details
                 await client.query(
                     'UPDATE comics SET title = $1, description = $2, characters = $3, setting = $4, updated_at = NOW() WHERE comic_id = $5',
                     [
                         comicData.title,
                         comicData.description,
-                        // Use JSON.stringify for JSONB columns, handle null/undefined
                         JSON.stringify(comicData.characters ?? null),
                         JSON.stringify(comicData.setting ?? null),
                         comicId
@@ -253,18 +248,14 @@ export class ComicService {
                 );
                 console.log(`Comic ${comicId} metadata updated.`);
 
-                // Clear old pages and panels before adding new ones for simplicity in update
                 console.log(`Clearing old pages/panels for comic ${comicId}`);
-                // Delete panels first due to foreign key constraint
                 await client.query('DELETE FROM panels WHERE page_id IN (SELECT page_id FROM pages WHERE comic_id = $1)', [comicId]);
-                // Then delete pages
                 await client.query('DELETE FROM pages WHERE comic_id = $1', [comicId]);
                 console.log(`Old pages/panels cleared for comic ${comicId}.`);
 
             } else {
                 console.log(`Creating new comic for user: ${internalUserId}`);
-                comicId = crypto.randomUUID(); // Generate new UUID for the comic
-                // Insert new comic record
+                comicId = crypto.randomUUID();
                 await client.query(
                     'INSERT INTO comics (comic_id, user_id, title, description, characters, setting) VALUES ($1, $2, $3, $4, $5, $6)',
                     [
@@ -282,8 +273,7 @@ export class ComicService {
             // --- Process Pages and Panels ---
             // Iterate through pages provided in the request data
             for (const pageData of comicData.pages) {
-                // 3. Create Page record for the current comic
-                const pageId = crypto.randomUUID(); // Generate new UUID for the page
+                const pageId = crypto.randomUUID();
                 await client.query(
                     'INSERT INTO pages (page_id, comic_id, page_number) VALUES ($1, $2, $3)',
                     [pageId, comicId, pageData.pageNumber]
@@ -292,53 +282,48 @@ export class ComicService {
 
                 // Iterate through panels within the current page
                 for (const panelData of pageData.panels) {
-                    // 4. Create Panel record first (without image URL)
-                    const panelId = crypto.randomUUID(); // Generate new UUID for the panel
+                    const panelId = crypto.randomUUID();
                     await client.query(
                         'INSERT INTO panels (panel_id, page_id, panel_number, prompt, dialogue, layout_position) VALUES ($1, $2, $3, $4, $5, $6)',
                         [
                             panelId,
-                            pageId, // Link to the page created above
+                            pageId,
                             panelData.panelNumber,
                             panelData.prompt,
-                            panelData.dialogue, // Store dialogue string directly
-                            JSON.stringify(panelData.layoutPosition ?? null) // Ensure JSONB compatibility
+                            panelData.dialogue,
+                            JSON.stringify(panelData.layoutPosition ?? null)
                         ]
                     );
                     console.log(`Created panel number: ${panelData.panelNumber}, DB ID: ${panelId}`);
 
-                    // 5. Upload Image to S3 using the helper method
                     console.log(`Uploading image for panel ${panelId} from temp URL: ${panelData.generatedImageUrl}`);
                     const s3ImageUrl = await this.uploadImageToS3(
                         panelData.generatedImageUrl,
                         internalUserId,
                         comicId,
-                        panelId // Use the generated panel ID for the S3 key
+                        panelId
                     );
 
-                    // 6. Update the Panel record with the permanent S3 URL
                     await client.query(
                         'UPDATE panels SET image_url = $1, updated_at = NOW() WHERE panel_id = $2',
                         [s3ImageUrl, panelId]
                     );
                     console.log(`Updated panel ${panelId} with S3 URL: ${s3ImageUrl}`);
 
-                } // End panels loop
-            } // End pages loop
+                }
+            }
 
-            await client.query('COMMIT'); // Commit the transaction if all operations succeed
+            await client.query('COMMIT');
             console.log(`Successfully saved comic ${comicId}. Transaction committed.`);
 
-            // 7. Return the result (e.g., the comic ID and a success message)
             return { id: comicId, message: "Comic saved successfully" };
 
         } catch (error: any) {
-            await client.query('ROLLBACK'); // Rollback the transaction on any error
+            await client.query('ROLLBACK');
             console.error(`Error during saveComicWithPanels for comic ${existingComicId || 'NEW'}. Rolling back transaction.`, error);
-            // Re-throw the error so the controller can handle it
             throw new Error(`Failed to save comic: ${error.message}`);
         } finally {
-            client.release(); // Release the client back to the pool IMPORTANT!
+            client.release();
             console.log(`Finished saveComicWithPanels attempt for comic ${existingComicId || 'NEW'}. Client released.`);
         }
     }
@@ -346,10 +331,9 @@ export class ComicService {
 
     // --- Helper: Script Parsing ---
     private parseComicScript(script: string): ScriptPanel[] {
-        // ... (Implementation remains the same as previous version) ...
         console.log("Parsing script...");
         const panelRegex = /Panel\s*(\d+):\s*([\s\S]*?)(?=Panel\s*\d+:|$)/gi;
-        const dialogueRegex = /([A-Z\s0-9]+):\s*"([^"]+)"/g; // Allow numbers in character names
+        const dialogueRegex = /([A-Z\s0-9]+):\s*"([^"]+)"/g;
         const panels: ScriptPanel[] = [];
         let match;
         while ((match = panelRegex.exec(script)) !== null) {
@@ -358,23 +342,20 @@ export class ComicService {
             const dialogue: Dialogue[] = [];
             let dialogueMatch;
             let remainingContent = panelContent;
-            dialogueRegex.lastIndex = 0; // Reset regex index for each panel
+            dialogueRegex.lastIndex = 0;
             while ((dialogueMatch = dialogueRegex.exec(panelContent)) !== null) {
                 const character = dialogueMatch[1].trim();
                 const text = dialogueMatch[2].trim();
                 dialogue.push({ character, text });
-                // Remove the matched dialogue line for description extraction
                 remainingContent = remainingContent.replace(dialogueMatch[0], '');
             }
-            // Clean up description more carefully
             const description = remainingContent
-                .replace(/Description:\s*/i, '') // Remove "Description:" prefix if present
-                .replace(/^[A-Z\s0-9]+:\s*".*"$/gm, '') // Remove lines that look like dialogue again just in case
-                .replace(/\n+/g, ' ') // Replace multiple newlines with spaces
+                .replace(/Description:\s*/i, '')
+                .replace(/^[A-Z\s0-9]+:\s*".*"$/gm, '')
+                .replace(/\n+/g, ' ')
                 .trim();
             panels.push({ panelNumber, description, dialogue });
         }
-        // Fallback parsing if "Panel X:" structure isn't found
         if (panels.length === 0 && script.trim().length > 0) {
             console.warn("Script parsing did not find 'Panel X:'. Attempting direct parse.");
             const dialogue: Dialogue[] = [];
@@ -388,7 +369,6 @@ export class ComicService {
                 remainingContent = remainingContent.replace(dialogueMatch[0], '');
             }
             const description = remainingContent.replace(/Description:\s*/i, '').replace(/^[A-Z\s0-9]+:\s*".*"$/gm, '').trim();
-            // Use '1' as default panel number if none found
             panels.push({ panelNumber: '1', description, dialogue });
         }
         return panels;
