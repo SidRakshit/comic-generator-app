@@ -1,3 +1,4 @@
+// backend/src/routes/user.ts
 import express from 'express';
 import pool from '../database';
 
@@ -19,5 +20,18 @@ router.get('/users/:id', (req, res) => {
             res.status(500).json({ message: 'Error fetching user' });
         });
 });
+
+// Get all users
+router.get('/users', (req, res) => {
+    pool.query('SELECT * FROM users')
+        .then((result: { rows: any; }) => {
+            res.json(result.rows);
+        })
+        .catch((error: any) => {
+            console.error('Error executing query', error);
+            res.status(500).json({ message: 'Error fetching users' });
+        });
+});
+
 
 export default router;

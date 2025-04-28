@@ -6,8 +6,6 @@ import { authenticateToken } from '../middleware/auth.middleware'; // Example mi
 
 const router = express.Router();
 
-// --- Generation Routes (Public or Authenticated?) ---
-// Decide if these need authentication or not
 router.post('/generate-script',
     authenticateToken,
     comicController.generateScript);
@@ -15,30 +13,15 @@ router.post('/generate-panel-image',
     authenticateToken,
     comicController.generateImage);
 
-// --- Test Routes ---
-router.get('/simple-test', (req, res) => {
-    console.log('Simple test route accessed!');
-    res.json({ message: 'Simple comics test route works!' });
-});
-router.get('/test', (req, res) => {
-    res.json({ message: 'Comics route is working!' });
-});
-
-// --- Comic CRUD Routes (Require Authentication) ---
-
-// POST /api/comics - Create a new comic
-// Applies authentication middleware first
 router.post(
     '/comics',
-    authenticateToken, // Apply your authentication middleware here
+    authenticateToken,
     comicController.saveComic
 );
 
-// PUT /api/comics/:comicId - Update an existing comic
-// Applies authentication middleware first
 router.put(
     '/comics/:comicId',
-    authenticateToken, // Apply your authentication middleware here
+    authenticateToken,
     comicController.saveComic
 );
 

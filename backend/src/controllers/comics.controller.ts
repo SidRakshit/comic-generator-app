@@ -1,14 +1,7 @@
 // src/controllers/comics.controller.ts
 import { Request, Response } from 'express';
 import { ComicService } from '../services/comics.service';
-
-// Define an interface that extends Request to include user info (adjust based on your auth middleware)
-interface AuthenticatedRequest extends Request {
-    user?: {
-        id: string; // Assuming your auth middleware adds user object with internal UUID 'id'
-        // Add other user properties if available/needed (e.g., email, auth_provider_id)
-    };
-}
+import { AuthenticatedRequest } from '../middleware/auth.middleware';
 
 export class ComicController {
     private comicService: ComicService;
@@ -51,8 +44,8 @@ export class ComicController {
         try {
             // 1. Get User ID from authenticated request
             // Adjust this based on how your authentication middleware provides the user ID
-            const userId = req.user?.id;
-            if (!userId) {
+            const internalUserId = req.internalUserId;
+            if (!internalUserId) {
                 res.status(401).json({ error: 'Unauthorized: User ID not found in request.' });
                 return;
             }
@@ -67,11 +60,11 @@ export class ComicController {
             // 3. Get existing Comic ID from route parameters (for updates)
             const { comicId } = req.params; // Will be undefined for POST requests
 
-            console.log(`Controller: saveComic called by user ${userId}. Existing comicId: ${comicId}`);
+            console.log(`Controller: saveComic called by user ${internalUserId}. Existing comicId: ${comicId}`);
 
             // 4. Call the service method
             const result = await this.comicService.saveComicWithPanels(
-                userId,
+                internalUserId,
                 comicData,
                 comicId // Pass undefined if it's a new comic (POST)
             );

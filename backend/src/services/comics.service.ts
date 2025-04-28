@@ -204,24 +204,24 @@ export class ComicService {
      * @returns The saved/updated comic object (adjust return type as needed).
      */
     async saveComicWithPanels(
-        userId: string, // This should be the user's internal UUID from your users table
+        internalUserId: string, // This should be the user's internal UUID from your users table
         comicData: ComicDataFromRequest,
         existingComicId?: string
     ): Promise<any> { // Replace 'any' with your actual Comic return type { id: string; message: string; }
 
         const client: PoolClient = await pool.connect(); // Get client from pool for transaction
-        console.log(`Starting saveComicWithPanels for user: ${userId}, comicId: ${existingComicId || 'NEW'}`);
+        console.log(`Starting saveComicWithPanels for user: ${internalUserId}, comicId: ${existingComicId || 'NEW'}`);
 
         try {
             await client.query('BEGIN'); // Start transaction
 
             // 1. Verify User Exists (using internal user_id UUID)
-            const userCheckResult = await client.query('SELECT user_id FROM users WHERE user_id = $1', [userId]);
+            const userCheckResult = await client.query('SELECT user_id FROM users WHERE user_id = $1', [internalUserId]);
             if (userCheckResult.rows.length === 0) {
-                console.error(`User not found for internal ID: ${userId}`);
+                console.error(`User not found for internal ID: ${internalUserId}`);
                 throw new Error("User not found");
             }
-            console.log(`User ${userId} verified.`);
+            console.log(`User ${internalUserId} verified.`);
 
             // 2. Create or Find/Update Comic Metadata
             let comicId: string;
@@ -233,7 +233,7 @@ export class ComicService {
                 // Verify ownership
                 const comicCheckResult = await client.query(
                     'SELECT comic_id FROM comics WHERE comic_id = $1 AND user_id = $2 FOR UPDATE', // Add FOR UPDATE for locking if needed
-                    [comicId, userId]
+                    [comicId, internalUserId]
                 );
                 if (comicCheckResult.rows.length === 0) {
                     throw new Error("Comic not found or user mismatch");
@@ -262,14 +262,14 @@ export class ComicService {
                 console.log(`Old pages/panels cleared for comic ${comicId}.`);
 
             } else {
-                console.log(`Creating new comic for user: ${userId}`);
+                console.log(`Creating new comic for user: ${internalUserId}`);
                 comicId = crypto.randomUUID(); // Generate new UUID for the comic
                 // Insert new comic record
                 await client.query(
                     'INSERT INTO comics (comic_id, user_id, title, description, characters, setting) VALUES ($1, $2, $3, $4, $5, $6)',
                     [
                         comicId,
-                        userId,
+                        internalUserId,
                         comicData.title,
                         comicData.description,
                         JSON.stringify(comicData.characters ?? null),
@@ -311,7 +311,7 @@ export class ComicService {
                     console.log(`Uploading image for panel ${panelId} from temp URL: ${panelData.generatedImageUrl}`);
                     const s3ImageUrl = await this.uploadImageToS3(
                         panelData.generatedImageUrl,
-                        userId,
+                        internalUserId,
                         comicId,
                         panelId // Use the generated panel ID for the S3 key
                     );
