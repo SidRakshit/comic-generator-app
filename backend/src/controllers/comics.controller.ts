@@ -11,6 +11,8 @@ export class ComicController {
         this.generateScript = this.generateScript.bind(this);
         this.generateImage = this.generateImage.bind(this);
         this.saveComic = this.saveComic.bind(this);
+        this.listComics = this.listComics.bind(this);
+        this.getComic = this.getComic.bind(this);
     }
 
     generateScript = async (req: Request, res: Response): Promise<void> => {
@@ -72,6 +74,60 @@ export class ComicController {
             else {
                 res.status(500).json({ error: error.message || 'Failed to save comic.' });
             }
+        }
+    };
+
+    /**
+     * Handles requests to list comics for the authenticated user.
+     */
+    listComics = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+        try {
+            const internalUserId = req.internalUserId;
+            if (!internalUserId) {
+                res.status(401).json({ error: 'Unauthorized: User ID not found in request.' });
+                return;
+            }
+
+            console.log(`Controller: listComics called by user ${internalUserId}`);
+            const comics = await this.comicService.listComicsByUser(internalUserId);
+            res.status(200).json(comics);
+
+        } catch (error: any) {
+            console.error('Error in listComics controller:', error.message);
+            res.status(500).json({ error: error.message || 'Failed to retrieve comics list.' });
+        }
+    };
+
+    /**
+ * Handles requests to get a specific comic by ID for the authenticated user.
+ */
+    getComic = async (req: AuthenticatedRequest, res: Response): Promise<void> => {
+        try {
+            const internalUserId = req.internalUserId;
+            if (!internalUserId) {
+                res.status(401).json({ error: 'Unauthorized: User ID not found in request.' });
+                return;
+            }
+
+            const { comicId } = req.params;
+            if (!comicId) {
+                res.status(400).json({ error: 'Bad Request: Comic ID is required.' });
+                return;
+            }
+
+            console.log(`Controller: getComic called by user ${internalUserId} for comic ${comicId}`);
+            const comic = await this.comicService.getComicById(comicId, internalUserId);
+
+            if (!comic) {
+                res.status(404).json({ error: 'Comic not found or access denied.' });
+                return;
+            }
+
+            res.status(200).json(comic);
+
+        } catch (error: any) {
+            console.error(`Error in getComic controller for comic ${req.params.comicId}:`, error.message);
+            res.status(500).json({ error: error.message || 'Failed to retrieve comic details.' });
         }
     };
 }

@@ -36,6 +36,26 @@ interface ComicDataFromRequest {
     setting?: object;
     pages: PageDataFromRequest[];
 }
+interface FullComicData extends ComicDataFromRequest {
+    comic_id: string;
+    created_at: Date;
+    updated_at: Date;
+    pages: FullPageData[];
+}
+interface FullPageData extends PageDataFromRequest {
+    page_id: string;
+    panels: FullPanelData[];
+}
+interface FullPanelData extends PanelDataFromRequest {
+    panel_id: string;
+    image_url: string;
+}
+interface ComicListItem {
+    comic_id: string;
+    title: string;
+    created_at: Date;
+    updated_at: Date;
+}
 
 // --- Comic Service Class ---
 export class ComicService {
@@ -374,9 +394,125 @@ export class ComicService {
         return panels;
     }
 
+    /**
+     * Retrieves a list of comics belonging to a specific user.
+     * @param internalUserId - The internal UUID of the user.
+     * @returns A promise that resolves to an array of ComicListItem objects.
+     */
+    async listComicsByUser(internalUserId: string): Promise<ComicListItem[]> {
+        console.log(`Workspaceing comics list for user: ${internalUserId}`);
+        const query = `
+                SELECT
+                    comic_id,
+                    title,
+                    created_at,
+                    updated_at
+                FROM comics
+                WHERE user_id = $1
+                ORDER BY updated_at DESC;
+            `;
+        try {
+            const result = await pool.query<ComicListItem>(query, [internalUserId]);
+            console.log(`Found ${result.rowCount} comics for user ${internalUserId}.`);
+            return result.rows;
+        } catch (error: any) {
+            console.error(`Error fetching comics for user ${internalUserId}:`, error);
+            throw new Error('Failed to retrieve comics list.');
+        }
+    }
+
+    /**
+     * Retrieves the full details of a specific comic, verifying ownership.
+     * @param comicId - The UUID of the comic to retrieve.
+     * @param internalUserId - The internal UUID of the requesting user.
+     * @returns A promise that resolves to the FullComicData object or null if not found/authorized.
+     */
+    async getComicById(comicId: string, internalUserId: string): Promise<FullComicData | null> {
+        console.log(`Workspaceing comic details for comic: ${comicId}, user: ${internalUserId}`);
+
+        // Query to get comic, pages, and panels, ensuring ownership
+        const query = `
+            SELECT
+                c.comic_id, c.title, c.description, c.characters, c.setting, c.created_at, c.updated_at,
+                p.page_id, p.page_number,
+                pn.panel_id, pn.panel_number, pn.prompt, pn.dialogue, pn.layout_position, pn.image_url
+            FROM comics c
+            LEFT JOIN pages p ON c.comic_id = p.comic_id
+            LEFT JOIN panels pn ON p.page_id = pn.page_id
+            WHERE c.comic_id = $1 AND c.user_id = $2
+            ORDER BY p.page_number ASC, pn.panel_number ASC;
+        `;
+
+        try {
+            const result = await pool.query(query, [comicId, internalUserId]);
+
+            if (result.rows.length === 0) {
+                console.log(`Comic ${comicId} not found or user ${internalUserId} not authorized.`);
+                return null; // Comic not found or doesn't belong to the user
+            }
+
+            // Aggregate the results into a nested structure
+            const comic: FullComicData = {
+                comic_id: result.rows[0].comic_id,
+                title: result.rows[0].title,
+                description: result.rows[0].description || undefined,
+                characters: result.rows[0].characters || undefined,
+                setting: result.rows[0].setting || undefined,
+                created_at: result.rows[0].created_at,
+                updated_at: result.rows[0].updated_at,
+                pages: []
+            };
+
+            const pagesMap = new Map<string, FullPageData>();
+
+            for (const row of result.rows) {
+                if (!row.page_id) continue; // Skip if there are no pages/panels (comic exists but is empty)
+
+                let page = pagesMap.get(row.page_id);
+                if (!page) {
+                    page = {
+                        page_id: row.page_id,
+                        pageNumber: row.page_number,
+                        panels: []
+                    };
+                    pagesMap.set(row.page_id, page);
+                    comic.pages.push(page); // Add in order
+                }
+
+                if (row.panel_id) {
+                    page.panels.push({
+                        panel_id: row.panel_id,
+                        panelNumber: row.panel_number,
+                        prompt: row.prompt,
+                        dialogue: row.dialogue || undefined,
+                        layoutPosition: row.layout_position || {},
+                        // Map image_url to generatedImageUrl for frontend compatibility if needed,
+                        // or adjust frontend to expect image_url
+                        generatedImageUrl: row.image_url, // Assuming frontend can use the S3 URL directly
+                        image_url: row.image_url, // Keep the final URL
+                    });
+                }
+            }
+
+            // Sort pages just in case the DB didn't guarantee order perfectly
+            comic.pages.sort((a, b) => a.pageNumber - b.pageNumber);
+            // Sort panels within each page
+            comic.pages.forEach(page => {
+                page.panels.sort((a, b) => a.panelNumber - b.panelNumber);
+            });
+
+
+            console.log(`Successfully fetched comic details for ${comicId}`);
+            return comic;
+
+        } catch (error: any) {
+            console.error(`Error fetching comic ${comicId} details:`, error);
+            throw new Error('Failed to retrieve comic details.');
+        }
+    }
+
+
     // --- Add other methods as needed ---
-    // async getComicById(comicId: string): Promise<any> { /* ... DB logic using pool.query ... */ }
-    // async listComicsByUser(userId: string): Promise<any[]> { /* ... DB logic using pool.query ... */ }
     // async deleteComic(comicId: string, userId: string): Promise<void> { /* ... DB logic + S3 cleanup ... */ }
 
 }

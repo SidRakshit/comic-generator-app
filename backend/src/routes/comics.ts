@@ -24,11 +24,17 @@ router.put(
     comicController.saveComic
 );
 
-// GET /api/comics - Get list of user's comics (Add controller method + service logic)
-// router.get('/comics', authenticateToken, comicController.listComics);
+router.get(
+    '/comics',
+    authenticateToken,
+    comicController.listComics
+);
 
-// GET /api/comics/:comicId - Get a specific comic (Add controller method + service logic)
-// router.get('/comics/:comicId', authenticateToken, comicController.getComic);
+router.get(
+    '/comics/:comicId',
+    authenticateToken,
+    comicController.getComic
+);
 
 // DELETE /api/comics/:comicId - Delete a comic (Add controller method + service logic)
 // router.delete('/comics/:comicId', authenticateToken, comicController.deleteComic);
