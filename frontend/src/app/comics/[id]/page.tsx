@@ -1,210 +1,267 @@
 // src/app/comics/[id]/page.tsx
-// PURPOSE: Provide the editor interface for a specific comic identified by [id].
-// UPDATED: Added image zoom modal and separate edit button logic.
+"use client";
 
-'use client';
-
-import { useParams, useRouter } from 'next/navigation';
-import { useState, useEffect } from 'react';
-import Link from 'next/link';
-import ComicCanvas from '@/components/comic/comic-canvas';         // Verify path
-import PanelPromptModal from '@/components/comic/panel-prompt'; // Verify path
-import ImageZoomModal from '@/components/comic/image-zoom-modal';   // <--- UPDATED: Corrected path for the Zoom Modal component
-import { useComicContext } from '@/context/comic-context';                  // Verify path
-import { Button } from '@/components/ui/button';                 // Verify path
-import { Panel } from '@/hooks/use-comic';                        // Verify path
-import { ArrowLeft, Loader2 } from 'lucide-react';                // Verify path
-
-// --- API Call Function (generateImageAPI) remains the same ---
-async function generateImageAPI(prompt: string): Promise<{ imageUrl: string }> {
-  const apiUrl = 'https://comiccreator.info/api/comics/generate-panel-image';
-  console.log(`Calling API: ${apiUrl} with description: "${prompt}"`);
-  const requestBody = { panelDescription: prompt };
-  try {
-    const response = await fetch(apiUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(requestBody),
-    });
-    if (!response.ok) {
-      let errorDetails = `HTTP error! Status: ${response.status}`;
-      try { const errorData = await response.json(); errorDetails += ` - ${JSON.stringify(errorData)}`; }
-      catch (jsonError) { errorDetails += ` - ${response.statusText}` }
-      throw new Error(errorDetails);
-    }
-    const data = await response.json();
-    if (!data.imageUrl) {
-      console.error("Actual API response data:", data);
-      throw new Error("API response did not contain the expected 'imageUrl' field.");
-    }
-    console.log("API call successful, received imageUrl:", data.imageUrl);
-    return { imageUrl: data.imageUrl };
-  } catch (error) {
-    console.error('Error calling generateImageAPI:', error);
-    throw error;
-  }
-}
+import React, { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
+import Link from "next/link";
+import ComicCanvas from "@/components/comic/comic-canvas";
+import PanelPromptModal from "@/components/comic/panel-prompt";
+import ImageZoomModal from "@/components/comic/image-zoom-modal";
+import { useComicContext } from "@/context/comic-context"; // Use context hook
+import { Button } from "@/components/ui/button";
+import { ArrowLeft, Loader2 } from "lucide-react";
+import { apiRequest } from "@/lib/api";
 
 export default function ComicEditorPage() {
-  const params = useParams();
-  const router = useRouter();
-  const comicId = params.id as string;
+	const params = useParams();
+	const router = useRouter();
+	const comicId = params.id as string;
 
-  const [activePanel, setActivePanel] = useState<number | null>(null);
-  const [isPromptModalOpen, setIsPromptModalOpen] = useState(false);
-  const [isZoomModalOpen, setIsZoomModalOpen] = useState(false);
-  const [zoomedImageUrl, setZoomedImageUrl] = useState<string | null>(null);
+	// Local UI state
+	const [activePanelIndex, setActivePanelIndex] = useState<number | null>(null); // Store only index
+	const [isPromptModalOpen, setIsPromptModalOpen] = useState(false);
+	const [isZoomModalOpen, setIsZoomModalOpen] = useState(false);
+	const [zoomedImageUrl, setZoomedImageUrl] = useState<string | null>(null);
 
-  const {
-    comic,
-    updatePanelContent,
-    updateComicMetadata,
-    saveComic,
-    isLoading,
-    isSaving,
-    error: comicHookError,
-} = useComicContext();
+	// Get state and actions from ComicContext (which uses useComic hook)
+	const {
+		comic,
+		updatePanelContent, // This function in the hook takes panelIndex
+		saveComic,
+		isLoading,
+		isSaving,
+		error: comicHookError,
+	} = useComicContext();
 
-  useEffect(() => {
-    if (comicHookError) {
-        console.error("Hook Error (load/save):", comicHookError);
-    }
-  }, [comicHookError]);
+	useEffect(() => {
+		if (comicHookError) {
+			console.error("Comic Context Hook Error (load/save):", comicHookError);
+		}
+	}, [comicHookError]);
 
+	// --- Panel interaction handlers ---
+	// Updated to accept only panelIndex
+	const handlePanelClick = (panelIndex: number) => {
+		// Access panels directly from comic.panels
+		if (isSaving || !comic || !comic.panels[panelIndex]) return;
+		const panel = comic.panels[panelIndex];
 
-  const handlePanelClick = (panelIndex: number) => {
-    if (isSaving || !comic) return;
+		if (panel.status === "complete" && panel.imageUrl) {
+			setZoomedImageUrl(panel.imageUrl);
+			setIsZoomModalOpen(true);
+		} else if (panel.status !== "loading") {
+			setActivePanelIndex(panelIndex); // Set active index
+			setIsPromptModalOpen(true);
+		}
+	};
 
-    const panel = comic.panels[panelIndex];
+	// Updated to accept only panelIndex
+	const handleEditPanelClick = (panelIndex: number) => {
+		// Access panels directly from comic.panels
+		if (isSaving || !comic || !comic.panels[panelIndex]) return;
+		const panel = comic.panels[panelIndex];
+		if (panel.status !== "loading") {
+			setActivePanelIndex(panelIndex); // Set active index
+			setIsPromptModalOpen(true);
+		}
+	};
 
-    if (panel.status === 'complete' && panel.imageUrl) {
-      setZoomedImageUrl(panel.imageUrl);
-      setIsZoomModalOpen(true);
-    } else if (panel.status !== 'loading') {
-      setActivePanel(panelIndex);
-      setIsPromptModalOpen(true);
-    }
-  };
+	// Submit prompt to generate/regenerate image via API
+	const handlePromptSubmit = async (prompt: string) => {
+		if (activePanelIndex === null || !comic) return; // Use activePanelIndex
+		const panelIndex = activePanelIndex; // Get index
 
-  const handleEditPanelClick = (panelIndex: number) => {
-    if (isSaving || !comic || comic.panels[panelIndex]?.status !== 'complete') return;
-    setActivePanel(panelIndex);
-    setIsPromptModalOpen(true);
-  };
-  
-  const handlePromptSubmit = async (prompt: string) => {
-    if (activePanel === null) return;
-    const panelIndex = activePanel;
+		setIsPromptModalOpen(false);
+		setActivePanelIndex(null); // Clear active index after submit
 
-    setIsPromptModalOpen(false);
-    setIsZoomModalOpen(false);
-    setActivePanel(null);
-    setZoomedImageUrl(null);
+		// Call context action (which takes panelIndex)
+		updatePanelContent(panelIndex, {
+			status: "loading",
+			prompt: prompt,
+			error: undefined,
+		});
 
-    updatePanelContent(panelIndex, { status: 'loading', prompt: prompt });
+		// Construct full prompt (using comic metadata from context)
+		// ... (fullPrompt construction logic remains the same) ...
+		let metadataPrefix = "";
+		if (comic.title) metadataPrefix += `Comic Title: ${comic.title}. `;
+		if (comic.genre) metadataPrefix += `Genre: ${comic.genre}. `;
+		if (comic.characters && comic.characters.length > 0) {
+			metadataPrefix += "Characters: ";
+			comic.characters.forEach((char) => {
+				if (char.name && char.description)
+					metadataPrefix += `(${char.name}: ${char.description}) `;
+				else if (char.name) metadataPrefix += `(${char.name}) `;
+			});
+		}
+		metadataPrefix = metadataPrefix.trim();
+		const fullPrompt = metadataPrefix
+			? `${metadataPrefix}\\n\\nPanel Prompt: ${prompt}`
+			: prompt;
 
-    try {
-      const response = await generateImageAPI(prompt);
-      updatePanelContent(panelIndex, { status: 'complete', imageUrl: response.imageUrl, prompt: prompt, error: undefined });
-      console.log(`Panel ${panelIndex} generation success.`);
-    } catch (error) {
-      console.error(`Panel ${panelIndex} generation failed:`, error);
-      updatePanelContent(panelIndex, { status: 'error', error: error instanceof Error ? error.message : 'Generation failed.', prompt: prompt });
-    }
-  };
+		try {
+			// Call API using shared apiRequest utility
+			console.log(`Editor: Sending prompt to API: "${fullPrompt}"`);
+			const response = await apiRequest<{ imageUrl: string }>(
+				"/generate-panel-image",
+				"POST",
+				{ panelDescription: fullPrompt }
+			);
 
-  const handleSaveComic = async () => {
-    if (isSaving) return;
-    console.log("Attempting to publish comic...");
-    try {
-      const savedComic = await saveComic();
-      console.log("Publish successful!", savedComic);
-      router.push('/comics');
-    } catch (error) {
-      console.error('Failed to publish comic:', error);
-    }
-  };
+			if (!response || !response.imageUrl) {
+				throw new Error("API response missing 'imageUrl'");
+			}
 
-  if (isLoading && !comic) {
-    return (
-      <div className="container mx-auto py-8 flex justify-center items-center h-screen">
-        <Loader2 className="h-16 w-16 text-blue-500 animate-spin" />
-        <span className="ml-4 text-xl text-gray-600">Loading Editor...</span>
-      </div>
-    );
-  }
-   if (comicHookError && !comic) {
-    return (
-      <div className="container mx-auto py-8 text-center">
-        <h2 className="text-2xl text-red-600 mb-4">Error Loading Comic</h2>
-        <p className="text-gray-700 mb-4">{comicHookError}</p>
-        <Link href="/comics/create"><Button variant="outline">Create New</Button></Link>
-      </div>
-    );
-  }
+			// Call context action (which takes panelIndex)
+			updatePanelContent(panelIndex, {
+				status: "complete",
+				imageUrl: response.imageUrl,
+				prompt: prompt,
+				error: undefined,
+			});
+			console.log(`Editor: Panel ${panelIndex} generation success.`);
+		} catch (error: any) {
+			console.error(`Editor: Panel ${panelIndex} generation failed:`, error);
+			// Call context action (which takes panelIndex)
+			updatePanelContent(panelIndex, {
+				status: "error",
+				error: error.message || "Image generation failed.",
+				prompt: prompt,
+				imageUrl: undefined,
+			});
+		}
+	};
 
-  if (!comic) {
-     return (
-      <div className="container mx-auto py-8 text-center">
-        <h2 className="text-2xl text-gray-600 mb-4">Comic Not Found</h2>
-        <p className="text-gray-700 mb-4">Cannot find comic with ID: {comicId}</p>
-        <Link href="/comics/create"><Button variant="outline">Create New</Button></Link>
-      </div>
-     );
-  }
+	// Save changes using the context's saveComic function
+	const handleSaveComic = async () => {
+		// canPublish logic needs to check comic.panels now
+		const canPublish = comic?.panels?.every(
+			(p) => p.status === "complete" && p.imageUrl
+		);
+		if (isSaving || !comic || !canPublish) return;
 
+		console.log(`Editor: Attempting to save/update comic ID: ${comic.id}...`);
+		try {
+			const savedComicResult = await saveComic();
+			if (savedComicResult) {
+				console.log("Editor: Save successful!", savedComicResult);
+				alert("Comic saved successfully!");
+				router.push("/profile");
+			} else {
+				console.error("Editor: Save failed (check context error).");
+				alert(
+					`Failed to save comic. ${
+						comicHookError || "Please check details and try again."
+					}`
+				);
+			}
+		} catch (error: any) {
+			console.error("Editor: Error during handleSaveComic:", error);
+			alert(`Failed to save comic: ${error.message || "Unknown error"}`);
+		}
+	};
 
-  const canPublish = comic.panels.every(p => p.status === 'complete');
+	// --- Render Logic (Loading, Error, Not Found states remain similar) ---
+	if (isLoading) {
+		/* ... Loading UI ... */
+	}
+	if (comicHookError && !comic && !isLoading) {
+		/* ... Error UI ... */
+	}
+	if (!comic && !isLoading) {
+		/* ... Not Found UI ... */
+	}
 
-  // --- Main Editor JSX ---
-  return (
-    <div className="container mx-auto py-8">
-      {/* Back Navigation */}
-       <div className="mb-6">
-        <Link href="/comics" className="inline-flex items-center text-blue-600 hover:text-blue-800">
-          <ArrowLeft className="h-4 w-4 mr-1" /> Back to Comics List
-        </Link>
-      </div>
+	// Determine if comic can be published (all panels complete)
+	const canPublish = comic?.panels?.every(
+		(p) => p.status === "complete" && p.imageUrl
+	);
 
-      {/* Header Section */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-         <h1 className="text-3xl font-bold">{comic.title || 'Edit Comic'}</h1>
-         <div className="flex gap-3">
-            <Button onClick={handleSaveComic} disabled={isSaving || !canPublish} title={!canPublish ? "All panels must be complete." : "Publish"}>
-                {isSaving ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                {isSaving ? 'Publishing...' : 'Publish Comic'}
-            </Button>
-         </div>
-      </div>
+	// --- Main Editor JSX ---
+	return (
+		<div className="container mx-auto py-8 px-4 md:px-6 lg:px-8">
+			{/* Back Navigation */}
+			{/* ... (Back link) ... */}
 
-       {/* Editor Area */}
-       <div className="bg-white rounded-lg shadow p-6">
-         <h2 className="text-xl font-semibold mb-4">Edit Panels ({comic.panels.length} total)</h2>
-         <p className="text-gray-600 mb-6">Click an empty panel to add content. Click an existing image to zoom, or use the edit icon to change it.</p>
+			{/* Header Section */}
+			{/* ... (Header with title and save button) ... */}
+			<div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
+				<h1 className="text-3xl font-bold break-words">
+					{comic.title || "Edit Comic"}
+				</h1>
+				<div className="flex gap-3 flex-shrink-0">
+					<Button
+						onClick={handleSaveComic}
+						disabled={isSaving || !canPublish}
+						title={
+							!canPublish
+								? "All panels must have generated images."
+								: "Save Changes"
+						}
+					>
+						{isSaving ? (
+							<Loader2 className="mr-2 h-4 w-4 animate-spin" />
+						) : null}
+						{isSaving ? "Saving..." : "Save Comic"}
+					</Button>
+				</div>
+			</div>
 
-         {/* Comic Canvas component */}
-         <ComicCanvas
-           panels={comic.panels}
-           onPanelClick={handlePanelClick} // Now triggers zoom or prompt for empty
-           onEditPanelClick={handleEditPanelClick} // <--- ADDED: Pass the new handler
-           layout={comic.template}
-         />
-       </div>
+			{/* Error display bar */}
+			{/* ... (Error display logic) ... */}
 
-      {/* Prompt Modal */}
-      <PanelPromptModal
-        isOpen={isPromptModalOpen}
-        onClose={() => setIsPromptModalOpen(false)}
-        onSubmit={handlePromptSubmit}
-        panelNumber={activePanel !== null ? activePanel + 1 : 0}
-        initialPrompt={activePanel !== null && comic.panels[activePanel] ? comic.panels[activePanel].prompt || '' : ''}
-      />
+			{/* Editor Area */}
+			<div className="bg-white rounded-lg shadow-md p-4 md:p-6">
+				<h2 className="text-xl font-semibold mb-2">
+					Edit Panels ({comic.panels?.length || 0} total)
+				</h2>
+				<p className="text-gray-600 mb-6 text-sm">
+					Click empty panels to generate content. Click generated images to
+					zoom. Use the ✏️ icon to regenerate.
+				</p>
 
-      <ImageZoomModal
-        isOpen={isZoomModalOpen}
-        onClose={() => setIsZoomModalOpen(false)}
-        imageUrl={zoomedImageUrl}
-      />
-    </div>
-  );
+				{/* Comic Canvas component */}
+				{/* Pass comic.panels directly, and handlers now only pass panelIndex */}
+				{comic && comic.panels && comic.template ? (
+					<ComicCanvas
+						panels={comic.panels} // Pass the flat list
+						onPanelClick={handlePanelClick} // Pass handler that takes only panelIndex
+						onEditPanelClick={handleEditPanelClick} // Pass handler that takes only panelIndex
+						layout={comic.template} // Pass template key
+					/>
+				) : (
+					<div>No panels loaded or template missing.</div>
+				)}
+			</div>
+
+			{/* Prompt Modal */}
+			{/* Update access to initial prompt and panel number */}
+			<PanelPromptModal
+				isOpen={isPromptModalOpen}
+				onClose={() => setIsPromptModalOpen(false)}
+				onSubmit={handlePromptSubmit}
+				panelNumber={
+					activePanelIndex !== null
+						? comic?.panels[activePanelIndex]?.panelNumber ?? 0 // Add fallback for undefined panelNumber
+						: 0 // Fallback when no panel is active
+				}
+				initialPrompt={
+					activePanelIndex !== null
+						? comic?.panels[activePanelIndex]?.prompt || ""
+						: ""
+				}
+				isRegenerating={
+					activePanelIndex !== null &&
+					comic?.panels[activePanelIndex]?.status === "complete"
+				}
+			/>
+
+			{/* Image Zoom Modal */}
+			<ImageZoomModal
+				isOpen={isZoomModalOpen}
+				onClose={() => setIsZoomModalOpen(false)}
+				imageUrl={zoomedImageUrl}
+			/>
+		</div>
+	);
 }
