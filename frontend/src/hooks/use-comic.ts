@@ -80,8 +80,8 @@ interface FullComicDataFromBackend {
 	title: string;
 	description?: string;
 	genre?: string; // Added genre
-	characters?: any; // Assuming JSON string or object array from backend
-	setting?: any; // Assuming object or JSON string
+	characters?: unknown; // Assuming JSON string or object array from backend
+	setting?: unknown; // Assuming object or JSON string
 	template?: string; // Ideally, backend stores and returns the template key
 	pages: {
 		// Assuming backend returns pages structure
@@ -193,9 +193,11 @@ export function useComic(
 				published: false, // Determine published status if backend provides it
 			});
 			console.log(`Hook: Comic ${comicId} loaded successfully.`);
-		} catch (err: any) {
+		} catch (err: unknown) {
 			console.error("Hook: Failed to load comic:", err);
-			setError(err.message || "Failed to load comic data.");
+			setError(
+				err instanceof Error ? err.message : "Failed to load comic data."
+			);
 		} finally {
 			setIsLoading(false);
 		}
@@ -354,11 +356,8 @@ export function useComic(
 					.map((panel, index) => ({
 						panelNumber: panel.panelNumber ?? index + 1,
 						prompt: panel.prompt || "",
-						// dialogue: panel.dialogue || '', // Add if storing dialogue
 						layoutPosition: panel.layoutPosition || {},
-						// CRITICAL: Send the most recent URL (temp preferred, fallback to existing)
 						generatedImageUrl: panel.generatedImageUrl || panel.imageUrl || "",
-						// Note: Backend should ideally handle panel_id persistence if needed
 					})),
 			},
 		];
@@ -419,16 +418,20 @@ export function useComic(
 			// Clear temporary generatedImageUrls after successful save? Optional.
 			// setComic(prev => ({...prev!, panels: prev!.panels.map(p => ({...p, generatedImageUrl: undefined}))}))
 			return finalComicData; // Return the final state
-		} catch (err: any) {
+		} catch (err: unknown) {
 			console.error("Hook: Failed to save comic:", err);
-			setError(err.message || "An unknown error occurred during save.");
+
+			const errorMsg =
+				err instanceof Error
+					? err.message
+					: "An unknown error occurred during save.";
+			setError(errorMsg);
 			setIsSaving(false);
 			// Don't re-throw here, let components check the error state
 			return undefined; // Indicate save failed
 		}
 	}, [comic]); // Dependency: entire comic object
 
-	// Return hook state and actions
 	return {
 		comic,
 		isLoading,

@@ -120,12 +120,13 @@ export default function ComicEditorPage() {
 				error: undefined,
 			});
 			console.log(`Editor: Panel ${panelIndex} generation success.`);
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error(`Editor: Panel ${panelIndex} generation failed:`, error);
 			// Call context action (which takes panelIndex)
 			updatePanelContent(panelIndex, {
 				status: "error",
-				error: error.message || "Image generation failed.",
+				error:
+					error instanceof Error ? error.message : "Image generation failed.",
 				prompt: prompt,
 				imageUrl: undefined,
 			});
@@ -155,9 +156,13 @@ export default function ComicEditorPage() {
 					}`
 				);
 			}
-		} catch (error: any) {
+		} catch (error: unknown) {
 			console.error("Editor: Error during handleSaveComic:", error);
-			alert(`Failed to save comic: ${error.message || "Unknown error"}`);
+			alert(
+				`Failed to save comic: ${
+					error instanceof Error ? error.message : "Unknown error"
+				}`
+			);
 		}
 	};
 
