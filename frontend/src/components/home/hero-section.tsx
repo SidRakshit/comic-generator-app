@@ -1,14 +1,13 @@
 // src/components/home/hero-section.tsx
-"use client"; // Add this if not already present
+"use client";
 
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
-import { useAuth } from "@/hooks/use-auth"; // Import the useAuth hook
-import { Loader2 } from "lucide-react"; // Import Loader icon
+import { useAuth } from "@/hooks/use-auth"; // Use the custom hook from the correct file
+import { Loader2 } from "lucide-react";
 
 export default function HeroSection() {
-	// Get auth state using the hook
-	const { user, isLoading } = useAuth(); // Assuming useAuth provides user and isLoading
+	const { user, isLoading } = useAuth();
 
 	return (
 		<section className="bg-gradient-to-b from-blue-600 to-blue-800 text-white py-16">
@@ -22,38 +21,38 @@ export default function HeroSection() {
 						creation platform. No artistic skills required!
 					</p>
 					<div className="flex flex-wrap justify-center gap-4">
-						{/* --- Conditional Rendering for the Create Button --- */}
+						{/* --- Modified Conditional Rendering --- */}
 						{isLoading ? (
-							// 1. Loading State: Show a disabled button with spinner
+							// Loading State: Show disabled button
 							<Button
 								size="lg"
 								disabled
-								className="bg-white text-blue-700 opacity-75 cursor-wait" // Style as disabled/loading
+								className="bg-white text-blue-700 opacity-75 cursor-wait"
 							>
 								<Loader2 className="mr-2 h-5 w-5 animate-spin" />
 								Loading...
 							</Button>
 						) : user ? (
-							// 2. Logged In State: Show the original button linking to create page
+							// Logged In State: Link to create page
 							<Button
 								size="lg"
-								asChild // Use asChild to make the button a link wrapper
+								asChild
 								className="bg-white text-blue-700 hover:bg-gray-100"
 							>
 								<Link href="/comics/create">Create Your First Comic</Link>
 							</Button>
 						) : (
-							// 3. Logged Out State: Show a disabled button with tooltip
+							// Logged Out State: Link to login page
 							<Button
 								size="lg"
-								disabled // Semantically disable the button
-								className="bg-white text-blue-700 opacity-50 cursor-not-allowed" // Visually indicate disabled state
-								title="Please login or sign up to create comics" // Add tooltip for explanation
+								asChild // Use asChild to make the button a link wrapper
+								className="bg-white text-blue-700 hover:bg-gray-100" // Use normal active styles
+								title="Login required to create comics" // Optional tooltip
 							>
-								Create Your First Comic
+								<Link href="/login">Create Your First Comic</Link>
 							</Button>
 						)}
-						{/* --- End of Conditional Rendering --- */}
+						{/* --- End Modified Conditional Rendering --- */}
 
 						{/* Browse Comics Button (remains unchanged) */}
 						<Button
