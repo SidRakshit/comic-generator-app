@@ -7,7 +7,7 @@ import Image from "next/image";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Button } from "@/components/ui/button";
 import { apiRequest } from "@/lib/api";
-import { useAuthContext } from "@/context/auth-context"; // Import your Auth context hook
+import { useAuth } from "@/context/auth-context"; // Import your Auth context hook
 import {
 	User,
 	Edit,
@@ -76,24 +76,35 @@ export default function ProfilePage() {
 	);
 
 	// Get auth state from context
-	const { isAuthenticated, isLoadingAuth, user } = useAuthContext(); // Assuming context provides user info too
+	const {
+		user,
+		isLoading: isLoadingAuth,
+		attributes,
+		error: authError,
+	} = useAuth();
+	const isAuthenticated = !!user && !isLoadingAuth;
 
 	// Update profile data from context once auth loads (optional)
 	useEffect(() => {
 		if (!isLoadingAuth && isAuthenticated && user) {
-			// Example: Update username/email from context if available
 			setProfileData((prev) => ({
 				...prev,
-				username: user.username || prev.username, // Adjust based on your user object properties
-				email: user.attributes?.email || prev.email, // Adjust based on your user object properties
-				name: user.attributes?.name || prev.name, // Adjust
-				// You might fetch the full profile (bio, stats etc.) from your own backend here
+				// Basic info from user object
+				username: user.username || prev.username,
+				// Details from attributes object (use optional chaining)
+				email: attributes?.email || prev.email, // <-- Access directly
+				name: attributes?.name || prev.name, // <-- Access directly
+				// Add others like given_name, family_name if needed
+				// joinDate: attributes?.updated_at ? formatDate(attributes.updated_at) : '', // Example
 			}));
 		} else if (!isLoadingAuth && !isAuthenticated) {
-			// Reset to default if user logs out while on page?
 			setProfileData(initialUserData);
 		}
-	}, [isLoadingAuth, isAuthenticated, user]);
+		if (authError) {
+			console.error("Authentication Error:", authError);
+			// Update error state if needed: setErrorLoadingComics(...)
+		}
+	}, [isLoadingAuth, isAuthenticated, user, attributes, authError]);
 
 	// Fetch user's comics, dependent on auth state
 	useEffect(() => {
