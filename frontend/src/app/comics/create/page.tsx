@@ -1,204 +1,107 @@
 // src/app/comics/create/page.tsx
-'use client';
+"use client";
 
-import { useRouter } from 'next/navigation';
-import TemplateSelector from '@/components/comic/template-selector';
-import { useState, ChangeEvent } from 'react';
-import { Button } from '@/components/ui/button';
-import { Loader2, Plus, Trash2 } from 'lucide-react';
-import { useComicContext } from '@/context/comic-context';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Textarea } from '@/components/ui/textarea';
+import { useRouter } from "next/navigation";
+import { useState, ChangeEvent } from "react"; // Keep useState, ChangeEvent
+// Remove Button, Loader2, Plus, Trash2, Input, Label, Textarea if not used directly
+// Keep useComicContext
+import { useComicContext } from "@/context/comic-context";
+// Remove TemplateSelector import
+
+// Import the new components
+import ComicMetadataForm from "@/components/comic/comic-metadata-form";
+import ComicTemplateStep from "@/components/comic/comic-template-step";
 
 export default function CreateComicPage() {
-  const router = useRouter();
-  const [step, setStep] = useState<'metadata' | 'template'>('metadata');
-  const {
-    comic,
-    setTemplate,
-    updateComicMetadata,
-    addCharacter,
-    removeCharacter,
-    updateCharacter,
-} = useComicContext();
+	const router = useRouter();
+	const [step, setStep] = useState<"metadata" | "template">("metadata");
+	const {
+		comic,
+		setTemplate,
+		updateComicMetadata,
+		addCharacter,
+		removeCharacter,
+		updateCharacter,
+	} = useComicContext();
 
-  const [isNavigating, setIsNavigating] = useState(false);
-  // --- Handlers ---
-  const handleMetadataChange = (
-      e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement> // Added Select
-  ) => {
-      updateComicMetadata({ [e.target.name]: e.target.value });
-  };
+	const [isNavigating, setIsNavigating] = useState(false);
 
-  const handleCharacterChange = (
-      id: string,
-      field: 'name' | 'description',
-      value: string
-  ) => {
-      updateCharacter(id, field, value);
-  };
+	// --- Handlers (Keep these here as they interact with context/routing) ---
+	const handleMetadataChange = (
+		e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement> // Removed Select unless needed
+	) => {
+		updateComicMetadata({ [e.target.name]: e.target.value });
+	};
 
-  const goToNextStep = () => {
-      if (!comic.title) {
-          alert("Please enter a title for the comic.");
-          return;
-      }
-      setStep('template');
-  };
+	const handleCharacterChange = (
+		id: string,
+		field: "name" | "description",
+		value: string
+	) => {
+		updateCharacter(id, field, value);
+	};
 
-  const goToPreviousStep = () => {
-      setStep('metadata');
-  };
+	const goToNextStep = () => {
+		if (!comic.title) {
+			// Consider using a more user-friendly notification than alert
+			alert("Please enter a title for the comic.");
+			return;
+		}
+		setStep("template");
+	};
 
-  const handleTemplateSelect = (templateId: string) => {
-    if (isNavigating) return;
-    console.log(`Template selected: ${templateId}`);
+	const goToPreviousStep = () => {
+		setStep("metadata");
+	};
 
-    setTemplate(templateId);
+	const handleTemplateSelect = (templateId: string) => {
+		if (isNavigating) return;
+		console.log(`Template selected: ${templateId}`);
 
-    setIsNavigating(true);
-    try {
-      const editorUrl = `/comics/editor`;
-      console.log(`Navigating to new comic editor: ${editorUrl}`);
-      router.push(editorUrl);
-    } catch (err) {
-      console.error("Failed to navigate:", err);
-      setIsNavigating(false);
-    }
-  };
+		setTemplate(templateId); // Update context
 
-  return (
-    <div className="container mx-auto py-8">
-      <div className="flex justify-between items-center mb-6">
-        <h1 className="text-3xl font-bold">Create New Comic</h1>
-      </div>
+		setIsNavigating(true);
+		try {
+			const editorUrl = `/comics/editor`; // Navigate to the editor page
+			console.log(`Navigating to editor: ${editorUrl}`);
+			router.push(editorUrl);
+			// Navigation will unmount this component or trigger layout change
+			// No need to setIsNavigating(false) here unless navigation fails quickly
+		} catch (err) {
+			console.error("Failed to navigate:", err);
+			setIsNavigating(false); // Reset if navigation throws error immediately
+			// Add user feedback for navigation failure
+		}
+	};
 
-      <div className="bg-white rounded-lg shadow p-6">
+	return (
+		<div className="container mx-auto py-8">
+			{/* Keep the main page title */}
+			<div className="flex justify-between items-center mb-6">
+				<h1 className="text-3xl font-bold text-gray-900">Create New Comic</h1>
+			</div>
 
-        {step === 'metadata' && (
-          <div>
-            <h2 className="text-xl font-semibold mb-4">1. Enter Comic Details</h2>
-            <div className="space-y-4">
-              {/* Title */}
-              <div>
-                <Label htmlFor="title">Title</Label>
-                <Input
-                  id="title"
-                  name="title"
-                  value={comic.title}
-                  onChange={handleMetadataChange}
-                  placeholder="Your Awesome Comic Title"
-                  required
-                />
-              </div>
-              {/* Genre */}
-              <div>
-                <Label htmlFor="genre">Genre (Optional)</Label>
-                <Input
-                  id="genre"
-                  name="genre"
-                  value={comic.genre || ''}
-                  onChange={handleMetadataChange}
-                  placeholder="e.g., Superhero, Sci-Fi, Slice of Life"
-                />
-              </div>
-              {/* Description */}
-               <div>
-                <Label htmlFor="description">Description (Optional)</Label>
-                <Textarea
-                  id="description"
-                  name="description"
-                  value={comic.description || ''}
-                  onChange={handleMetadataChange}
-                  placeholder="Brief description of your comic"
-                />
-              </div>
+			{/* Render steps conditionally within the card */}
+			<div className="bg-white rounded-lg shadow p-6">
+				{step === "metadata" && (
+					<ComicMetadataForm
+						comic={comic}
+						onMetadataChange={handleMetadataChange}
+						onCharacterChange={handleCharacterChange}
+						onAddCharacter={addCharacter}
+						onRemoveCharacter={removeCharacter}
+						onNextStep={goToNextStep}
+					/>
+				)}
 
-              {/* Characters */}
-              <div>
-                 <h3 className="text-lg font-semibold mb-2 border-t pt-4">Characters</h3>
-                 {comic.characters?.map((char, index) => (
-                     <div key={char.id} className="p-3 border rounded mb-3 space-y-2 relative bg-gray-50">
-                         <Label className="font-medium">Character {index + 1}</Label>
-                         <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
-                              <div>
-                                 <Label htmlFor={`char-name-${char.id}`} className="text-sm">Name</Label>
-                                 <Input
-                                     id={`char-name-${char.id}`}
-                                     value={char.name}
-                                     onChange={(e) => handleCharacterChange(char.id, 'name', e.target.value)}
-                                     placeholder="Character Name"
-                                 />
-                             </div>
-                              <div>
-                                 <Label htmlFor={`char-desc-${char.id}`} className="text-sm">Description</Label>
-                                 <Input
-                                     id={`char-desc-${char.id}`}
-                                     value={char.description}
-                                     onChange={(e) => handleCharacterChange(char.id, 'description', e.target.value)}
-                                     placeholder="Brief description (e.g., appearance, role)"
-                                 />
-                             </div>
-                         </div>
-                         {/* Remove Button - only show if more than 1 character */}
-                         {(comic.characters?.length ?? 0) > 1 && (
-                             <Button
-                                 type="button"
-                                 variant="ghost"
-                                 size="icon"
-                                 className="absolute top-1 right-1 h-6 w-6 text-red-500 hover:text-red-700"
-                                 onClick={() => removeCharacter(char.id)}
-                                 aria-label="Remove Character"
-                             >
-                                 <Trash2 className="h-4 w-4" />
-                             </Button>
-                         )}
-                     </div>
-                 ))}
-                 {/* Add Character Button */}
-                 <Button type="button" variant="outline" size="sm" onClick={addCharacter} className="mt-2">
-                     <Plus className="h-4 w-4 mr-1" /> Add Character
-                 </Button>
-              </div>
-
-            </div>
-            {/* Navigation Button */}
-            <div className="mt-6 text-right">
-              <Button onClick={goToNextStep}>Next: Choose Template</Button>
-            </div>
-          </div>
-        )}
-
-        {step === 'template' && (
-           <div>
-             <h2 className="text-xl font-semibold mb-4">2. Choose a Template</h2>
-             <p className="text-gray-600 mb-6">Select a layout to begin.</p>
-
-             {/* TemplateSelector component */}
-             <TemplateSelector
-                 onSelect={handleTemplateSelect}
-                 disabled={isNavigating}
-             />
-
-             {/* Loading indicator */}
-             {isNavigating && (
-                 <div className="mt-4 flex justify-center items-center text-gray-500">
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                     Loading editor...
-                 </div>
-             )}
-
-             {/* Navigation Buttons */}
-              <div className="mt-6 flex justify-between">
-                 <Button variant="outline" onClick={goToPreviousStep} disabled={isNavigating}>
-                     Back to Details
-                 </Button>
-             </div>
-           </div>
-        )}
-
-      </div>
-    </div>
-  );
+				{step === "template" && (
+					<ComicTemplateStep
+						onSelectTemplate={handleTemplateSelect}
+						onGoBack={goToPreviousStep}
+						isNavigating={isNavigating}
+					/>
+				)}
+			</div>
+		</div>
+	);
 }
