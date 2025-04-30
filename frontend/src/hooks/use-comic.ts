@@ -137,6 +137,13 @@ export function useComic(
 				`/comics/${comicId}`,
 				"GET"
 			);
+			console.log("Raw backend data received:", JSON.stringify(data, null, 2));
+			if (data.pages && data.pages[0] && data.pages[0].panels) {
+				console.log(
+					"Panel Image URLs received:",
+					data.pages[0].panels.map((p) => p.image_url)
+				);
+			}
 
 			// Map the backend data structure to the frontend Comic state
 			// ** CRITICAL: Adjust mapping based on your actual backend response **
