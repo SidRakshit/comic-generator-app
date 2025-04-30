@@ -144,7 +144,7 @@ export default function Navbar() {
 		} else {
 			return (
 				<Link
-					href="/login"
+					href="/signup"
 					onClick={closeMobileMenu}
 					className={isMobile ? mobileInactiveClasses : desktopInactiveClasses}
 					title="Login to create comics"
@@ -175,10 +175,10 @@ export default function Navbar() {
 								{" "}
 								<Home className="h-4 w-4 mr-1" /> Home{" "}
 							</Link>
-							<Link href="/comics" className={desktopInactiveClasses}>
+							{/* <Link href="/comics" className={desktopInactiveClasses}>
 								{" "}
 								<BookOpen className="h-4 w-4 mr-1" /> Browse{" "}
-							</Link>
+							</Link> */}
 							{/* Render dynamic Create link */}
 							{renderCreateLink(false)}
 						</div>
@@ -226,14 +226,14 @@ export default function Navbar() {
 						{" "}
 						<Home className="inline-block h-4 w-4 mr-1" /> Home{" "}
 					</Link>
-					<Link
+					{/* <Link
 						href="/comics"
 						onClick={closeMobileMenu}
 						className={mobileInactiveClasses}
 					>
 						{" "}
 						<BookOpen className="inline-block h-4 w-4 mr-1" /> Browse{" "}
-					</Link>
+					</Link> */}
 					{/* Render dynamic Create link */}
 					{renderCreateLink(true)}
 				</div>

@@ -49,20 +49,20 @@ export default function HeroSection() {
 								className="bg-white text-blue-700 hover:bg-gray-100" // Use normal active styles
 								title="Login required to create comics" // Optional tooltip
 							>
-								<Link href="/login">Create Your First Comic</Link>
+								<Link href="/signup">Create Your First Comic</Link>
 							</Button>
 						)}
 						{/* --- End Modified Conditional Rendering --- */}
 
 						{/* Browse Comics Button (remains unchanged) */}
-						<Button
+						{/* <Button
 							size="lg"
 							variant="outline"
 							asChild
 							className="border-white text-white hover:bg-blue-700"
 						>
 							<Link href="/comics"> Browse Comics </Link>
-						</Button>
+						</Button> */}
 					</div>
 				</div>
 			</div>
