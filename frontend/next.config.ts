@@ -1,15 +1,18 @@
 // next.config.js Example
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // ... other config
-  images: {
-    remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: 'oaidalleapiprodscus.blob.core.windows.net',
-      },
-      // Add any other external domains you use
-    ],
-  },
+	images: {
+		remotePatterns: [
+			{
+				protocol: "https",
+				hostname: "oaidalleapiprodscus.blob.core.windows.net",
+			},
+			{
+				protocol: "https",
+				hostname: "comic-gen-image-prod-us-east-1.s3.us-east-1.amazonaws.com",
+			},
+			// Add any other external domains you use
+		],
+	},
 };
 module.exports = nextConfig;

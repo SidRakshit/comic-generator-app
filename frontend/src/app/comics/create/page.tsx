@@ -1,18 +1,15 @@
 // src/app/comics/create/page.tsx
-// UPDATED: Multi-step form for metadata and template selection.
-
 'use client';
 
 import { useRouter } from 'next/navigation';
 import TemplateSelector from '@/components/comic/template-selector';
-import { useState, ChangeEvent } from 'react'; // Import ChangeEvent
+import { useState, ChangeEvent } from 'react';
 import { Button } from '@/components/ui/button';
 import { Loader2, Plus, Trash2 } from 'lucide-react';
-// --- MODIFIED: Import useComic and character management functions ---
 import { useComicContext } from '@/context/comic-context';
-import { Input } from '@/components/ui/input'; // Assuming you have ShadCN UI Input
-import { Label } from '@/components/ui/label'; // Assuming you have ShadCN UI Label
-import { Textarea } from '@/components/ui/textarea'; // Assuming you have ShadCN UI Textarea
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { Textarea } from '@/components/ui/textarea';
 
 export default function CreateComicPage() {
   const router = useRouter();
