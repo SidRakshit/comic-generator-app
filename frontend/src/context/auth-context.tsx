@@ -223,7 +223,6 @@ export const AuthProvider: React.FC<{ children: ReactNode }> = ({
 			handleSignOut,
 		}),
 		// Disable the exhaustive-deps rule for this line
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[
 			user,
 			userId,
