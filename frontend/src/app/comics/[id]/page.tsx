@@ -217,7 +217,7 @@ export default function ComicEditorPage() {
 
 			{/* Editor Area */}
 			<div className="bg-white rounded-lg shadow-md p-4 md:p-6">
-				<h2 className="text-xl font-semibold mb-2">
+				<h2 className="text-xl font-semibold mb-2 text-gray-900">
 					Edit Panels ({comic.panels?.length || 0} total)
 				</h2>
 				<p className="text-gray-600 mb-6 text-sm">
