@@ -71,7 +71,7 @@ interface FullComicDataFromBackend {
 }
 
 // This now correctly inherits the proper 'pages' type
-interface SaveComicResponseFromBackend extends FullComicDataFromBackend {}
+type SaveComicResponseFromBackend = FullComicDataFromBackend;
 
 // --- Templates Definition ---
 export const templates: Record<string, TemplateDefinition> = {
