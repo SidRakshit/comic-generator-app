@@ -13,7 +13,10 @@ interface ComicContextType {
 	isSaving: boolean;
 	error: string | null;
 	setTemplate: (templateId: string | null) => void;
-	updatePanelContent: (panelIndex: number, updates: Partial<Panel>) => void;
+	updatePanelContent: (
+		panelIndex: number,
+		updates: Partial<Panel> & { imageData?: string }
+	) => void;
 	updateComicMetadata: (
 		updates: Partial<Omit<Comic, "panels" | "characters">>
 	) => void;
