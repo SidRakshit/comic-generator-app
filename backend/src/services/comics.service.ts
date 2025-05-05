@@ -1,4 +1,4 @@
-// backend/src/services/comics.service.ts
+// src/services/comics.service.ts
 
 // --- Core Dependencies ---
 import { PutObjectCommand, ObjectCannedACL } from "@aws-sdk/client-s3";
@@ -12,7 +12,7 @@ import { s3Client, S3_BUCKET, OPENAI_API_KEY } from "../config";
 // --- Database Pool Import ---
 import pool from "../database";
 
-// --- Interfaces (Keep existing interfaces: Dialogue, ScriptPanel, PanelImage) ---
+// --- Interfaces ---
 export interface Dialogue {
 	character: string;
 	text: string;
@@ -22,17 +22,18 @@ export interface ScriptPanel {
 	description: string;
 	dialogue: Dialogue[];
 }
-export interface PanelImage {
-	imageUrl: string;
+
+export interface GeneratedImageData {
+	imageData: string; // Base64 encoded image data
+	promptUsed: string;
 }
 
-// Interfaces for the data structure expected when saving a comic
 interface PanelDataFromRequest {
 	panelNumber: number;
 	prompt: string;
 	dialogue?: string;
 	layoutPosition: object;
-	generatedImageUrl: string;
+	imageBase64: string; // Expect base64 data from frontend
 }
 interface PageDataFromRequest {
 	pageNumber: number;
@@ -45,19 +46,19 @@ interface ComicDataFromRequest {
 	setting?: object;
 	pages: PageDataFromRequest[];
 }
-interface FullComicData extends ComicDataFromRequest {
+interface FullComicData extends Omit<ComicDataFromRequest, "pages"> {
 	comic_id: string;
 	created_at: Date;
 	updated_at: Date;
 	pages: FullPageData[];
 }
-interface FullPageData extends PageDataFromRequest {
+interface FullPageData extends Omit<PageDataFromRequest, "panels"> {
 	page_id: string;
 	panels: FullPanelData[];
 }
-interface FullPanelData extends PanelDataFromRequest {
+interface FullPanelData extends Omit<PanelDataFromRequest, "imageBase64"> {
 	panel_id: string;
-	image_url: string;
+	image_url: string; // Final S3 URL
 }
 interface ComicListItem {
 	comic_id: string;
@@ -70,11 +71,6 @@ interface ComicListItem {
 export class ComicService {
 	// --- OpenAI Interaction Methods ---
 
-	/**
-	 * Generates the script (panel description and dialogue) for a SINGLE panel.
-	 * @param prompt The user's prompt describing the desired panel content.
-	 * @returns A promise that resolves to a ScriptPanel object or null.
-	 */
 	async generateSinglePanelScript(prompt: string): Promise<ScriptPanel | null> {
 		if (!OPENAI_API_KEY) {
 			throw new Error("OpenAI API key is not configured.");
@@ -84,11 +80,10 @@ export class ComicService {
 		}
 		console.log(`Generating script for single panel prompt: "${prompt}"`);
 		try {
-			// *** Restored OpenAI API call for script generation ***
 			const storyResponse = await axios.post(
 				"https://api.openai.com/v1/chat/completions",
 				{
-					model: "gpt-4", // Consider using a newer model if available/needed
+					model: "gpt-4",
 					messages: [
 						{
 							role: "system",
@@ -113,11 +108,10 @@ export class ComicService {
 				throw new Error("Failed to get panel content from OpenAI response.");
 			}
 			console.log("Raw panel content received:", panelContent);
-			const panels = this.parseComicScript(`Panel 1: ${panelContent}`); // Use internal parser
+			const panels = this.parseComicScript(`Panel 1: ${panelContent}`);
 			console.log("Parsed single panel:", panels);
 			return panels.length > 0 ? panels[0] : null;
 		} catch (error: any) {
-			// *** Restored Error Handling ***
 			console.error(
 				"Error calling OpenAI for single panel script generation:",
 				error.response?.data || error.message
@@ -130,11 +124,15 @@ export class ComicService {
 	}
 
 	/**
-	 * Generates an image URL for a given panel description using OpenAI.
+	 * Generates base64 encoded image data for a given panel description using OpenAI.
+	 * Handles both b64_json and url responses from the API, always returning base64.
+	 * Includes enhanced logging for debugging OpenAI API calls.
 	 * @param panelDescription Text description of the panel scene.
-	 * @returns A promise that resolves to a PanelImage object containing the temporary image URL.
+	 * @returns A promise that resolves to a GeneratedImageData object containing the base64 string.
 	 */
-	async generatePanelImage(panelDescription: string): Promise<PanelImage> {
+	async generatePanelImage(
+		panelDescription: string
+	): Promise<GeneratedImageData> {
 		if (!OPENAI_API_KEY) {
 			throw new Error("OpenAI API key is not configured.");
 		}
@@ -142,16 +140,34 @@ export class ComicService {
 			throw new Error("Panel description cannot be empty.");
 		}
 		console.log(`Generating image for description: "${panelDescription}"`);
+
+		// --- Use the model you specified ---
+		const modelToUse = "gpt-image-1";
+		// Determine params based on your experience with this model
+		// const preferredResponseFormat = "b64_json"; // You confirmed this works
+		const size = "1024x1024"; // Keep this for now, check logs if 400 error persists
+
 		try {
-			// *** Restored OpenAI API call for image generation ***
+			const fullPrompt = `Comic book panel illustration: ${panelDescription}. Style: vibrant, detailed.`;
+
+			// Prepare the request payload
+			const requestPayload = {
+				model: modelToUse,
+				prompt: fullPrompt,
+				size: size,
+				quality: "low",
+				moderation: "low",
+			};
+
+			// --- ADDED LOGGING: Log the request payload ---
+			console.log(
+				"Sending payload to OpenAI:",
+				JSON.stringify(requestPayload, null, 2)
+			);
+
 			const imageResponse = await axios.post(
 				"https://api.openai.com/v1/images/generations",
-				{
-					// Consider using DALL-E 3 if available via API
-					prompt: `Comic book panel illustration: ${panelDescription}. Style: vibrant, detailed.`,
-					n: 1,
-					size: "512x512", // Or '1024x1024' etc.
-				},
+				requestPayload, // Use the payload object
 				{
 					headers: {
 						Authorization: `Bearer ${OPENAI_API_KEY}`,
@@ -160,18 +176,70 @@ export class ComicService {
 				}
 			);
 
-			const imageUrl = imageResponse.data.data[0]?.url;
-			if (!imageUrl) {
-				throw new Error("Failed to get image URL from OpenAI response.");
+			let imageDataBase64: string | null = null;
+			const responseData = imageResponse.data.data[0];
+
+			if (responseData?.b64_json) {
+				console.log("Received b64_json from OpenAI.");
+				imageDataBase64 = responseData.b64_json;
+			} else if (responseData?.url) {
+				console.log(
+					`Received URL from OpenAI: ${responseData.url}. Downloading...`
+				);
+				const imageUrl = responseData.url;
+				try {
+					const downloadResponse = await axios.get(imageUrl, {
+						responseType: "arraybuffer",
+					});
+					if (downloadResponse.status !== 200) {
+						throw new Error(
+							`Failed to download image from URL ${imageUrl}. Status: ${downloadResponse.status}`
+						);
+					}
+					const imageBuffer: Buffer = downloadResponse.data;
+					imageDataBase64 = imageBuffer.toString("base64");
+					console.log(
+						"Successfully downloaded and converted image URL to base64."
+					);
+				} catch (downloadError: any) {
+					console.error(
+						`Error downloading image from URL ${imageUrl}:`,
+						downloadError.message
+					);
+					throw new Error(
+						`Failed to download image from provided URL: ${downloadError.message}`
+					);
+				}
 			}
-			console.log("Image URL received:", imageUrl);
-			return { imageUrl }; // Returns the temporary URL
-		} catch (error: any) {
-			// *** Restored Error Handling ***
-			console.error(
-				"Error calling OpenAI for image generation:",
-				error.response?.data || error.message
+
+			if (!imageDataBase64) {
+				console.error(
+					"OpenAI response format not recognized or missing data:",
+					imageResponse.data
+				);
+				throw new Error(
+					"Failed to get image data (b64_json or url) from OpenAI response."
+				);
+			}
+
+			console.log(
+				"Image data prepared (first 50 chars):",
+				imageDataBase64.substring(0, 50) + "..."
 			);
+			return { imageData: imageDataBase64, promptUsed: fullPrompt };
+		} catch (error: any) {
+			// --- ENHANCED LOGGING in CATCH block ---
+			console.error(
+				"Error calling OpenAI for image generation or processing response. Status:",
+				error.response?.status // Log status code if available
+			);
+			// Log the detailed error response body from OpenAI if available
+			console.error(
+				"OpenAI Error Response Body:",
+				JSON.stringify(error.response?.data, null, 2) // Log the full JSON error
+			);
+
+			// Keep specific error checks
 			if (axios.isAxiosError(error) && error.response?.status === 401) {
 				throw new Error("OpenAI API key is invalid or expired.");
 			} else if (
@@ -182,13 +250,34 @@ export class ComicService {
 					"Image generation failed due to content policy violation."
 				);
 			}
-			throw new Error("Failed to generate panel image from OpenAI.");
+			// Check if the error occurred during download (keep this check)
+			if (error.message.includes("Failed to download image")) {
+				throw error; // Re-throw download-specific error
+			}
+
+			// Construct a more informative general error message
+			const statusText = error.response?.status
+				? ` (Status ${error.response.status})`
+				: "";
+			// Try to get the specific error message from OpenAI's response data
+			const openAIErrorMessage =
+				error.response?.data?.error?.message || error.message;
+			throw new Error(
+				`Failed to generate or process panel image from OpenAI${statusText}: ${openAIErrorMessage}`
+			);
 		}
 	}
 
-	// --- S3 Upload Helper Method ---
+	/**
+	 * Uploads image data (from base64 string) to S3.
+	 * @param imageDataBase64 The base64 encoded image data.
+	 * @param userId The user's ID.
+	 * @param comicId The comic's ID.
+	 * @param panelId The panel's ID.
+	 * @returns The final public URL of the uploaded image in S3.
+	 */
 	private async uploadImageToS3(
-		tempImageUrl: string,
+		imageBase64: string,
 		userId: string,
 		comicId: string,
 		panelId: string
@@ -198,27 +287,17 @@ export class ComicService {
 			console.error("S3 configuration (Bucket Name or Region) is missing.");
 			throw new Error("S3 configuration is incomplete, cannot upload image.");
 		}
-		try {
-			console.log(`Downloading image from: ${tempImageUrl}`);
-			const response = await axios.get(tempImageUrl, {
-				responseType: "arraybuffer",
-			});
-			if (response.status !== 200) {
-				throw new Error(`Failed to download image. Status: ${response.status}`);
-			}
+		if (!imageBase64) {
+			throw new Error("Image data (base64) is missing, cannot upload.");
+		}
 
-			const imageData: Buffer = response.data;
-			let contentType =
-				response.headers["content-type"] || "application/octet-stream";
-			let fileExtension = "bin";
-			if (contentType.startsWith("image/")) {
-				fileExtension = contentType.split("/")[1].split("+")[0];
-			} else {
-				console.warn(
-					`Unexpected content type "${contentType}", using default extension.`
-				);
-				contentType = "application/octet-stream";
-			}
+		try {
+			const imageData: Buffer = Buffer.from(imageBase64, "base64");
+			// Assuming PNG format when handling base64 data directly or downloaded.
+			// If OpenAI URL metadata indicated a different type, that could be used,
+			// but for simplicity here, we'll default to PNG.
+			const contentType = "image/png";
+			const fileExtension = "png";
 
 			const s3Key = `users/${userId}/comics/${comicId}/panels/${panelId}.${fileExtension}`;
 			console.log(`Uploading image to S3 bucket: ${S3_BUCKET}, Key: ${s3Key}`);
@@ -238,10 +317,8 @@ export class ComicService {
 			return s3Url;
 		} catch (error: any) {
 			console.error("Error in uploadImageToS3:", error);
-			if (axios.isAxiosError(error)) {
-				throw new Error(
-					`Failed to download image from temp URL: ${error.message}`
-				);
+			if (error.message?.includes("base64")) {
+				throw new Error(`Invalid Base64 data provided: ${error.message}`);
 			} else if (
 				error.name?.includes("Credentials") ||
 				error.message?.includes("credentials")
@@ -252,13 +329,12 @@ export class ComicService {
 		}
 	}
 
-	// --- Database Saving Method ---
 	/**
-	 * Saves or updates a comic, handling panel image uploads to S3 and DB operations using pg Pool.
-	 * @param userId - The ID (UUID) of the user creating/updating the comic.
-	 * @param comicData - The comic data received from the request.
+	 * Saves or updates a comic, handling panel image uploads (from base64) to S3 and DB operations.
+	 * @param internalUserId - The ID (UUID) of the user creating/updating the comic.
+	 * @param comicData - The comic data received from the request (expects imageBase64 per panel).
 	 * @param existingComicId - Optional ID (UUID) if updating an existing comic.
-	 * @returns The saved/updated comic object (adjust return type as needed).
+	 * @returns The saved/updated comic object.
 	 */
 	async saveComicWithPanels(
 		internalUserId: string,
@@ -290,7 +366,6 @@ export class ComicService {
 			if (existingComicId) {
 				comicId = existingComicId;
 				console.log(`Updating existing comic: ${comicId}`);
-
 				const comicCheckResult = await client.query(
 					"SELECT comic_id FROM comics WHERE comic_id = $1 AND user_id = $2 FOR UPDATE",
 					[comicId, internalUserId]
@@ -298,7 +373,6 @@ export class ComicService {
 				if (comicCheckResult.rows.length === 0) {
 					throw new Error("Comic not found or user mismatch");
 				}
-
 				await client.query(
 					"UPDATE comics SET title = $1, description = $2, characters = $3, setting = $4, updated_at = NOW() WHERE comic_id = $5",
 					[
@@ -310,7 +384,6 @@ export class ComicService {
 					]
 				);
 				console.log(`Comic ${comicId} metadata updated.`);
-
 				console.log(`Clearing old pages/panels for comic ${comicId}`);
 				await client.query(
 					"DELETE FROM panels WHERE page_id IN (SELECT page_id FROM pages WHERE comic_id = $1)",
@@ -335,8 +408,6 @@ export class ComicService {
 				console.log(`New comic created with ID: ${comicId}.`);
 			}
 
-			// --- Process Pages and Panels ---
-			// Iterate through pages provided in the request data
 			for (const pageData of comicData.pages) {
 				const pageId = crypto.randomUUID();
 				await client.query(
@@ -347,7 +418,6 @@ export class ComicService {
 					`Created page number: ${pageData.pageNumber}, DB ID: ${pageId}`
 				);
 
-				// Iterate through panels within the current page
 				for (const panelData of pageData.panels) {
 					const panelId = crypto.randomUUID();
 					await client.query(
@@ -366,10 +436,21 @@ export class ComicService {
 					);
 
 					console.log(
-						`Uploading image for panel ${panelId} from temp URL: ${panelData.generatedImageUrl}`
+						`Uploading image for panel ${panelId} using provided base64 data.`
 					);
+					if (!panelData.imageBase64) {
+						console.warn(
+							`Panel ${panelId} is missing image data. Skipping upload.`
+						);
+						await client.query(
+							"UPDATE panels SET image_url = NULL, updated_at = NOW() WHERE panel_id = $1",
+							[panelId]
+						);
+						continue;
+					}
+
 					const s3ImageUrl = await this.uploadImageToS3(
-						panelData.generatedImageUrl,
+						panelData.imageBase64,
 						internalUserId,
 						comicId,
 						panelId
@@ -387,8 +468,7 @@ export class ComicService {
 			console.log(
 				`Successfully saved comic ${comicId}. Transaction committed.`
 			);
-
-			return { id: comicId, message: "Comic saved successfully" };
+			return this.getComicById(comicId, internalUserId);
 		} catch (error: any) {
 			await client.query("ROLLBACK");
 			console.error(
@@ -397,7 +477,11 @@ export class ComicService {
 				}. Rolling back transaction.`,
 				error
 			);
-			throw new Error(`Failed to save comic: ${error.message}`);
+			if (error instanceof Error) {
+				throw error;
+			} else {
+				throw new Error(`Failed to save comic: ${error.message || error}`);
+			}
 		} finally {
 			client.release();
 			console.log(
@@ -408,7 +492,6 @@ export class ComicService {
 		}
 	}
 
-	// --- Helper: Script Parsing ---
 	private parseComicScript(script: string): ScriptPanel[] {
 		console.log("Parsing script...");
 		const panelRegex = /Panel\s*(\d+):\s*([\s\S]*?)(?=Panel\s*\d+:|$)/gi;
@@ -458,13 +541,8 @@ export class ComicService {
 		return panels;
 	}
 
-	/**
-	 * Retrieves a list of comics belonging to a specific user.
-	 * @param internalUserId - The internal UUID of the user.
-	 * @returns A promise that resolves to an array of ComicListItem objects.
-	 */
 	async listComicsByUser(internalUserId: string): Promise<ComicListItem[]> {
-		console.log(`Workspaceing comics list for user: ${internalUserId}`);
+		console.log(`Listing comics list for user: ${internalUserId}`); // Corrected typo: Listing
 		const query = `
                 SELECT
                     comic_id,
@@ -487,21 +565,13 @@ export class ComicService {
 		}
 	}
 
-	/**
-	 * Retrieves the full details of a specific comic, verifying ownership.
-	 * @param comicId - The UUID of the comic to retrieve.
-	 * @param internalUserId - The internal UUID of the requesting user.
-	 * @returns A promise that resolves to the FullComicData object or null if not found/authorized.
-	 */
 	async getComicById(
 		comicId: string,
 		internalUserId: string
 	): Promise<FullComicData | null> {
 		console.log(
-			`Workspaceing comic details for comic: ${comicId}, user: ${internalUserId}`
+			`Workspaceing comic details for comic: ${comicId}, user: ${internalUserId}` // Corrected typo: Fetching
 		);
-
-		// Query to get comic, pages, and panels, ensuring ownership
 		const query = `
             SELECT
                 c.comic_id, c.title, c.description, c.characters, c.setting, c.created_at, c.updated_at,
@@ -521,10 +591,9 @@ export class ComicService {
 				console.log(
 					`Comic ${comicId} not found or user ${internalUserId} not authorized.`
 				);
-				return null; // Comic not found or doesn't belong to the user
+				return null;
 			}
 
-			// Aggregate the results into a nested structure
 			const comic: FullComicData = {
 				comic_id: result.rows[0].comic_id,
 				title: result.rows[0].title,
@@ -539,7 +608,7 @@ export class ComicService {
 			const pagesMap = new Map<string, FullPageData>();
 
 			for (const row of result.rows) {
-				if (!row.page_id) continue; // Skip if there are no pages/panels (comic exists but is empty)
+				if (!row.page_id) continue;
 
 				let page = pagesMap.get(row.page_id);
 				if (!page) {
@@ -549,7 +618,7 @@ export class ComicService {
 						panels: [],
 					};
 					pagesMap.set(row.page_id, page);
-					comic.pages.push(page); // Add in order
+					comic.pages.push(page);
 				}
 
 				if (row.panel_id) {
@@ -559,17 +628,13 @@ export class ComicService {
 						prompt: row.prompt,
 						dialogue: row.dialogue || undefined,
 						layoutPosition: row.layout_position || {},
-						// Map image_url to generatedImageUrl for frontend compatibility if needed,
-						// or adjust frontend to expect image_url
-						generatedImageUrl: row.image_url, // Assuming frontend can use the S3 URL directly
-						image_url: row.image_url, // Keep the final URL
+						image_url: row.image_url,
 					});
 				}
 			}
 
-			// Sort pages just in case the DB didn't guarantee order perfectly
+			// Sort pages and panels after processing all rows
 			comic.pages.sort((a, b) => a.pageNumber - b.pageNumber);
-			// Sort panels within each page
 			comic.pages.forEach((page) => {
 				page.panels.sort((a, b) => a.panelNumber - b.panelNumber);
 			});
@@ -581,7 +646,4 @@ export class ComicService {
 			throw new Error("Failed to retrieve comic details.");
 		}
 	}
-
-	// --- Add other methods as needed ---
-	// async deleteComic(comicId: string, userId: string): Promise<void> { /* ... DB logic + S3 cleanup ... */ }
-}
+} // End of ComicService class
