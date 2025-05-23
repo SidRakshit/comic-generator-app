@@ -1,42 +1,79 @@
 worker_processes 1;
+
 events {
     worker_connections 1024;
 }
+
 http {
     include       /etc/nginx/mime.types;
     default_type  application/octet-stream;
     sendfile        on;
     keepalive_timeout  65;
-    client_max_body_size 50m;
-    
+    client_max_body_size 50m; # For handling larger file uploads if needed by your API
+
+    # Server block to redirect HTTP to HTTPS for main/www domains
+    # This is fine, though traffic for these domains should primarily hit Vercel.
     server {
         listen 80;
         server_name comiccreator.info www.comiccreator.info;
-        
-        # Redirect HTTP to HTTPS
         return 301 https://$host$request_uri;
     }
-    
+
+    # Server block for handling HTTPS for comiccreator.info and www.comiccreator.info
+    # Since these domains now point to Vercel, this block on your backend server
+    # should ideally just redirect to the canonical Vercel URL if it ever receives traffic.
+    # It should NOT proxy to your backend API for these hostnames anymore.
     server {
-        listen 443 ssl;
+        listen 443 ssl http2; # Added http2
         server_name comiccreator.info www.comiccreator.info;
-        
-        # SSL certificate configuration
+
+        # SSL certificate configuration (your old certificate for these domains)
         ssl_certificate /etc/nginx/ssl/www.comiccreator.info_ssl_certificate.cer;
         ssl_certificate_key /etc/nginx/ssl/www.comiccreator.info_private_key.key;
         ssl_trusted_certificate /etc/nginx/ssl/www.comiccreator.info_chain.cer;
-        
+
         # SSL settings
         ssl_protocols TLSv1.2 TLSv1.3;
         ssl_prefer_server_ciphers on;
         ssl_session_cache shared:SSL:10m;
         ssl_session_timeout 10m;
-        
-        # CORS handling
+
+        # Instead of proxying, redirect any traffic that might still land here to your Vercel frontend
         location / {
-            # OPTIONS request handling
+            return 301 https://www.comiccreator.info$request_uri; # Or your preferred canonical frontend URL
+        }
+    }
+
+    # Server block for your API: api.comiccreator.info
+    server {
+        listen 443 ssl http2;
+        server_name api.comiccreator.info;
+
+        # SSL certificate configuration from Let's Encrypt for api.comiccreator.info
+        ssl_certificate /etc/letsencrypt/live/api.comiccreator.info/fullchain.pem;
+        ssl_certificate_key /etc/letsencrypt/live/api.comiccreator.info/privkey.pem;
+        # ssl_trusted_certificate path is often included in fullchain.pem with Let's Encrypt
+
+        # SSL settings (consistent and secure)
+        ssl_protocols TLSv1.2 TLSv1.3;
+        ssl_prefer_server_ciphers off; # Modern clients have good cipher preference
+        ssl_dhparam /etc/nginx/dhparam.pem; # Generate with: sudo openssl dhparam -out /etc/nginx/dhparam.pem 2048 (if not already present)
+        ssl_ciphers 'ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384:DHE-RSA-AES128-GCM-SHA256:DHE-RSA-AES256-GCM-SHA384';
+        ssl_session_cache shared:SSL:10m; # Or 1h
+        ssl_session_timeout 1d; # Or 10m, depending on needs
+        ssl_session_tickets off; # Improve security by disabling session tickets if not strictly needed
+
+        # Security Headers (optional but recommended)
+        # add_header Strict-Transport-Security "max-age=63072000; includeSubDomains; preload" always;
+        # add_header X-Frame-Options DENY always;
+        # add_header X-Content-Type-Options nosniff always;
+        # add_header X-XSS-Protection "1; mode=block" always;
+        # add_header Referrer-Policy "strict-origin-when-cross-origin" always;
+
+        location / {
+            # OPTIONS request handling for CORS preflight
             if ($request_method = 'OPTIONS') {
-                add_header 'Access-Control-Allow-Origin' 'https://comic-generator-app.vercel.app' always;
+                add_header 'Access-Control-Allow-Origin' 'https://www.comiccreator.info' always; # Your Vercel frontend domain
                 add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS, PUT, DELETE' always;
                 add_header 'Access-Control-Allow-Headers' 'Origin, X-Requested-With, Content-Type, Accept, Authorization' always;
                 add_header 'Access-Control-Allow-Credentials' 'true' always;
@@ -44,27 +81,26 @@ http {
                 add_header 'Content-Length' '0';
                 return 204;
             }
-            
-            # Forward to backend (NO CORS HEADERS HERE - THEY COME AFTER)
-            proxy_pass http://backend:8080;
+
+            # Forward to backend service
+            proxy_pass http://backend:8080; # Ensure 'backend' resolves to your backend app (e.g., localhost:8080 or Docker service name)
             proxy_http_version 1.1;
             proxy_set_header Upgrade $http_upgrade;
             proxy_set_header Connection 'upgrade';
-            proxy_set_header Host $host;
-            proxy_cache_bypass $http_upgrade;
+            proxy_set_header Host $host; # Important: passes the original host header to backend
             proxy_set_header X-Real-IP $remote_addr;
             proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-            proxy_set_header X-Forwarded-Proto $scheme;
+            proxy_set_header X-Forwarded-Proto $scheme; # Important: tells backend if original request was http/https
 
             proxy_connect_timeout   75s;
             proxy_send_timeout      180s;
             proxy_read_timeout      180s;
 
-            add_header 'Access-Control-Allow-Origin' 'https://comic-generator-app.vercel.app' always;
-            add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS, PUT, DELETE' always;
-            add_header 'Access-Control-Allow-Headers' 'Origin, X-Requested-With, Content-Type, Accept, Authorization' always;
+            # Add CORS headers for actual requests
+            add_header 'Access-Control-Allow-Origin' 'https://www.comiccreator.info' always; # Your Vercel frontend domain
+            add_header 'Access-Control-Allow-Methods' 'GET, POST, OPTIONS, PUT, DELETE' always; # Not strictly needed for actual requests usually, but doesn't hurt
+            add_header 'Access-Control-Allow-Headers' 'Origin, X-Requested-With, Content-Type, Accept, Authorization' always; # Not strictly needed for actual requests usually
             add_header 'Access-Control-Allow-Credentials' 'true' always;
-            
         }
     }
 }

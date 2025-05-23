@@ -6,7 +6,9 @@ services:
       - FRONTEND_URL=https://comic-generator-app.vercel.app/
     volumes:
       - ./nginx.template:/etc/nginx/nginx.conf
+      - /etc/letsencrypt:/etc/letsencrypt
       - /etc/nginx/ssl:/etc/nginx/ssl
+      - /etc/nginx/dhparam.pem:/etc/nginx/dhparam.pem
     command: nginx -g 'daemon off;'
     ports:
       - "80:80"
