@@ -19,31 +19,6 @@ http {
         return 301 https://$host$request_uri;
     }
 
-    # Server block for handling HTTPS for comiccreator.info and www.comiccreator.info
-    # Since these domains now point to Vercel, this block on your backend server
-    # should ideally just redirect to the canonical Vercel URL if it ever receives traffic.
-    # It should NOT proxy to your backend API for these hostnames anymore.
-    server {
-        listen 443 ssl http2; # Added http2
-        server_name comiccreator.info www.comiccreator.info;
-
-        # SSL certificate configuration (your old certificate for these domains)
-        ssl_certificate /etc/nginx/ssl/www.comiccreator.info_ssl_certificate.cer;
-        ssl_certificate_key /etc/nginx/ssl/www.comiccreator.info_private_key.key;
-        ssl_trusted_certificate /etc/nginx/ssl/www.comiccreator.info_chain.cer;
-
-        # SSL settings
-        ssl_protocols TLSv1.2 TLSv1.3;
-        ssl_prefer_server_ciphers on;
-        ssl_session_cache shared:SSL:10m;
-        ssl_session_timeout 10m;
-
-        # Instead of proxying, redirect any traffic that might still land here to your Vercel frontend
-        location / {
-            return 301 https://www.comiccreator.info$request_uri; # Or your preferred canonical frontend URL
-        }
-    }
-
     # Server block for your API: api.comiccreator.info
     server {
         listen 443 ssl http2;
