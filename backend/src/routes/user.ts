@@ -1,11 +1,12 @@
 // backend/src/routes/user.ts
 import express from "express";
 import pool from "../database";
+import { authenticateToken } from "../middleware/auth.middleware";
 
 const router = express.Router();
 
 // Get user by ID
-router.get("/users/:id", (req, res) => {
+router.get("/users/:id", authenticateToken, (req, res) => {
 	const id = parseInt(req.params.id);
 
 	pool
@@ -23,7 +24,7 @@ router.get("/users/:id", (req, res) => {
 });
 
 // Get all users
-router.get("/users", (req, res) => {
+router.get("/users", authenticateToken, (req, res) => {
 	pool
 		.query("SELECT * FROM users")
 		.then((result: { rows: any }) => {
