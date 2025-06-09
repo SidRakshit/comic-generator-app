@@ -26,13 +26,11 @@ export class ComicController {
 				throw new Error("Failed to parse generated panel content.");
 			res.status(200).json(scriptPanel);
 		} catch (error: any) {
-			/* ... error handling ... */ res
-				.status(500)
-				.json({ error: error.message });
+			res.status(500).json({ error: error.message });
 		}
 	};
+
 	generateImage = async (req: Request, res: Response): Promise<void> => {
-		// ... your existing implementation ...
 		try {
 			const { panelDescription } = req.body;
 			if (!panelDescription) throw new Error("panelDescription is required.");
@@ -41,9 +39,7 @@ export class ComicController {
 			);
 			res.status(200).json(panelImage);
 		} catch (error: any) {
-			/* ... error handling ... */ res
-				.status(500)
-				.json({ error: error.message });
+			res.status(500).json({ error: error.message });
 		}
 	};
 

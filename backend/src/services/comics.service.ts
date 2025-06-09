@@ -5,6 +5,7 @@ import { PutObjectCommand, ObjectCannedACL } from "@aws-sdk/client-s3";
 import axios from "axios";
 import crypto from "crypto";
 import { Pool, PoolClient } from "pg";
+import { AWS_REGION } from "../config";
 
 // --- Configuration Import ---
 import { s3Client, S3_BUCKET, OPENAI_API_KEY } from "../config";
@@ -28,6 +29,7 @@ export interface GeneratedImageData {
 	promptUsed: string;
 }
 
+// --- Panels, Pages, Comics Before Saving ---
 interface PanelDataFromRequest {
 	panelNumber: number;
 	prompt: string;
@@ -46,12 +48,8 @@ interface ComicDataFromRequest {
 	setting?: object;
 	pages: PageDataFromRequest[];
 }
-interface FullComicData extends Omit<ComicDataFromRequest, "pages"> {
-	comic_id: string;
-	created_at: Date;
-	updated_at: Date;
-	pages: FullPageData[];
-}
+
+// --- Panels, Pages, Comics After Saving ---
 interface FullPageData extends Omit<PageDataFromRequest, "panels"> {
 	page_id: string;
 	panels: FullPanelData[];
@@ -60,6 +58,14 @@ interface FullPanelData extends Omit<PanelDataFromRequest, "imageBase64"> {
 	panel_id: string;
 	image_url: string; // Final S3 URL
 }
+interface FullComicData extends Omit<ComicDataFromRequest, "pages"> {
+	comic_id: string;
+	created_at: Date;
+	updated_at: Date;
+	pages: FullPageData[];
+}
+
+// Summarized version of a comic's data
 interface ComicListItem {
 	comic_id: string;
 	title: string;
@@ -143,9 +149,7 @@ export class ComicService {
 
 		// --- Use the model you specified ---
 		const modelToUse = "gpt-image-1";
-		// Determine params based on your experience with this model
-		// const preferredResponseFormat = "b64_json"; // You confirmed this works
-		const size = "1024x1024"; // Keep this for now, check logs if 400 error persists
+		const size = "1024x1024";
 
 		try {
 			const fullPrompt = `Comic book panel illustration: ${panelDescription}. Style: vibrant, detailed.`;
@@ -282,7 +286,7 @@ export class ComicService {
 		comicId: string,
 		panelId: string
 	): Promise<string> {
-		const awsRegion = process.env.AWS_REGION;
+		const awsRegion = AWS_REGION;
 		if (!S3_BUCKET || !awsRegion) {
 			console.error("S3 configuration (Bucket Name or Region) is missing.");
 			throw new Error("S3 configuration is incomplete, cannot upload image.");
@@ -340,7 +344,7 @@ export class ComicService {
 		internalUserId: string,
 		comicData: ComicDataFromRequest,
 		existingComicId?: string
-	): Promise<any> {
+	): Promise<FullComicData | null> {
 		const client: PoolClient = await pool.connect();
 		console.log(
 			`Starting saveComicWithPanels for user: ${internalUserId}, comicId: ${
@@ -542,7 +546,7 @@ export class ComicService {
 	}
 
 	async listComicsByUser(internalUserId: string): Promise<ComicListItem[]> {
-		console.log(`Listing comics list for user: ${internalUserId}`); // Corrected typo: Listing
+		console.log(`Listing comics list for user: ${internalUserId}`);
 		const query = `
                 SELECT
                     comic_id,
