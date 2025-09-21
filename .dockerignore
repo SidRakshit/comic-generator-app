@@ -1,0 +1,22 @@
+# Git and config files
+.git
+.gitignore
+README.md
+
+# Dependencies - these will be installed inside the container
+node_modules
+
+# Build artifacts from other apps
+.next
+build
+out
+
+# All other applications
+frontend/
+
+# Environment variables
+.env
+.env*.local
+
+# Monorepo cache
+.turbo
