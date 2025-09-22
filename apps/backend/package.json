@@ -10,7 +10,6 @@
     "migrate:dev": "prisma migrate dev",
     "migrate:create": "prisma migrate dev --create-only",
     "migrate:resolve": "prisma migrate resolve"
-
   },
   "keywords": [],
   "author": "",
@@ -29,7 +28,7 @@
     "update": "^0.7.4"
   },
   "devDependencies": {
-    "@types/cors": "^2.8.17",
+    "@types/cors": "^2.8.19",
     "@types/express": "^5.0.1",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "^22.14.0",

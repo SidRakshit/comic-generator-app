@@ -1,12 +1,20 @@
 // src/index.ts
 import 'dotenv/config';
 import express from "express";
+import cors from 'cors';
 // Only import PORT if needed, otherwise define directly for test
-import { PORT } from "./config";
+import { PORT, FRONTEND_URL } from './config';
+
 import mainApiRouter from "./routes/index";
 // import './database';
 
 const app = express();
+
+const corsOptions = {
+  origin: FRONTEND_URL, // This uses the URL from your .env.local
+};
+
+app.use(cors(corsOptions));
 
 app.use(express.json({ limit: "50mb" }));
 app.use(express.urlencoded({ limit: "50mb", extended: true }));
