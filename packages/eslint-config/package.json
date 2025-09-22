@@ -1,0 +1,10 @@
+{
+  "name": "@repo/eslint-config",
+  "version": "0.0.0",
+  "private": true,
+  "main": "index.js",
+  "dependencies": {
+    "eslint-config-next": "^15.2.4",
+    "eslint-config-turbo": "^2.5.6"
+  }
+}

@@ -1,21 +1,24 @@
-// src/app/page.tsx
-// Remove unused imports like useState, useEffect, useCallback, Image, specific icons etc.
-// Keep Link if needed elsewhere, or remove if not.
-
 import HeroSection from "@/components/home/hero-section";
 import HowItWorksSection from "@/components/home/how-it-works-section";
-import FeaturedComicsSection from "@/components/home/featured-comics-section"; // Import even if placeholder
+import FeaturedComicsSection from "@/components/home/featured-comics-section";
 import CallToActionSection from "@/components/home/call-to-action-section";
+import { Button } from "@repo/ui/button";
 
 export default function HomePage() {
-	return (
-		// The outer div might not be strictly necessary if RootLayout handles min-height
-		// but keeping it is fine too.
-		<div className="min-h-screen">
-			<HeroSection />
-			<HowItWorksSection />
-			<FeaturedComicsSection /> {/* Render the placeholder/future section */}
-			<CallToActionSection />
-		</div>
-	);
+  return (
+    <div className="min-h-screen">
+      <HeroSection />
+      <HowItWorksSection />
+      <FeaturedComicsSection />
+      <CallToActionSection />
+
+      {/* --- Test Section for Shared Component --- */}
+      <div className="text-center p-16 bg-slate-800">
+        <h2 className="text-2xl font-bold mb-4 text-white">
+          Test of Shared UI Component
+        </h2>
+        <Button>Click Me</Button>
+      </div>
+    </div>
+  );
 }
