@@ -6,7 +6,11 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "ts-node -r dotenv/config src/index.ts",
     "start": "node dist/index.js",
-    "build": "tsc"
+    "build": "tsc",
+    "migrate:dev": "prisma migrate dev",
+    "migrate:create": "prisma migrate dev --create-only",
+    "migrate:resolve": "prisma migrate resolve"
+
   },
   "keywords": [],
   "author": "",
