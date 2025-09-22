@@ -10,6 +10,13 @@ import mainApiRouter from "./routes/index";
 
 const app = express();
 
+const allowedOrigins = FRONTEND_URL.split(',').map(origin => origin.trim());
+
+// ADD THESE TWO LINES FOR DEBUGGING
+console.log("--- CORS DEBUG ---");
+console.log("Allowed Origins:", allowedOrigins);
+
+
 const corsOptions = {
   origin: FRONTEND_URL, // This uses the URL from your .env.local
 };
