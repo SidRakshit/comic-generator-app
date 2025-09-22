@@ -1,4 +1,5 @@
 // src/index.ts
+import 'dotenv/config';
 import express from "express";
 // Only import PORT if needed, otherwise define directly for test
 import { PORT } from "./config";

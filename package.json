@@ -1,0 +1,17 @@
+{
+  "name": "comic-creator-monorepo",
+  "private": true,
+  "scripts": {
+    "build": "turbo build",
+    "dev": "turbo dev",
+    "lint": "turbo lint"
+  },
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "devDependencies": {
+    "turbo": "latest"
+  },
+  "packageManager": "npm@10.8.3"
+}

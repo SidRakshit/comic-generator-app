@@ -1,9 +1,11 @@
 // src/database/index.ts
 import { Pool } from "pg";
-import { DB_CONFIG } from "../config";
+import { DATABASE_URL } from '../config';
 
 // Create a connection pool
-const pool = new Pool(DB_CONFIG);
+const pool = new Pool({
+  connectionString: DATABASE_URL,
+});
 
 pool
 	.connect()
