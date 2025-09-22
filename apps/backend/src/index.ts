@@ -18,7 +18,19 @@ console.log("Allowed Origins:", allowedOrigins);
 
 
 const corsOptions = {
-  origin: FRONTEND_URL, // This uses the URL from your .env.local
+  origin: (
+    origin: string | undefined,
+    callback: (err: Error | null, allow?: boolean) => void
+  ) => {
+    // `!origin` allows REST tools and server-to-server requests
+    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      callback(null, false);
+    }
+  },
+  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+  allowedHeaders: ["Content-Type", "Authorization"],
 };
 
 app.use(cors(corsOptions));
