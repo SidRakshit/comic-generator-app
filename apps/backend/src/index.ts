@@ -186,6 +186,15 @@ try {
   process.exit(1);
 }
 
+// Immediate response endpoint - no dependencies
+app.get('/ping', (req: any, res: any) => {
+  res.status(200).json({ 
+    status: 'ok', 
+    timestamp: new Date().toISOString(),
+    message: 'Server is responding immediately'
+  });
+});
+
 // Health check endpoint (should come before main routes) - optimized for speed
 app.get('/', (req: any, res: any) => {
   if (process.env.NODE_ENV !== 'production') {
@@ -226,10 +235,13 @@ app.get('/health', async (req: any, res: any) => {
     }
   };
 
-  // Test database connection
+  // Test database connection with timeout
   try {
     const pool = require('./database').default;
-    const client = await pool.connect();
+    const client = await Promise.race([
+      pool.connect(),
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Database connection timeout')), 3000))
+    ]);
     client.release();
     health.services.database = 'connected';
   } catch (error) {
@@ -286,23 +298,32 @@ try {
 console.log('[DEBUG] Step 8: Starting server...');
 try {
   // --- Start Server ---
-  const server = app.listen(PORT, () => {
+  const server = app.listen(Number(PORT), '0.0.0.0', () => {
     console.log('[DEBUG] ===========================================');
     console.log('[DEBUG] 🎉 SERVER STARTUP COMPLETE! 🎉');
     console.log('[DEBUG] ===========================================');
     console.log(`[SUCCESS] Server started successfully on port ${PORT}`);
     console.log(`[DEBUG] Environment - FRONTEND_URL: ${FRONTEND_URL}`);
     console.log(`[DEBUG] Environment - PORT: ${PORT}`);
-    console.log(`[DEBUG] Server URL: http://localhost:${PORT}`);
-    console.log(`[DEBUG] Health check: http://localhost:${PORT}/`);
-    console.log(`[DEBUG] API endpoint: http://localhost:${PORT}/api`);
+    console.log(`[DEBUG] Server URL: http://0.0.0.0:${PORT}`);
+    console.log(`[DEBUG] Health check: http://0.0.0.0:${PORT}/`);
+    console.log(`[DEBUG] API endpoint: http://0.0.0.0:${PORT}/api`);
     console.log('[DEBUG] ===========================================');
   });
 
   // Set server timeout to prevent hanging connections
-  server.timeout = 30000; // 30 seconds
-  server.keepAliveTimeout = 65000; // 65 seconds
-  server.headersTimeout = 66000; // 66 seconds
+  server.timeout = 10000; // 10 seconds - reduced from 30
+  server.keepAliveTimeout = 30000; // 30 seconds - reduced from 65
+  server.headersTimeout = 31000; // 31 seconds - reduced from 66
+  
+  // Handle server errors
+  server.on('error', (error: any) => {
+    console.error('[FATAL] Server error:', error);
+    if (error.code === 'EADDRINUSE') {
+      console.error(`Port ${PORT} is already in use`);
+    }
+    process.exit(1);
+  });
   
 } catch (error) {
   console.error('[FATAL] Error starting server:', error);

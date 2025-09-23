@@ -12,17 +12,19 @@ const pool = new Pool({
 });
 
 // Test connection asynchronously without blocking startup
-pool
-	.connect()
-	.then((client: { release: () => void }) => {
-		console.log("✅ Successfully connected to PostgreSQL");
-		client.release();
-	})
-	.catch((err: { message: any }) => {
-		console.error("❌ Error connecting to PostgreSQL:", err.message);
-		console.error("❌ Database connection failed, but server will continue to start");
-		console.error("❌ Database-dependent features may not work properly");
-	});
+setTimeout(() => {
+  pool
+    .connect()
+    .then((client: { release: () => void }) => {
+      console.log("✅ Successfully connected to PostgreSQL");
+      client.release();
+    })
+    .catch((err: { message: any }) => {
+      console.error("❌ Error connecting to PostgreSQL:", err.message);
+      console.error("❌ Database connection failed, but server will continue to start");
+      console.error("❌ Database-dependent features may not work properly");
+    });
+}, 1000); // Delay by 1 second to let server start first
 
 // Handle pool errors gracefully
 pool.on('error', (err: any) => {
