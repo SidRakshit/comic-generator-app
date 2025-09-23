@@ -192,7 +192,7 @@ try {
     console.log(`[DEBUG] Health check: http://localhost:${PORT}/`);
     console.log(`[DEBUG] API endpoint: http://localhost:${PORT}/api`);
     console.log('[DEBUG] ===========================================');
-  });
+  }); 
 } catch (error) {
   console.error('[FATAL] Error starting server:', error);
   process.exit(1);
