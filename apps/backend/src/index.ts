@@ -33,12 +33,13 @@ console.log('[DEBUG] ✅ Express app created successfully');
 
 console.log('[DEBUG] Step 5: Setting up middleware...');
 try {
-  // Global request logger to see ALL incoming requests
+  // Global request logger to see ALL incoming requests (production optimized)
   app.use((req: any, res: any, next: any) => {
-    console.log(`[REQUEST] ${new Date().toISOString()} - ${req.method} ${req.url}`);
-    console.log(`[REQUEST] Origin: ${req.headers.origin || 'NO ORIGIN'}`);
-    console.log(`[REQUEST] User-Agent: ${req.headers['user-agent']}`);
-    console.log(`[REQUEST] Headers:`, JSON.stringify(req.headers, null, 2));
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`[REQUEST] ${new Date().toISOString()} - ${req.method} ${req.url}`);
+      console.log(`[REQUEST] Origin: ${req.headers.origin || 'NO ORIGIN'}`);
+      console.log(`[REQUEST] User-Agent: ${req.headers['user-agent']}`);
+    }
     next();
   });
   console.log('[DEBUG] ✅ Request logger middleware added');
@@ -60,20 +61,28 @@ try {
 
   const corsOptions = {
     origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
-      console.log(`[CORS] Checking origin: "${origin}"`);
-      console.log(`[CORS] Allowed origins: ${JSON.stringify(allowedOrigins)}`);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(`[CORS] Checking origin: "${origin}"`);
+        console.log(`[CORS] Allowed origins: ${JSON.stringify(allowedOrigins)}`);
+      }
       
       // Allow requests with no origin (mobile apps, curl, postman, etc.)
       if (!origin) {
-        console.log(`[CORS] ✅ ALLOWING - No origin (likely same-origin or tools)`);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log(`[CORS] ✅ ALLOWING - No origin (likely same-origin or tools)`);
+        }
         callback(null, true);
       } else if (allowedOrigins.includes(origin)) {
-        console.log(`[CORS] ✅ ALLOWING - Origin matches allowed list`);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log(`[CORS] ✅ ALLOWING - Origin matches allowed list`);
+        }
         callback(null, true);
       } else {
-        console.log(`[CORS] ❌ BLOCKING - Origin not in allowed list`);
-        console.log(`[CORS] ❌ Rejected origin: "${origin}"`);
-        console.log(`[CORS] ❌ Expected one of: ${allowedOrigins.join(', ')}`);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log(`[CORS] ❌ BLOCKING - Origin not in allowed list`);
+          console.log(`[CORS] ❌ Rejected origin: "${origin}"`);
+          console.log(`[CORS] ❌ Expected one of: ${allowedOrigins.join(', ')}`);
+        }
         callback(new Error(`CORS blocked: Origin ${origin} not allowed`), false);
       }
     },
@@ -90,10 +99,12 @@ try {
     // CRITICAL: Explicit OPTIONS handler for Railway
     console.log('[CORS] Setting up explicit OPTIONS handler...');
     app.options('*', (req: any, res: any) => {
-      console.log(`[OPTIONS] Handling OPTIONS request for: ${req.url}`);
-      console.log(`[OPTIONS] Origin: ${req.headers.origin}`);
-      console.log(`[OPTIONS] Access-Control-Request-Method: ${req.headers['access-control-request-method']}`);
-      console.log(`[OPTIONS] Access-Control-Request-Headers: ${req.headers['access-control-request-headers']}`);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(`[OPTIONS] Handling OPTIONS request for: ${req.url}`);
+        console.log(`[OPTIONS] Origin: ${req.headers.origin}`);
+        console.log(`[OPTIONS] Access-Control-Request-Method: ${req.headers['access-control-request-method']}`);
+        console.log(`[OPTIONS] Access-Control-Request-Headers: ${req.headers['access-control-request-headers']}`);
+      }
       
       // Manually set CORS headers
       const origin = req.headers.origin;
@@ -102,10 +113,14 @@ try {
         res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
         res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
         res.header('Access-Control-Allow-Credentials', 'true');
-        console.log(`[OPTIONS] ✅ Responding with CORS headers for origin: ${origin}`);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log(`[OPTIONS] ✅ Responding with CORS headers for origin: ${origin}`);
+        }
         res.sendStatus(200);
       } else {
-        console.log(`[OPTIONS] ❌ Rejecting OPTIONS for origin: ${origin}`);
+        if (process.env.NODE_ENV !== 'production') {
+          console.log(`[OPTIONS] ❌ Rejecting OPTIONS for origin: ${origin}`);
+        }
         res.sendStatus(403);
       }
     });
@@ -131,7 +146,9 @@ try {
     console.log('[DEBUG] ✅ Fallback CORS middleware applied');
     
     app.options('*', (req: any, res: any) => {
-      console.log(`[FALLBACK OPTIONS] Handling OPTIONS for: ${req.url} from origin: ${req.headers.origin}`);
+      if (process.env.NODE_ENV !== 'production') {
+        console.log(`[FALLBACK OPTIONS] Handling OPTIONS for: ${req.url} from origin: ${req.headers.origin}`);
+      }
       res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
       res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
       res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
@@ -145,9 +162,11 @@ try {
   process.exit(1);
 }
 
-// Health check endpoint (should come before main routes)
+// Health check endpoint (should come before main routes) - optimized for speed
 app.get('/', (req: any, res: any) => {
-  console.log('[HEALTH] Health check requested');
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('[HEALTH] Health check requested');
+  }
   res.status(200).json({
     message: 'Server is running and reachable',
     timestamp: new Date().toISOString(),
@@ -159,7 +178,9 @@ app.get('/', (req: any, res: any) => {
 
 // Test CORS endpoint
 app.get('/test-cors', (req: any, res: any) => {
-  console.log('[TEST-CORS] CORS test endpoint hit');
+  if (process.env.NODE_ENV !== 'production') {
+    console.log('[TEST-CORS] CORS test endpoint hit');
+  }
   res.json({ 
     message: 'CORS test successful', 
     origin: req.headers.origin,
@@ -181,7 +202,7 @@ try {
 console.log('[DEBUG] Step 8: Starting server...');
 try {
   // --- Start Server ---
-  app.listen(PORT, () => {
+  const server = app.listen(PORT, () => {
     console.log('[DEBUG] ===========================================');
     console.log('[DEBUG] 🎉 SERVER STARTUP COMPLETE! 🎉');
     console.log('[DEBUG] ===========================================');
@@ -192,7 +213,13 @@ try {
     console.log(`[DEBUG] Health check: http://localhost:${PORT}/`);
     console.log(`[DEBUG] API endpoint: http://localhost:${PORT}/api`);
     console.log('[DEBUG] ===========================================');
-  }); 
+  });
+
+  // Set server timeout to prevent hanging connections
+  server.timeout = 30000; // 30 seconds
+  server.keepAliveTimeout = 65000; // 65 seconds
+  server.headersTimeout = 66000; // 66 seconds
+  
 } catch (error) {
   console.error('[FATAL] Error starting server:', error);
   process.exit(1);
