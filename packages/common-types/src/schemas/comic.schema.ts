@@ -40,6 +40,55 @@ export const TemplateDefinitionSchema = z.object({
   panelCount: z.number().positive(),
 });
 
+// Unified GeneratedImageData schema
+export const GeneratedImageDataSchema = z.object({
+  imageData: z.string().min(1, 'Image data is required'),
+  promptUsed: z.string().min(1, 'Prompt used is required'),
+});
+
+// ComicContextType schema
+export const ComicContextTypeSchema = z.object({
+  comic: ComicSchema,
+  isLoading: z.boolean(),
+  isSaving: z.boolean(),
+  error: z.string().nullable(),
+  setTemplate: z.function().args(z.string().nullable()).returns(z.void()),
+  updatePanelContent: z.function().args(
+    z.number(),
+    z.object({
+      id: z.string().optional(),
+      status: PanelStatusSchema.optional(),
+      prompt: z.string().optional(),
+      imageUrl: z.string().optional(),
+      imageBase64: z.string().optional(),
+      error: z.string().optional(),
+      panelNumber: z.number().optional(),
+      layoutPosition: z.record(z.unknown()).optional(),
+      imageData: z.string().optional(),
+    }).partial()
+  ).returns(z.void()),
+  updateComicMetadata: z.function().args(
+    z.object({
+      id: z.string().optional(),
+      title: z.string().optional(),
+      description: z.string().optional(),
+      genre: z.string().optional(),
+      template: z.string().nullable().optional(),
+      createdAt: z.string().optional(),
+      updatedAt: z.string().optional(),
+      published: z.boolean().optional(),
+    }).partial()
+  ).returns(z.void()),
+  addCharacter: z.function().returns(z.void()),
+  removeCharacter: z.function().args(z.string()).returns(z.void()),
+  updateCharacter: z.function().args(
+    z.string(),
+    z.enum(['name', 'description']),
+    z.string()
+  ).returns(z.void()),
+  saveComic: z.function().returns(z.promise(ComicSchema.optional())),
+});
+
 // Backend schemas
 export const BackendComicDataSchema = z.object({
   comic_id: z.string().uuid(),

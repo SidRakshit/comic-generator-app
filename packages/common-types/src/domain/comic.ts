@@ -38,6 +38,36 @@ export interface TemplateDefinition {
   panelCount: number;
 }
 
+// Unified GeneratedImageData type (replaces both frontend and backend versions)
+export interface GeneratedImageData {
+  imageData: string; // Base64 encoded image data
+  promptUsed: string;
+}
+
+// Frontend context type
+export interface ComicContextType {
+  comic: Comic;
+  isLoading: boolean;
+  isSaving: boolean;
+  error: string | null;
+  setTemplate: (templateId: string | null) => void;
+  updatePanelContent: (
+    panelIndex: number,
+    updates: Partial<Panel> & { imageData?: string }
+  ) => void;
+  updateComicMetadata: (
+    updates: Partial<Omit<Comic, "panels" | "characters">>
+  ) => void;
+  addCharacter: () => void;
+  removeCharacter: (idToRemove: string) => void;
+  updateCharacter: (
+    idToUpdate: string,
+    field: keyof Omit<ComicCharacter, "id">,
+    value: string
+  ) => void;
+  saveComic: () => Promise<Comic | undefined>;
+}
+
 // Backend-specific comic types
 export interface BackendComicData {
   comic_id: string;

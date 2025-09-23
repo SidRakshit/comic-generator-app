@@ -33,7 +33,8 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "zod": "^3.22.0"
+    "zod": "^3.22.0",
+    "aws-amplify": "^6.14.3"
   },
   "devDependencies": {
     "@repo/eslint-config": "*",

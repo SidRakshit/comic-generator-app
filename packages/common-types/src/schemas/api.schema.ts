@@ -1,7 +1,7 @@
 // Zod schemas for API Request/Response validation
 
 import { z } from 'zod';
-import { ComicCharacterSchema } from './comic.schema';
+import { ComicCharacterSchema, GeneratedImageDataSchema } from './comic.schema';
 
 // Request schemas
 export const CreateComicRequestSchema = z.object({
@@ -134,10 +134,8 @@ export const ComicListItemResponseSchema = z.object({
   published: z.boolean(),
 });
 
-export const GeneratedImageDataResponseSchema = z.object({
-  imageUrl: z.string().url(),
-  promptUsed: z.string(),
-});
+// Use unified GeneratedImageData schema
+export const GeneratedImageDataResponseSchema = GeneratedImageDataSchema;
 
 export const UserResponseSchema = z.object({
   user_id: z.string().uuid(),

@@ -1,6 +1,6 @@
 // API Response DTOs
 
-import type { Comic, User, UserProfile, BackendComicData, BackendPageData, BackendPanelData } from '../domain';
+import type { Comic, User, UserProfile, BackendComicData, BackendPageData, BackendPanelData, GeneratedImageData } from '../domain';
 
 // Comic responses
 export interface ComicResponse {
@@ -32,11 +32,8 @@ export interface ComicListItemResponse {
   published: boolean;
 }
 
-// Image generation responses
-export interface GeneratedImageDataResponse {
-  imageUrl: string;
-  promptUsed: string;
-}
+// Image generation responses - using unified type
+export type GeneratedImageDataResponse = GeneratedImageData;
 
 // User responses
 export interface UserResponse {
