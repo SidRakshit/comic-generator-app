@@ -1,52 +1,54 @@
-// src/index.ts
-import 'dotenv/config';
-import express from "express";
+import express from 'express';
 import cors from 'cors';
-// Only import PORT if needed, otherwise define directly for test
 import { PORT, FRONTEND_URL } from './config';
+import mainApiRouter from './routes/index';
 
-import mainApiRouter from "./routes/index";
-// import './database';
+console.log('[DEBUG] Starting server process...');
 
 const app = express();
 
-const allowedOrigins = FRONTEND_URL.split(',').map(origin => origin.trim());
+app.use(express.json({ limit: '50mb' }));
 
-// ADD THESE TWO LINES FOR DEBUGGING
-console.log("--- CORS DEBUG ---");
-console.log("Allowed Origins:", allowedOrigins);
+// --- Robust CORS Configuration with Debugging ---
+if (FRONTEND_URL && FRONTEND_URL.length > 0) {
+  console.log(`[DEBUG] FRONTEND_URL is defined: ${FRONTEND_URL}`);
+  const allowedOrigins = FRONTEND_URL.split(',').map(origin => origin.trim());
+  console.log('[DEBUG] Allowed Origins array:', allowedOrigins);
 
+  const corsOptions = {
+    origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
+      console.log(`[DEBUG] CORS middleware received a request from origin: ${origin}`);
+      if (!origin || allowedOrigins.includes(origin)) {
+        console.log(`[DEBUG] CORS check PASSED for origin: ${origin}`);
+        callback(null, true);
+      } else {
+        console.error(`[DEBUG] CORS check FAILED. Origin "${origin}" is not in the allowed list.`);
+        callback(null, false);
+      }
+    },
+    methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization'],
+  };
 
-const corsOptions = {
-  origin: (
-    origin: string | undefined,
-    callback: (err: Error | null, allow?: boolean) => void
-  ) => {
-    // `!origin` allows REST tools and server-to-server requests
-    if (!origin || allowedOrigins.indexOf(origin) !== -1) {
-      callback(null, true);
-    } else {
-      callback(null, false);
-    }
-  },
-  methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
-  allowedHeaders: ["Content-Type", "Authorization"],
-};
+  console.log('[DEBUG] Applying CORS middleware...');
+  app.use(cors(corsOptions));
+  console.log('[DEBUG] CORS middleware applied.');
 
-app.use(cors(corsOptions));
-
-app.use(express.json({ limit: "50mb" }));
-app.use(express.urlencoded({ limit: "50mb", extended: true }));
+} else {
+  console.error('---');
+  console.error('[FATAL DEBUG] FRONTEND_URL is NOT defined. CORS will not be configured.');
+  console.error('---');
+}
 
 // --- Routes ---
-app.use("/api", mainApiRouter);
-
-// Keep only the simplest possible route
-app.get("/", (req, res) => {
-	res.send("Minimal OK");
+console.log('[DEBUG] Applying API routes...');
+app.use('/api', mainApiRouter);
+app.get('/', (req, res) => {
+  res.send('Server is running and reachable.');
 });
+console.log('[DEBUG] API routes applied.');
 
 // --- Start Server ---
 app.listen(PORT, () => {
-	console.log(`Minimal Server running on http://localhost:${PORT}`);
+  console.log(`[SUCCESS] Server started successfully on port ${PORT}`);
 });
