@@ -296,6 +296,10 @@ try {
 }
 
 console.log('[DEBUG] Step 8: Starting server...');
+console.log(`[DEBUG] About to start server on port ${PORT} (${typeof PORT})`);
+console.log(`[DEBUG] PORT value: "${PORT}"`);
+console.log(`[DEBUG] Converted to number: ${Number(PORT)}`);
+
 try {
   // --- Start Server ---
   const server = app.listen(Number(PORT), '0.0.0.0', () => {
@@ -306,9 +310,10 @@ try {
     console.log(`[DEBUG] Environment - FRONTEND_URL: ${FRONTEND_URL}`);
     console.log(`[DEBUG] Environment - PORT: ${PORT}`);
     console.log(`[DEBUG] Server URL: http://0.0.0.0:${PORT}`);
-    console.log(`[DEBUG] Health check: http://0.0.0.0:${PORT}/`);
+    console.log(`[DEBUG] Health check: http://0.0.0.0:${PORT}/ping`);
     console.log(`[DEBUG] API endpoint: http://0.0.0.0:${PORT}/api`);
     console.log('[DEBUG] ===========================================');
+    console.log('[DEBUG] Server is now listening and ready to accept connections');
   });
 
   // Set server timeout to prevent hanging connections
@@ -323,6 +328,12 @@ try {
       console.error(`Port ${PORT} is already in use`);
     }
     process.exit(1);
+  });
+
+  // Test that server is actually listening
+  server.on('listening', () => {
+    console.log('[DEBUG] ✅ Server is now listening for connections');
+    console.log(`[DEBUG] ✅ Server address: ${server.address()}`);
   });
   
 } catch (error) {
