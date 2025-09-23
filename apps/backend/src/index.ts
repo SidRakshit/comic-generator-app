@@ -122,30 +122,34 @@ try {
     
     // CRITICAL: Explicit OPTIONS handler for Railway
     console.log('[CORS] Setting up explicit OPTIONS handler...');
-    app.options('*', (req: any, res: any) => {
-      if (process.env.NODE_ENV !== 'production') {
-        console.log(`[OPTIONS] Handling OPTIONS request for: ${req.url}`);
-        console.log(`[OPTIONS] Origin: ${req.headers.origin}`);
-        console.log(`[OPTIONS] Access-Control-Request-Method: ${req.headers['access-control-request-method']}`);
-        console.log(`[OPTIONS] Access-Control-Request-Headers: ${req.headers['access-control-request-headers']}`);
-      }
-      
-      // Manually set CORS headers
-      const origin = req.headers.origin;
-      if (!origin || allowedOrigins.includes(origin)) {
-        res.header('Access-Control-Allow-Origin', origin || '*');
-        res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-        res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-        res.header('Access-Control-Allow-Credentials', 'true');
+    app.use((req: any, res: any, next: any) => {
+      if (req.method === 'OPTIONS') {
         if (process.env.NODE_ENV !== 'production') {
-          console.log(`[OPTIONS] ✅ Responding with CORS headers for origin: ${origin}`);
+          console.log(`[OPTIONS] Handling OPTIONS request for: ${req.url}`);
+          console.log(`[OPTIONS] Origin: ${req.headers.origin}`);
+          console.log(`[OPTIONS] Access-Control-Request-Method: ${req.headers['access-control-request-method']}`);
+          console.log(`[OPTIONS] Access-Control-Request-Headers: ${req.headers['access-control-request-headers']}`);
         }
-        res.sendStatus(200);
+        
+        // Manually set CORS headers
+        const origin = req.headers.origin;
+        if (!origin || allowedOrigins.includes(origin)) {
+          res.header('Access-Control-Allow-Origin', origin || '*');
+          res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+          res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+          res.header('Access-Control-Allow-Credentials', 'true');
+          if (process.env.NODE_ENV !== 'production') {
+            console.log(`[OPTIONS] ✅ Responding with CORS headers for origin: ${origin}`);
+          }
+          res.sendStatus(200);
+        } else {
+          if (process.env.NODE_ENV !== 'production') {
+            console.log(`[OPTIONS] ❌ Rejecting OPTIONS for origin: ${origin}`);
+          }
+          res.sendStatus(403);
+        }
       } else {
-        if (process.env.NODE_ENV !== 'production') {
-          console.log(`[OPTIONS] ❌ Rejecting OPTIONS for origin: ${origin}`);
-        }
-        res.sendStatus(403);
+        next();
       }
     });
     console.log('[DEBUG] ✅ OPTIONS handler applied');
@@ -169,15 +173,19 @@ try {
     app.use(cors(fallbackCors));
     console.log('[DEBUG] ✅ Fallback CORS middleware applied');
     
-    app.options('*', (req: any, res: any) => {
-      if (process.env.NODE_ENV !== 'production') {
-        console.log(`[FALLBACK OPTIONS] Handling OPTIONS for: ${req.url} from origin: ${req.headers.origin}`);
+    app.use((req: any, res: any, next: any) => {
+      if (req.method === 'OPTIONS') {
+        if (process.env.NODE_ENV !== 'production') {
+          console.log(`[FALLBACK OPTIONS] Handling OPTIONS for: ${req.url} from origin: ${req.headers.origin}`);
+        }
+        res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
+        res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
+        res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
+        res.header('Access-Control-Allow-Credentials', 'true');
+        res.sendStatus(200);
+      } else {
+        next();
       }
-      res.header('Access-Control-Allow-Origin', req.headers.origin || '*');
-      res.header('Access-Control-Allow-Methods', 'GET, POST, PUT, DELETE, OPTIONS');
-      res.header('Access-Control-Allow-Headers', 'Content-Type, Authorization, X-Requested-With');
-      res.header('Access-Control-Allow-Credentials', 'true');
-      res.sendStatus(200);
     });
     console.log('[DEBUG] ✅ Fallback OPTIONS handler applied');
   }
