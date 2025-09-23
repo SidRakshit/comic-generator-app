@@ -292,6 +292,10 @@ export class ComicService {
       throw new Error("Image data (base64) is missing, cannot upload.");
     }
 
+    if (!s3Client) {
+      throw new Error("S3 client is not configured. Please check AWS credentials.");
+    }
+
     try {
       const imageData: Buffer = Buffer.from(imageBase64, "base64");
       const contentType = "image/png";
