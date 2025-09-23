@@ -2,6 +2,28 @@ console.log('[DEBUG] ===========================================');
 console.log('[DEBUG] STARTING BACKEND APPLICATION');
 console.log('[DEBUG] ===========================================');
 
+// Handle uncaught exceptions and unhandled rejections
+process.on('uncaughtException', (error) => {
+  console.error('❌ Uncaught Exception:', error);
+  console.error('❌ Server will continue running, but this error should be fixed');
+});
+
+process.on('unhandledRejection', (reason, promise) => {
+  console.error('❌ Unhandled Rejection at:', promise, 'reason:', reason);
+  console.error('❌ Server will continue running, but this error should be fixed');
+});
+
+// Graceful shutdown
+process.on('SIGTERM', () => {
+  console.log('🛑 SIGTERM received, shutting down gracefully');
+  process.exit(0);
+});
+
+process.on('SIGINT', () => {
+  console.log('🛑 SIGINT received, shutting down gracefully');
+  process.exit(0);
+});
+
 import express from 'express';
 import cors from 'cors';
 import { PORT, FRONTEND_URL } from './config';
@@ -25,6 +47,8 @@ console.log(`[DEBUG] - OPENAI_API_KEY: ${process.env.OPENAI_API_KEY ? 'SET' : 'N
 console.log(`[DEBUG] - S3_BUCKET_NAME: ${process.env.S3_BUCKET_NAME ? 'SET' : 'NOT SET'}`);
 console.log(`[DEBUG] - AWS_ACCESS_KEY_ID: ${process.env.AWS_ACCESS_KEY_ID ? 'SET' : 'NOT SET'}`);
 console.log(`[DEBUG] - AWS_SECRET_ACCESS_KEY: ${process.env.AWS_SECRET_ACCESS_KEY ? 'SET' : 'NOT SET'}`);
+console.log('[DEBUG] ===========================================');
+console.log('[DEBUG] All required environment variables are present!');
 console.log('[DEBUG] ===========================================');
 
 console.log('[DEBUG] Step 4: Creating Express app...');
@@ -172,8 +196,68 @@ app.get('/', (req: any, res: any) => {
     timestamp: new Date().toISOString(),
     cors_configured: !!FRONTEND_URL,
     frontend_url: FRONTEND_URL,
-    port: PORT
+    port: PORT,
+    environment: process.env.NODE_ENV || 'development'
   });
+});
+
+// Detailed health check endpoint for debugging
+app.get('/health', async (req: any, res: any) => {
+  const health = {
+    status: 'ok',
+    timestamp: new Date().toISOString(),
+    services: {
+      database: 'unknown',
+      s3: 'unknown',
+      cognito: 'unknown'
+    },
+    environment: {
+      NODE_ENV: process.env.NODE_ENV || 'development',
+      PORT: PORT,
+      FRONTEND_URL: FRONTEND_URL ? 'SET' : 'NOT SET',
+      DATABASE_URL: process.env.DATABASE_URL ? 'SET' : 'NOT SET',
+      AWS_REGION: process.env.AWS_REGION ? 'SET' : 'NOT SET',
+      S3_BUCKET_NAME: process.env.S3_BUCKET_NAME ? 'SET' : 'NOT SET',
+      COGNITO_USER_POOL_ID: process.env.COGNITO_USER_POOL_ID ? 'SET' : 'NOT SET',
+      COGNITO_CLIENT_ID: process.env.COGNITO_CLIENT_ID ? 'SET' : 'NOT SET',
+      OPENAI_API_KEY: process.env.OPENAI_API_KEY ? 'SET' : 'NOT SET',
+      AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID ? 'SET' : 'NOT SET',
+      AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY ? 'SET' : 'NOT SET'
+    }
+  };
+
+  // Test database connection
+  try {
+    const pool = require('./database').default;
+    const client = await pool.connect();
+    client.release();
+    health.services.database = 'connected';
+  } catch (error) {
+    health.services.database = 'error';
+    health.status = 'degraded';
+  }
+
+  // Test S3 client
+  try {
+    const { s3Client } = require('./config');
+    if (s3Client) {
+      health.services.s3 = 'available';
+    } else {
+      health.services.s3 = 'not_configured';
+    }
+  } catch (error) {
+    health.services.s3 = 'error';
+  }
+
+  // Test Cognito configuration
+  if (process.env.COGNITO_USER_POOL_ID && process.env.COGNITO_CLIENT_ID) {
+    health.services.cognito = 'configured';
+  } else {
+    health.services.cognito = 'not_configured';
+  }
+
+  const statusCode = health.status === 'ok' ? 200 : 503;
+  res.status(statusCode).json(health);
 });
 
 // Test CORS endpoint

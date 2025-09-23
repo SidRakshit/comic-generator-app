@@ -16,9 +16,21 @@ const requiredEnvVars = [
 const missingEnvVars = requiredEnvVars.filter((varName) => !process.env[varName]);
 
 if (missingEnvVars.length > 0) {
-  console.error(
-    `FATAL ERROR: The following required environment variables are missing: ${missingEnvVars.join(', ')}`
-  );
+  console.error('===========================================');
+  console.error('FATAL ERROR: Missing required environment variables');
+  console.error('===========================================');
+  console.error('Missing variables:', missingEnvVars.join(', '));
+  console.error('===========================================');
+  console.error('Environment variable status:');
+  requiredEnvVars.forEach(varName => {
+    const value = process.env[varName];
+    const status = value ? '✅ SET' : '❌ MISSING';
+    const displayValue = value ? (varName.includes('KEY') || varName.includes('SECRET') ? '***HIDDEN***' : value) : 'undefined';
+    console.error(`  ${varName}: ${status} (${displayValue})`);
+  });
+  console.error('===========================================');
+  console.error('Please set the missing variables in your Railway deployment');
+  console.error('===========================================');
   process.exit(1);
 }
 
@@ -31,10 +43,20 @@ export const COGNITO_CLIENT_ID = process.env.COGNITO_CLIENT_ID!;
 export const OPENAI_API_KEY = process.env.OPENAI_API_KEY!;
 export const FRONTEND_URL = process.env.FRONTEND_URL!;
 
-export const s3Client = new S3Client({
-  region: AWS_REGION,
-  credentials: {
-    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
-  },
-});
+// Create S3 client with error handling
+let s3Client: S3Client | null = null;
+try {
+  s3Client = new S3Client({
+    region: AWS_REGION,
+    credentials: {
+      accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+    },
+  });
+  console.log('✅ S3 client initialized successfully');
+} catch (error) {
+  console.error('❌ Failed to initialize S3 client:', error);
+  console.error('❌ S3 features will not be available');
+}
+
+export { s3Client };
