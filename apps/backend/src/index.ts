@@ -1,6 +1,8 @@
-console.log('[DEBUG] ===========================================');
-console.log('[DEBUG] STARTING BACKEND APPLICATION');
-console.log('[DEBUG] ===========================================');
+if (process.env.NODE_ENV !== 'production') {
+  console.log('[DEBUG] ===========================================');
+  console.log('[DEBUG] STARTING BACKEND APPLICATION');
+  console.log('[DEBUG] ===========================================');
+}
 
 // Handle uncaught exceptions and unhandled rejections
 process.on('uncaughtException', (error) => {
@@ -28,34 +30,39 @@ import express from 'express';
 import cors from 'cors';
 import { PORT, FRONTEND_URL } from './config';
 import mainApiRouter from './routes/index';
+const isProd = process.env.NODE_ENV === 'production';
 
-console.log('[DEBUG] Step 1: Dependencies imported successfully');
-console.log('[DEBUG] Step 2: Config imported successfully');
-console.log('[DEBUG] Step 3: Routes imported successfully');
+if (!isProd) {
+  console.log('[DEBUG] Step 1: Dependencies imported successfully');
+  console.log('[DEBUG] Step 2: Config imported successfully');
+  console.log('[DEBUG] Step 3: Routes imported successfully');
+}
 
-console.log('[DEBUG] ===========================================');
-console.log('[DEBUG] ENVIRONMENT VARIABLES CHECK');
-console.log('[DEBUG] ===========================================');
-console.log(`[DEBUG] - PORT: ${PORT}`);
-console.log(`[DEBUG] - FRONTEND_URL: ${FRONTEND_URL}`);
-console.log(`[DEBUG] - NODE_ENV: ${process.env.NODE_ENV}`);
-console.log(`[DEBUG] - DATABASE_URL: ${process.env.DATABASE_URL ? 'SET' : 'NOT SET'}`);
-console.log(`[DEBUG] - AWS_REGION: ${process.env.AWS_REGION ? 'SET' : 'NOT SET'}`);
-console.log(`[DEBUG] - COGNITO_USER_POOL_ID: ${process.env.COGNITO_USER_POOL_ID ? 'SET' : 'NOT SET'}`);
-console.log(`[DEBUG] - COGNITO_CLIENT_ID: ${process.env.COGNITO_CLIENT_ID ? 'SET' : 'NOT SET'}`);
-console.log(`[DEBUG] - OPENAI_API_KEY: ${process.env.OPENAI_API_KEY ? 'SET' : 'NOT SET'}`);
-console.log(`[DEBUG] - S3_BUCKET_NAME: ${process.env.S3_BUCKET_NAME ? 'SET' : 'NOT SET'}`);
-console.log(`[DEBUG] - AWS_ACCESS_KEY_ID: ${process.env.AWS_ACCESS_KEY_ID ? 'SET' : 'NOT SET'}`);
-console.log(`[DEBUG] - AWS_SECRET_ACCESS_KEY: ${process.env.AWS_SECRET_ACCESS_KEY ? 'SET' : 'NOT SET'}`);
-console.log('[DEBUG] ===========================================');
-console.log('[DEBUG] All required environment variables are present!');
-console.log('[DEBUG] ===========================================');
+if (!isProd) {
+  console.log('[DEBUG] ===========================================');
+  console.log('[DEBUG] ENVIRONMENT VARIABLES CHECK');
+  console.log('[DEBUG] ===========================================');
+  console.log(`[DEBUG] - PORT: ${PORT}`);
+  console.log(`[DEBUG] - FRONTEND_URL: ${FRONTEND_URL}`);
+  console.log(`[DEBUG] - NODE_ENV: ${process.env.NODE_ENV}`);
+  console.log(`[DEBUG] - DATABASE_URL: ${process.env.DATABASE_URL ? 'SET' : 'NOT SET'}`);
+  console.log(`[DEBUG] - AWS_REGION: ${process.env.AWS_REGION ? 'SET' : 'NOT SET'}`);
+  console.log(`[DEBUG] - COGNITO_USER_POOL_ID: ${process.env.COGNITO_USER_POOL_ID ? 'SET' : 'NOT SET'}`);
+  console.log(`[DEBUG] - COGNITO_CLIENT_ID: ${process.env.COGNITO_CLIENT_ID ? 'SET' : 'NOT SET'}`);
+  console.log(`[DEBUG] - OPENAI_API_KEY: ${process.env.OPENAI_API_KEY ? 'SET' : 'NOT SET'}`);
+  console.log(`[DEBUG] - S3_BUCKET_NAME: ${process.env.S3_BUCKET_NAME ? 'SET' : 'NOT SET'}`);
+  console.log(`[DEBUG] - AWS_ACCESS_KEY_ID: ${process.env.AWS_ACCESS_KEY_ID ? 'SET' : 'NOT SET'}`);
+  console.log(`[DEBUG] - AWS_SECRET_ACCESS_KEY: ${process.env.AWS_SECRET_ACCESS_KEY ? 'SET' : 'NOT SET'}`);
+  console.log('[DEBUG] ===========================================');
+  console.log('[DEBUG] All required environment variables are present!');
+  console.log('[DEBUG] ===========================================');
+}
 
-console.log('[DEBUG] Step 4: Creating Express app...');
+if (!isProd) console.log('[DEBUG] Step 4: Creating Express app...');
 const app = express();
-console.log('[DEBUG] ✅ Express app created successfully');
+if (!isProd) console.log('[DEBUG] ✅ Express app created successfully');
 
-console.log('[DEBUG] Step 5: Setting up middleware...');
+if (!isProd) console.log('[DEBUG] Step 5: Setting up middleware...');
 try {
   // Global request logger to see ALL incoming requests (production optimized)
   app.use((req: any, res: any, next: any) => {
@@ -66,22 +73,22 @@ try {
     }
     next();
   });
-  console.log('[DEBUG] ✅ Request logger middleware added');
+  if (!isProd) console.log('[DEBUG] ✅ Request logger middleware added');
 
   app.use(express.json({ limit: '50mb' }));
-  console.log('[DEBUG] ✅ JSON parser middleware added');
+  if (!isProd) console.log('[DEBUG] ✅ JSON parser middleware added');
 } catch (error) {
   console.error('[FATAL] Error setting up basic middleware:', error);
   process.exit(1);
 }
 
-console.log('[DEBUG] Step 6: Setting up CORS configuration...');
+if (!isProd) console.log('[DEBUG] Step 6: Setting up CORS configuration...');
 try {
   // --- Robust CORS Configuration with Debugging ---
   if (FRONTEND_URL && FRONTEND_URL.length > 0) {
-    console.log(`[DEBUG] FRONTEND_URL is defined: ${FRONTEND_URL}`);
+    if (!isProd) console.log(`[DEBUG] FRONTEND_URL is defined: ${FRONTEND_URL}`);
     const allowedOrigins = FRONTEND_URL.split(',').map(origin => origin.trim());
-    console.log('[DEBUG] Allowed Origins array:', allowedOrigins);
+    if (!isProd) console.log('[DEBUG] Allowed Origins array:', allowedOrigins);
 
   const corsOptions = {
     origin: (origin: string | undefined, callback: (err: Error | null, allow?: boolean) => void) => {
@@ -116,12 +123,12 @@ try {
     optionsSuccessStatus: 200 // Some legacy browsers choke on 204
   };
 
-    console.log('[CORS] Applying CORS middleware...');
+    if (!isProd) console.log('[CORS] Applying CORS middleware...');
     app.use(cors(corsOptions));
-    console.log('[DEBUG] ✅ CORS middleware applied');
+    if (!isProd) console.log('[DEBUG] ✅ CORS middleware applied');
     
     // CRITICAL: Explicit OPTIONS handler for Railway
-    console.log('[CORS] Setting up explicit OPTIONS handler...');
+    if (!isProd) console.log('[CORS] Setting up explicit OPTIONS handler...');
     app.use((req: any, res: any, next: any) => {
       if (req.method === 'OPTIONS') {
         if (process.env.NODE_ENV !== 'production') {
@@ -152,16 +159,20 @@ try {
         next();
       }
     });
-    console.log('[DEBUG] ✅ OPTIONS handler applied');
-    console.log('[CORS] CORS middleware and OPTIONS handler applied.');
+    if (!isProd) {
+      console.log('[DEBUG] ✅ OPTIONS handler applied');
+      console.log('[CORS] CORS middleware and OPTIONS handler applied.');
+    }
 
   } else {
-    console.error('---');
-    console.error('[FATAL] FRONTEND_URL is NOT defined. Using permissive CORS.');
-    console.error('---');
+    if (!isProd) {
+      console.error('---');
+      console.error('[FATAL] FRONTEND_URL is NOT defined. Using permissive CORS.');
+      console.error('---');
+    }
     
     // Fallback CORS for development
-    console.log('[DEBUG] Setting up fallback CORS...');
+    if (!isProd) console.log('[DEBUG] Setting up fallback CORS...');
     const fallbackCors = {
       origin: true,
       methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
@@ -171,7 +182,7 @@ try {
     };
     
     app.use(cors(fallbackCors));
-    console.log('[DEBUG] ✅ Fallback CORS middleware applied');
+    if (!isProd) console.log('[DEBUG] ✅ Fallback CORS middleware applied');
     
     app.use((req: any, res: any, next: any) => {
       if (req.method === 'OPTIONS') {
@@ -187,7 +198,7 @@ try {
         next();
       }
     });
-    console.log('[DEBUG] ✅ Fallback OPTIONS handler applied');
+    if (!isProd) console.log('[DEBUG] ✅ Fallback OPTIONS handler applied');
   }
 } catch (error) {
   console.error('[FATAL] Error setting up CORS:', error);
