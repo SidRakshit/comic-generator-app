@@ -325,9 +325,9 @@ try {
   });
 
   // Set server timeout to prevent hanging connections
-  server.timeout = 10000; // 10 seconds - reduced from 30
-  server.keepAliveTimeout = 30000; // 30 seconds - reduced from 65
-  server.headersTimeout = 31000; // 31 seconds - reduced from 66
+  server.timeout = 120000; // 120 seconds - increased for long image generation
+  server.keepAliveTimeout = 65000; // 65 seconds
+  server.headersTimeout = 66000; // 66 seconds - must be > keepAliveTimeout
   
   // Handle server errors
   server.on('error', (error: any) => {
