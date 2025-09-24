@@ -16,7 +16,7 @@ import {
 	PlusCircle,
 	Loader2,
 } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/button";
 
 export default function Navbar() {
 	const [isOpen, setIsOpen] = useState(false);

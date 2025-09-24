@@ -7,7 +7,7 @@
 // import { useState, useEffect, useCallback } from "react";
 // import { ChevronRight } from "lucide-react";
 // import ComicCard from "./comic-card"; // Assuming you create this
-// import { Button } from "@/components/ui/button";
+// import { Button } from "@repo/ui/button";
 
 // Interface needed when uncommented:
 // interface FeaturedComic {

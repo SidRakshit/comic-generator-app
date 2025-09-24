@@ -5,9 +5,9 @@ import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { signIn } from "aws-amplify/auth";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label"; // Assuming Label doesn't enforce its own color
+import { Button } from "@repo/ui/button";
+import { Input } from "@repo/ui/input";
+import { Label } from "@repo/ui/label"; // Assuming Label doesn't enforce its own color
 
 export default function LoginPage() {
 	const [email, setEmail] = useState("");

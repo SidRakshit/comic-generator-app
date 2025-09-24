@@ -4,8 +4,8 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Button } from "@/components/ui/button";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/tabs";
+import { Button } from "@repo/ui/button";
 import { apiRequest } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
 import {

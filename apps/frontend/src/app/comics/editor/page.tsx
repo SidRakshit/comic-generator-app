@@ -8,7 +8,7 @@ import PanelPromptModal from "@/components/comic/panel-prompt";
 import ImageZoomModal from "@/components/comic/image-zoom-modal";
 import { useComicContext } from "@/context/comic-context";
 import { templates } from "@/hooks/use-comic";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/button";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { apiRequest, GeneratedImageDataResponse } from "@/lib/api";
 
