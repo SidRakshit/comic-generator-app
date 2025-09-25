@@ -1,0 +1,4 @@
+# Force Railway to use Dockerfile instead of auto-detection
+# This prevents Railpack from taking over the build process
+apps/backend/package.json
+apps/backend/package-lock.json
