@@ -1,6 +1,0 @@
-{
-  "buildCommand": "npx turbo build --filter=comic-creator",
-  "outputDirectory": "apps/frontend/.next",
-  "installCommand": "npm install",
-  "framework": null
-}
