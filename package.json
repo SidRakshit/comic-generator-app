@@ -3,6 +3,7 @@
   "private": true,
   "scripts": {
     "build": "turbo build",
+    "build:packages": "cd packages/utils && npm run build && cd ../common-types && npm run build",
     "dev": "turbo dev",
     "lint": "turbo lint",
     "typecheck": "turbo typecheck"
