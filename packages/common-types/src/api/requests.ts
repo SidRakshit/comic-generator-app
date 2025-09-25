@@ -56,3 +56,25 @@ export interface SignupRequest {
   password: string;
   confirmPassword: string;
 }
+
+// Backend service request types (moved from comics.service.ts)
+export interface PanelDataFromRequest {
+  panelNumber: number;
+  prompt: string;
+  dialogue?: string;
+  layoutPosition: object;
+  imageBase64: string; // Expect base64 data from frontend
+}
+
+export interface PageDataFromRequest {
+  pageNumber: number;
+  panels: PanelDataFromRequest[];
+}
+
+export interface ComicDataFromRequest {
+  title: string;
+  description?: string;
+  characters?: object[];
+  setting?: object;
+  pages: PageDataFromRequest[];
+}

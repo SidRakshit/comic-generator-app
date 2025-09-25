@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { generateId } from "@/lib/utils";
+import { generateId } from "@repo/utils";
 import { apiRequest, GeneratedImageDataResponse } from "@/lib/api";
 import { PanelStatus, Panel, ComicCharacter, Comic, TemplateDefinition, BackendPanelData, BackendPageData, FullComicDataFromBackend } from "@repo/common-types";
 

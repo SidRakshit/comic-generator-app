@@ -16,51 +16,20 @@ import {
 import pool from "../database";
 
 // --- Shared Types ---
-import { Dialogue, ScriptPanel, GeneratedImageData } from "@repo/common-types";
+import { 
+  Dialogue, 
+  ScriptPanel, 
+  GeneratedImageData,
+  PanelDataFromRequest,
+  PageDataFromRequest,
+  ComicDataFromRequest,
+  FullPageData,
+  FullPanelData,
+  FullComicData
+} from "@repo/common-types";
+import { ComicListItem } from "@repo/common-types";
 
-// --- Panels, Pages, Comics Before Saving ---
-interface PanelDataFromRequest {
-  panelNumber: number;
-  prompt: string;
-  dialogue?: string;
-  layoutPosition: object;
-  imageBase64: string; // Expect base64 data from frontend
-}
-interface PageDataFromRequest {
-  pageNumber: number;
-  panels: PanelDataFromRequest[];
-}
-interface ComicDataFromRequest {
-  title: string;
-  description?: string;
-  characters?: object[];
-  setting?: object;
-  pages: PageDataFromRequest[];
-}
-
-// --- Panels, Pages, Comics After Saving ---
-interface FullPageData extends Omit<PageDataFromRequest, "panels"> {
-  page_id: string;
-  panels: FullPanelData[];
-}
-interface FullPanelData extends Omit<PanelDataFromRequest, "imageBase64"> {
-  panel_id: string;
-  image_url: string; // Final S3 URL
-}
-interface FullComicData extends Omit<ComicDataFromRequest, "pages"> {
-  comic_id: string;
-  created_at: Date;
-  updated_at: Date;
-  pages: FullPageData[];
-}
-
-// Summarized version of a comic's data
-interface ComicListItem {
-  comic_id: string;
-  title: string;
-  created_at: Date;
-  updated_at: Date;
-}
+// --- Types now imported from @repo/common-types ---
 
 // --- Comic Service Class ---
 export class ComicService {

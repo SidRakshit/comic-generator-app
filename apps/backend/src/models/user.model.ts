@@ -2,8 +2,7 @@
 import pool from "../database";
 import { User } from "@repo/common-types";
 
-// Re-export User type for backward compatibility
-export type { User };
+// User type is imported from @repo/common-types
 
 export class UserModel {
 	static async findAll(): Promise<User[]> {
