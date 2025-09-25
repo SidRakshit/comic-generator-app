@@ -6,9 +6,27 @@ WORKDIR /app
 # Install OpenSSL, which Prisma needs
 RUN apt-get update -y && apt-get install -y openssl
 
-# Copy package files and install everything
-COPY package*.json ./
+# Copy root package.json for workspace configuration
+COPY ../../package*.json ./
+
+# Copy shared packages first (needed for @repo/* dependencies)
+COPY ../../packages ./packages
+
+# Copy backend package files
+COPY package*.json ./apps/backend/
+WORKDIR /app/apps/backend
+
+# Install dependencies (workspace will resolve @repo/* packages)
 RUN npm install
+
+# Build shared packages first
+WORKDIR /app/packages/utils
+RUN npm run build
+WORKDIR /app/packages/common-types  
+RUN npm run build
+
+# Back to backend directory
+WORKDIR /app/apps/backend
 
 # Copy source code and Prisma schema
 COPY prisma ./prisma
@@ -27,14 +45,11 @@ WORKDIR /app
 # Install OpenSSL here as well
 RUN apt-get update -y && apt-get install -y openssl
 
-# Copy package files and install ONLY production dependencies
-COPY package*.json ./
-RUN npm install --omit=dev
+# Copy the entire built workspace structure
+COPY --from=builder /app ./
 
-# Copy the built application, Prisma schema, and generated client from the builder stage
-COPY --from=builder /app/dist ./dist
-COPY --from=builder /app/prisma ./prisma
-COPY --from=builder /app/node_modules/.prisma ./node_modules/.prisma
+# Set working directory to backend
+WORKDIR /app/apps/backend
 
 # Expose the application port
 EXPOSE 8080
