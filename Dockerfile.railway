@@ -13,10 +13,9 @@ COPY package*.json ./
 COPY packages ./packages
 
 # Copy backend package files
-COPY apps/backend/package*.json ./apps/backend/
-WORKDIR /app/apps/backend
+COPY apps/backend ./apps/backend
 
-# Install dependencies (workspace will resolve @repo/* packages)
+# Install dependencies from ROOT (workspace context)
 RUN npm install
 
 # Build shared packages first
@@ -27,11 +26,6 @@ RUN npm run build
 
 # Back to backend directory
 WORKDIR /app/apps/backend
-
-# Copy source code and Prisma schema
-COPY apps/backend/prisma ./prisma
-COPY apps/backend/src ./src
-COPY apps/backend/tsconfig.json ./tsconfig.json
 
 # Generate the Prisma client and build the TypeScript code
 RUN npx prisma generate
