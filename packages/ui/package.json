@@ -41,7 +41,8 @@
       "types": "./dist/textarea.d.ts",
       "default": "./dist/textarea.js"
     },
-    "./styles": "./styles/globals.css"
+    "./styles": "./styles/globals.css",
+    "./styles/globals.css": "./styles/globals.css"
   },
   "scripts": {
     "build": "tsc",
@@ -52,6 +53,7 @@
   "dependencies": {
     "@radix-ui/react-dialog": "^1.1.2",
     "@radix-ui/react-label": "^2.1.0",
+    "@radix-ui/react-slot": "^1.1.0",
     "@radix-ui/react-tabs": "^1.1.1",
     "@repo/utils": "^0.0.0",
     "class-variance-authority": "^0.7.0",
