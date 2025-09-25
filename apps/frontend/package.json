@@ -5,7 +5,7 @@
   "scripts": {
     "dev": "next dev",
     "build": "npm run build:deps && next build",
-    "build:deps": "cd ../../packages/ui && npm run build && cd ../../packages/common-types && npm run build && cd ../../packages/utils && npm run build",
+    "build:deps": "cd ../../packages/utils && npm run build && cd ../../packages/common-types && npm run build && cd ../../packages/ui && npm run build",
     "start": "next start",
     "lint": "next lint"
   },
