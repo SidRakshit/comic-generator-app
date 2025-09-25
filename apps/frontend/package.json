@@ -4,7 +4,8 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "build": "next build",
+    "build": "npm run build:deps && next build",
+    "build:deps": "cd ../../packages/ui && npm run build && cd ../../packages/common-types && npm run build && cd ../../packages/utils && npm run build",
     "start": "next start",
     "lint": "next lint"
   },

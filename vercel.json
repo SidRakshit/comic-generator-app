@@ -1,7 +1,5 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "apps/frontend/.next",
-  "installCommand": "npm install",
-  "framework": null,
-  "ignoreCommand": "git diff --quiet HEAD^ HEAD ./apps/frontend/"
+  "installCommand": "npm install"
 }
