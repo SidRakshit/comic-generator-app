@@ -263,7 +263,7 @@ app.get('/health', async (req: any, res: any) => {
     ]);
     client.release();
     health.services.database = 'connected';
-  } catch (error) {
+  } catch {
     health.services.database = 'error';
     health.status = 'degraded';
   }
@@ -276,7 +276,7 @@ app.get('/health', async (req: any, res: any) => {
     } else {
       health.services.s3 = 'not_configured';
     }
-  } catch (error) {
+  } catch {
     health.services.s3 = 'error';
   }
 

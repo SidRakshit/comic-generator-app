@@ -1,12 +1,9 @@
 // src/models/user.model.ts
 import pool from "../database";
+import { User } from "@repo/common-types";
 
-export interface User {
-	id: number;
-	username: string;
-	email: string;
-	created_at: Date;
-}
+// Re-export User type for backward compatibility
+export type { User };
 
 export class UserModel {
 	static async findAll(): Promise<User[]> {

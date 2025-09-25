@@ -15,21 +15,8 @@ import {
 // --- Database Pool Import ---
 import pool from "../database";
 
-// --- Interfaces ---
-export interface Dialogue {
-  character: string;
-  text: string;
-}
-export interface ScriptPanel {
-  panelNumber: string;
-  description: string;
-  dialogue: Dialogue[];
-}
-
-export interface GeneratedImageData {
-  imageData: string; // Base64 encoded image data
-  promptUsed: string;
-}
+// --- Shared Types ---
+import { Dialogue, ScriptPanel, GeneratedImageData } from "@repo/common-types";
 
 // --- Panels, Pages, Comics Before Saving ---
 interface PanelDataFromRequest {

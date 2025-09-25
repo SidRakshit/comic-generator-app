@@ -1,6 +1,7 @@
 // Domain types for Authentication
 
 import type { AuthUser, FetchUserAttributesOutput } from "aws-amplify/auth";
+import type { Request } from "express";
 
 export type UserAttributes = FetchUserAttributesOutput;
 
@@ -15,7 +16,7 @@ export interface AuthContextType {
 }
 
 // Backend authentication types
-export interface AuthenticatedRequest {
+export interface AuthenticatedRequest extends Request {
   user?: {
     sub: string;
     email?: string;

@@ -1,22 +1,18 @@
 {
+  "extends": "@repo/typescript-config/node",
   "compilerOptions": {
-    "target": "es6",
-    "module": "commonjs",
-    "esModuleInterop": true,
-    "moduleResolution": "node",
     "types": [
       "node",
       "express"
     ],
-    "strict": true,
-    "skipLibCheck": true,
-    "forceConsistentCasingInFileNames": true,
-    "outDir": "./dist"
+    "outDir": "./dist",
+    "rootDir": "."
   },
   "include": [
     "src"
   ],
   "exclude": [
-    "node_modules"
+    "node_modules",
+    "src/generated"
   ]
 }
