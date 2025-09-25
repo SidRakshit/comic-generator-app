@@ -3,11 +3,10 @@ import { fetchAuthSession } from "aws-amplify/auth";
 const API_BASE_URL =
 	process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api";
 
-// Specific Response Type Interfaces
-export interface GeneratedImageDataResponse {
-	imageData: string;
-	promptUsed: string;
-}
+import { GeneratedImageDataResponse } from "@repo/common-types";
+
+// Re-export for backward compatibility
+export type { GeneratedImageDataResponse };
 
 /**
  * Makes an authenticated request to the backend API.

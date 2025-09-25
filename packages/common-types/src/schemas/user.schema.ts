@@ -23,12 +23,12 @@ export const UserProfileSchema = z.object({
 });
 
 export const ComicListItemSchema = z.object({
-  id: z.string().uuid(),
+  comic_id: z.string().uuid(),
   title: z.string(),
   description: z.string().optional(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-  panelCount: z.number().nonnegative(),
+  created_at: z.string(),
+  updated_at: z.string(),
+  panel_count: z.number().nonnegative(),
   published: z.boolean(),
 });
 

@@ -6,7 +6,7 @@ import { Label } from "@repo/ui/label";
 import { Textarea } from "@repo/ui/textarea";
 import { Plus } from "lucide-react";
 import CharacterInput from "./character-input";
-import { Comic } from "@/hooks/use-comic";
+import { Comic } from "@repo/common-types";
 
 interface ComicMetadataFormProps {
 	comic: Comic; // Use the imported Comic type

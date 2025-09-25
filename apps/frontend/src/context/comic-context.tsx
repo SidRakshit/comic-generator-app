@@ -3,32 +3,7 @@
 
 import React, { createContext, useContext, ReactNode } from "react";
 import { useComic } from "@/hooks/use-comic";
-import type { Comic, Panel, ComicCharacter } from "@/hooks/use-comic";
-
-// Define the shape of the context value (what consumers will get)
-// This mirrors the return value of your useComic hook
-interface ComicContextType {
-	comic: Comic;
-	isLoading: boolean;
-	isSaving: boolean;
-	error: string | null;
-	setTemplate: (templateId: string | null) => void;
-	updatePanelContent: (
-		panelIndex: number,
-		updates: Partial<Panel> & { imageData?: string }
-	) => void;
-	updateComicMetadata: (
-		updates: Partial<Omit<Comic, "panels" | "characters">>
-	) => void;
-	addCharacter: () => void;
-	removeCharacter: (idToRemove: string) => void;
-	updateCharacter: (
-		idToUpdate: string,
-		field: keyof Omit<ComicCharacter, "id">,
-		value: string
-	) => void;
-	saveComic: () => Promise<Comic | undefined>;
-}
+import type { Comic, Panel, ComicCharacter, ComicContextType } from "@repo/common-types";
 
 // Create the context with a default value (usually null or a minimal state)
 // We'll throw an error if used outside a provider, so default value isn't critical

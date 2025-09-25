@@ -5,7 +5,7 @@ import { Input } from "@repo/ui/input";
 import { Label } from "@repo/ui/label";
 import { Trash2 } from "lucide-react";
 // *** FIX: Import type directly from the hook file ***
-import { ComicCharacter } from "@/hooks/use-comic";
+import { ComicCharacter } from "@repo/common-types";
 
 interface CharacterInputProps {
 	character: ComicCharacter; // Use the imported type

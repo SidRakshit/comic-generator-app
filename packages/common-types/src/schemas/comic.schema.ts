@@ -103,23 +103,30 @@ export const BackendComicDataSchema = z.object({
 
 export const BackendPanelDataSchema = z.object({
   panel_id: z.string().uuid(),
-  page_id: z.string().uuid(),
-  panel_number: z.number(),
-  image_url: z.string().url().optional(),
+  panelNumber: z.number(),
   prompt: z.string().optional(),
   dialogue: z.string().optional(),
-  layout_position: z.record(z.unknown()).optional(),
-  created_at: z.string(),
-  updated_at: z.string(),
+  layoutPosition: z.record(z.unknown()).optional(),
+  image_url: z.string().url().optional(),
 });
 
 export const BackendPageDataSchema = z.object({
   page_id: z.string().uuid(),
+  pageNumber: z.number(),
+  panels: z.array(BackendPanelDataSchema),
+});
+
+export const FullComicDataFromBackendSchema = z.object({
   comic_id: z.string().uuid(),
-  page_number: z.number(),
+  title: z.string(),
+  description: z.string().optional(),
+  genre: z.string().optional(),
+  characters: z.unknown().optional(),
+  setting: z.unknown().optional(),
+  template: z.string().optional(),
+  pages: z.array(BackendPageDataSchema),
   created_at: z.string(),
   updated_at: z.string(),
-  panels: z.array(BackendPanelDataSchema),
 });
 
 // Service layer schemas

@@ -8,6 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/tabs";
 import { Button } from "@repo/ui/button";
 import { apiRequest } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
+import { ComicListItem } from "@repo/common-types";
 import {
 	User,
 	Edit,
@@ -23,15 +24,6 @@ import {
 	Twitter,
 	Loader2,
 } from "lucide-react";
-
-// Interface matching backend's list response item
-interface ComicListItem {
-	comic_id: string;
-	title: string;
-	created_at: string; // Or Date if you parse it
-	updated_at: string; // Or Date
-	// Add other fields if your API returns them (e.g., coverImage, likes)
-}
 
 // Initial user data structure (consider fetching this too if needed)
 const initialUserData = {

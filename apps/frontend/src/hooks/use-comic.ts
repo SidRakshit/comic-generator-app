@@ -3,72 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { generateId } from "@/lib/utils";
 import { apiRequest, GeneratedImageDataResponse } from "@/lib/api";
-
-// --- Interfaces ---
-export type PanelStatus = "empty" | "loading" | "complete" | "error";
-export interface Panel {
-	id: string;
-	status: PanelStatus;
-	prompt?: string;
-	imageUrl?: string; // Holds S3 URL (loaded) or Data URL (newly generated)
-	imageBase64?: string; // Holds the raw base64 from generation, used for saving
-	error?: string;
-	panelNumber?: number;
-	layoutPosition?: object;
-}
-export interface ComicCharacter {
-	id: string;
-	name: string;
-	description: string;
-}
-export interface Comic {
-	id?: string;
-	title: string;
-	description?: string;
-	genre?: string;
-	characters?: ComicCharacter[];
-	template: string | null;
-	panels: Panel[];
-	createdAt?: string;
-	updatedAt?: string;
-	published?: boolean;
-}
-interface TemplateDefinition {
-	id: string;
-	name: string;
-	panelCount: number;
-	layout: string;
-}
-
-// --- Backend Data Interfaces ---
-interface BackendPanelData {
-	panel_id: string;
-	panelNumber: number;
-	prompt?: string;
-	dialogue?: string; // Note: dialogue isn't currently mapped back to frontend Panel state
-	layoutPosition?: object;
-	image_url?: string;
-}
-
-interface BackendPageData {
-	page_id: string;
-	pageNumber: number;
-	panels: BackendPanelData[]; // Use the panel data type
-}
-
-// CORRECTED: Use BackendPageData[] for pages
-interface FullComicDataFromBackend {
-	comic_id: string;
-	title: string;
-	description?: string;
-	genre?: string;
-	characters?: unknown;
-	setting?: unknown;
-	template?: string;
-	pages: BackendPageData[]; // Use the defined interface
-	created_at: string;
-	updated_at: string;
-}
+import { PanelStatus, Panel, ComicCharacter, Comic, TemplateDefinition, BackendPanelData, BackendPageData, FullComicDataFromBackend } from "@repo/common-types";
 
 // This now correctly inherits the proper 'pages' type
 type SaveComicResponseFromBackend = FullComicDataFromBackend;
@@ -79,31 +14,26 @@ export const templates: Record<string, TemplateDefinition> = {
 		id: "template-1",
 		name: "2x2 Grid",
 		panelCount: 4,
-		layout: "grid-2x2",
 	},
 	"template-2": {
 		id: "template-2",
 		name: "3x2 Grid",
 		panelCount: 6,
-		layout: "grid-3x2",
 	},
 	"template-3": {
 		id: "template-3",
 		name: "Single Panel",
 		panelCount: 1,
-		layout: "single",
 	},
 	"template-4": {
 		id: "template-4",
 		name: "3x3 Grid",
 		panelCount: 9,
-		layout: "grid-3x3",
 	},
 	"template-5": {
 		id: "template-5",
 		name: "Manga Style",
 		panelCount: 5,
-		layout: "manga",
 	},
 };
 
@@ -187,7 +117,7 @@ export function useComic(
 					imageBase64: undefined, // Ensure base64 is not stored for loaded comics
 					error: undefined,
 					panelNumber: p.panelNumber,
-					layoutPosition: p.layoutPosition || {},
+					layoutPosition: (p.layoutPosition as Record<string, unknown>) || {},
 				})) || []; // Fallback to empty array if map fails (less likely now)
 
 			const loadedTemplateKey =
@@ -416,7 +346,7 @@ export function useComic(
 					imageBase64: undefined,
 					error: undefined,
 					panelNumber: p.panelNumber,
-					layoutPosition: p.layoutPosition || {},
+					layoutPosition: (p.layoutPosition as Record<string, unknown>) || {},
 				})) || comic.panels; // Keep fallback
 
 			const finalComicState: Comic = {

@@ -22,12 +22,12 @@ export interface UserProfile {
 
 // Frontend-specific user types
 export interface ComicListItem {
-  id: string;
+  comic_id: string;
   title: string;
   description?: string;
-  createdAt: string;
-  updatedAt: string;
-  panelCount: number;
+  created_at: string;
+  updated_at: string;
+  panel_count: number;
   published: boolean;
 }
 

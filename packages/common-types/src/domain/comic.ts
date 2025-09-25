@@ -82,21 +82,28 @@ export interface BackendComicData {
 
 export interface BackendPageData {
   page_id: string;
-  comic_id: string;
-  page_number: number;
-  created_at: string;
-  updated_at: string;
+  pageNumber: number;
   panels: BackendPanelData[];
 }
 
 export interface BackendPanelData {
   panel_id: string;
-  page_id: string;
-  panel_number: number;
-  image_url?: string;
+  panelNumber: number;
   prompt?: string;
   dialogue?: string;
-  layout_position?: Record<string, unknown>;
+  layoutPosition?: Record<string, unknown>;
+  image_url?: string;
+}
+
+export interface FullComicDataFromBackend {
+  comic_id: string;
+  title: string;
+  description?: string;
+  genre?: string;
+  characters?: unknown;
+  setting?: unknown;
+  template?: string;
+  pages: BackendPageData[];
   created_at: string;
   updated_at: string;
 }
