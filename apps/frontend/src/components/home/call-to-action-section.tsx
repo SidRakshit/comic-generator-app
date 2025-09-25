@@ -2,7 +2,7 @@
 "use client"; // Required for using hooks
 
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/button";
 import { useAuth } from "@/hooks/use-auth"; // Import the auth hook
 import { Loader2 } from "lucide-react"; // Import loading icon
 

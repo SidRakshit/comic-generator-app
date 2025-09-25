@@ -1,17 +1,11 @@
 // backend/src/middleware/auth.middleware.ts
 
-import { Request, Response, NextFunction } from "express";
+import { Response, NextFunction } from "express";
 import { CognitoJwtVerifier } from "aws-jwt-verify"; // Import the verifier
 import { CognitoAccessTokenPayload } from "aws-jwt-verify/jwt-model"; // Type for payload
 import { AWS_REGION, COGNITO_USER_POOL_ID, COGNITO_CLIENT_ID } from "../config"; // Import Cognito config
 import pool from "../database"; // <<< Import the database pool
-
-// --- Define an interface that extends Request ---
-// It will now include the original Cognito payload AND our internal DB user ID
-export interface AuthenticatedRequest extends Request {
-	user?: CognitoAccessTokenPayload; // Keep original payload if needed downstream
-	internalUserId?: string; // Our internal DB UUID for the user
-}
+import { AuthenticatedRequest } from "@repo/common-types"; // Import shared type
 
 // --- Input Validation ---
 if (!AWS_REGION || !COGNITO_USER_POOL_ID || !COGNITO_CLIENT_ID) {
@@ -69,7 +63,7 @@ export const authenticateToken = async (
 	try {
 		const cognitoSub = payload.sub;
 		const cognitoEmail = payload.email;
-		const emailToInsert = cognitoEmail || null;
+		// const emailToInsert = cognitoEmail || null;
 
 		if (!cognitoSub) {
 			console.error(

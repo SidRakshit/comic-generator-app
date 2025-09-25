@@ -8,9 +8,10 @@ import ComicCanvas from "@/components/comic/comic-canvas";
 import PanelPromptModal from "@/components/comic/panel-prompt";
 import ImageZoomModal from "@/components/comic/image-zoom-modal";
 import { useComicContext } from "@/context/comic-context"; // Use context hook
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/button";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { apiRequest } from "@/lib/api";
+import { ComicCharacter, Panel } from "@repo/common-types";
 
 export default function ComicEditorPage() {
 	const params = useParams();
@@ -88,7 +89,7 @@ export default function ComicEditorPage() {
 		if (comic.genre) metadataPrefix += `Genre: ${comic.genre}. `;
 		if (comic.characters && comic.characters.length > 0) {
 			metadataPrefix += "Characters: ";
-			comic.characters.forEach((char) => {
+			comic.characters.forEach((char: ComicCharacter) => {
 				if (char.name && char.description)
 					metadataPrefix += `(${char.name}: ${char.description}) `;
 				else if (char.name) metadataPrefix += `(${char.name}) `;
@@ -137,7 +138,7 @@ export default function ComicEditorPage() {
 	const handleSaveComic = async () => {
 		// canPublish logic needs to check comic.panels now
 		const canPublish = comic?.panels?.every(
-			(p) => p.status === "complete" && p.imageUrl
+			(p: Panel) => p.status === "complete" && p.imageUrl
 		);
 		if (isSaving || !comic || !canPublish) return;
 
@@ -179,7 +180,7 @@ export default function ComicEditorPage() {
 
 	// Determine if comic can be published (all panels complete)
 	const canPublish = comic?.panels?.every(
-		(p) => p.status === "complete" && p.imageUrl
+		(p: Panel) => p.status === "complete" && p.imageUrl
 	);
 
 	// --- Main Editor JSX ---

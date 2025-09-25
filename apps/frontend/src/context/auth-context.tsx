@@ -19,19 +19,9 @@ import {
 	type FetchUserAttributesOutput,
 } from "aws-amplify/auth";
 import { configureAmplify } from "@/lib/amplify-config";
+import { AuthContextType } from "@repo/common-types";
 
 type UserAttributes = FetchUserAttributesOutput;
-
-// Export the type for use in the hook and potentially components
-export interface AuthContextType {
-	user: AuthUser | null;
-	userId: string | null;
-	attributes: UserAttributes | null;
-	isLoading: boolean;
-	error: Error | null;
-	getAccessToken: () => Promise<string | null>;
-	handleSignOut: () => Promise<void>;
-}
 
 // Default value
 const defaultAuthContextValue: AuthContextType = {

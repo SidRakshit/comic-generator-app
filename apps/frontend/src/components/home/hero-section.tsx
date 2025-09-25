@@ -2,7 +2,7 @@
 "use client";
 
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/button";
 import { useAuth } from "@/hooks/use-auth"; // Use the custom hook from the correct file
 import { Loader2 } from "lucide-react";
 

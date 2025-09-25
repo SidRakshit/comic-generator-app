@@ -1,12 +1,12 @@
 // src/components/comic/comic-metadata-form.tsx
 import React, { ChangeEvent } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
+import { Button } from "@repo/ui/button";
+import { Input } from "@repo/ui/input";
+import { Label } from "@repo/ui/label";
+import { Textarea } from "@repo/ui/textarea";
 import { Plus } from "lucide-react";
 import CharacterInput from "./character-input";
-import { Comic } from "@/hooks/use-comic";
+import { Comic } from "@repo/common-types";
 
 interface ComicMetadataFormProps {
 	comic: Comic; // Use the imported Comic type

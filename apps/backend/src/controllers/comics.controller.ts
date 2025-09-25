@@ -1,7 +1,7 @@
 // src/controllers/comics.controller.ts
 import { Request, Response } from "express";
 import { ComicService } from "../services/comics.service";
-import { AuthenticatedRequest } from "../middleware/auth.middleware";
+import { AuthenticatedRequest } from "@repo/common-types";
 
 export class ComicController {
 	private comicService: ComicService;

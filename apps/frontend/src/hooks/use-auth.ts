@@ -1,7 +1,8 @@
 // src/hooks/use-auth.ts
 import { useContext } from "react";
 // Import the context object and its type from the context file
-import { AuthContext, type AuthContextType } from "@/context/auth-context"; // Adjust path if necessary
+import { AuthContext } from "@/context/auth-context"; // Adjust path if necessary
+import { AuthContextType } from "@repo/common-types";
 
 // Export the consumer hook
 export function useAuth(): AuthContextType {

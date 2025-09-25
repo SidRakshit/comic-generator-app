@@ -8,9 +8,10 @@ import PanelPromptModal from "@/components/comic/panel-prompt";
 import ImageZoomModal from "@/components/comic/image-zoom-modal";
 import { useComicContext } from "@/context/comic-context";
 import { templates } from "@/hooks/use-comic";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/button";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { apiRequest, GeneratedImageDataResponse } from "@/lib/api";
+import { ComicCharacter, Panel } from "@repo/common-types";
 
 async function generateImageAPI(
 	prompt: string
@@ -116,7 +117,7 @@ function NewComicEditorContent() {
 		if (comic.genre) metadataPrefix += `Genre: ${comic.genre}. `;
 		if (comic.characters && comic.characters.length > 0) {
 			metadataPrefix += "Characters: ";
-			comic.characters.forEach((char) => {
+			comic.characters.forEach((char: ComicCharacter) => {
 				if (char.name && char.description)
 					metadataPrefix += `(${char.name}: ${char.description}) `;
 				else if (char.name) metadataPrefix += `(${char.name}) `;
@@ -201,7 +202,7 @@ function NewComicEditorContent() {
 
 	const templateName =
 		templates[comic.template || ""]?.name || "Unknown Template";
-	const canSave = comic.panels?.every((p) => p.status === "complete");
+		const canSave = comic.panels?.every((p: Panel) => p.status === "complete");
 
 	return (
 		<div className="container mx-auto py-8 px-4">

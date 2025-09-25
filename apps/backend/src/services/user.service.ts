@@ -1,4 +1,5 @@
-import { User, UserModel } from "../models/user.model";
+import { User } from "@repo/common-types";
+import { UserModel } from "../models/user.model";
 
 export class UserService {
 	static async getAllUsers(): Promise<User[]> {

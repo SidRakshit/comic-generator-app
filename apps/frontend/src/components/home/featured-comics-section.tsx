@@ -7,7 +7,7 @@
 // import { useState, useEffect, useCallback } from "react";
 // import { ChevronRight } from "lucide-react";
 // import ComicCard from "./comic-card"; // Assuming you create this
-// import { Button } from "@/components/ui/button";
+// import { Button } from "@repo/ui/button";
 
 // Interface needed when uncommented:
 // interface FeaturedComic {
@@ -50,40 +50,21 @@ export default function FeaturedComicsSection() {
 	// };
 	// --- End of Data Fetching Logic ---
 
-	// Placeholder content until the section is implemented
+	// For now, show a simple placeholder that matches the original design
 	return (
-		<section className="py-16 bg-gray-50 hidden">
-			{" "}
-			{/* Hidden for now */}
+		<section className="py-16 bg-gray-50">
 			<div className="container mx-auto px-4">
 				<div className="flex justify-between items-center mb-8">
-					<h2 className="text-3xl font-bold">Featured Comics</h2>
-					{/* <Link href="/comics?category=featured" className="text-blue-600 hover:text-blue-800 inline-flex items-center">
-            View all <ChevronRight className="h-4 w-4 ml-1" />
-          </Link> */}
+					<h2 className="text-3xl font-bold text-gray-900">Featured Comics</h2>
 				</div>
-				{/* --- Conditional Rendering (Use when uncommented) ---
-        {isLoading ? (
-          <div className="flex justify-center items-center h-64">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
-          </div>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-            {featuredComics.map(comic => (
-              <ComicCard key={comic.id} comic={comic} /> // Use ComicCard component
-            ))}
-          </div>
-        )}
-        */}
-				{/* --- CTA Button (Use when uncommented) ---
-        <div className="text-center mt-12">
-          <Button asChild>
-            <Link href="/comics/create">Create Your Own Comic</Link>
-          </Button>
-        </div>
-         */}
-				<p className="text-center text-gray-500">(Featured Comics Section)</p>{" "}
-				{/* Placeholder text */}
+				<div className="text-center py-12">
+					<p className="text-gray-600 text-lg mb-4">
+						Discover amazing comics created by our community
+					</p>
+					<p className="text-gray-500">
+						Featured comics will appear here soon!
+					</p>
+				</div>
 			</div>
 		</section>
 	);

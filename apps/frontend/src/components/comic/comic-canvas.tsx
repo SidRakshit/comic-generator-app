@@ -2,7 +2,7 @@
 "use client";
 
 import Image from "next/image";
-import { Panel } from "@/hooks/use-comic";
+import { Panel } from "@repo/common-types";
 import { Loader2, ImageOff, Plus, Edit } from "lucide-react";
 
 interface ComicCanvasProps {

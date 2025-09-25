@@ -1,6 +1,6 @@
 // src/components/comic/comic-template-step.tsx
 import React from "react";
-import { Button } from "@/components/ui/button";
+import { Button } from "@repo/ui/button";
 import { Loader2 } from "lucide-react";
 import TemplateSelector from "@/components/comic/template-selector";
 
