@@ -15,15 +15,15 @@ export interface AuthContextType {
   handleSignOut: () => Promise<void>;
 }
 
-// Backend authentication types - use generic Request interface
-export interface AuthenticatedRequest extends Request {
+// Backend authentication types - use intersection type for better compatibility
+export type AuthenticatedRequest = Request & {
   user?: {
     sub: string;
     email?: string;
     [key: string]: unknown;
   };
   internalUserId?: string;
-}
+};
 
 // Cognito JWT payload type (simplified)
 export interface CognitoAccessTokenPayload {
