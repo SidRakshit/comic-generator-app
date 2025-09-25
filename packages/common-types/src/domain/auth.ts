@@ -15,7 +15,7 @@ export interface AuthContextType {
   handleSignOut: () => Promise<void>;
 }
 
-// Backend authentication types
+// Backend authentication types - use generic Request interface
 export interface AuthenticatedRequest extends Request {
   user?: {
     sub: string;
