@@ -1,7 +1,7 @@
 // src/routes/comics.ts
 import express from 'express';
 import { comicController } from '../controllers/comics.controller';
-import { authenticateToken } from '../middleware/auth.middleware';
+import { authenticateToken, checkPanelBalance } from '../middleware/auth.middleware';
 import { validateRequestBody } from '../middleware/validation.middleware';
 import { CreateComicRequestSchema, GeneratePanelImageRequestSchema } from '@repo/common-types';
 
@@ -12,6 +12,7 @@ router.post('/generate-script',
     comicController.generateScript);
 router.post('/generate-panel-image',
     authenticateToken,
+    checkPanelBalance,
     validateRequestBody(GeneratePanelImageRequestSchema),
     comicController.generateImage);
 

@@ -1,0 +1,16 @@
+@import "tailwindcss";
+
+:root {
+  --admin-background: #f5f5f5;
+  --admin-foreground: #0f172a;
+}
+
+body {
+  background: var(--admin-background);
+  color: var(--admin-foreground);
+  font-family: Arial, Helvetica, sans-serif;
+}
+
+main {
+  min-height: calc(100vh - 64px);
+}

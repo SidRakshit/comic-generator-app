@@ -1,6 +1,7 @@
 // Domain types for Authentication
 
 import type { AuthUser, FetchUserAttributesOutput } from "aws-amplify/auth";
+import type { AdminRole, AdminPermission } from "./admin";
 
 export type UserAttributes = FetchUserAttributesOutput;
 
@@ -23,6 +24,9 @@ export interface AuthenticatedRequestFields {
     [key: string]: unknown;
   };
   internalUserId?: string;
+  isAdmin?: boolean;
+  adminRoles?: AdminRole[];
+  adminPermissions?: AdminPermission[];
 }
 
 // Type alias for backend - to be used with Express Request

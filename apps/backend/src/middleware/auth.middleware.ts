@@ -5,10 +5,79 @@ import { CognitoJwtVerifier } from "aws-jwt-verify"; // Import the verifier
 import { CognitoAccessTokenPayload } from "aws-jwt-verify/jwt-model"; // Type for payload
 import { AWS_REGION, COGNITO_USER_POOL_ID, COGNITO_CLIENT_ID } from "../config"; // Import Cognito config
 import pool from "../database"; // <<< Import the database pool
-import { AuthenticatedRequestFields } from "@repo/common-types"; // Import shared type
+import {
+	AuthenticatedRequestFields,
+	AdminRole,
+	AdminPermission,
+} from "@repo/common-types"; // Import shared type
 
 // Create the final AuthenticatedRequest type by intersecting Express Request with our fields
 type AuthenticatedRequest = Request & AuthenticatedRequestFields;
+
+interface AdminContextRow {
+	roles: AdminRole[] | null;
+	permissions: AdminPermission[] | null;
+	can_impersonate?: boolean | null;
+}
+
+interface UserCreditsRow {
+	panel_balance: number;
+}
+
+const DEFAULT_ADMIN_CONTEXT = {
+	isAdmin: false,
+	roles: [] as AdminRole[],
+	permissions: [] as AdminPermission[],
+};
+
+async function attachAdminContext(req: AuthenticatedRequest): Promise<void> {
+	if (!req.internalUserId) {
+		req.isAdmin = false;
+		req.adminRoles = [];
+		req.adminPermissions = [];
+		return;
+	}
+
+	try {
+		const adminResult = await pool.query<AdminContextRow>(
+			`SELECT roles, permissions, can_impersonate
+			 FROM admin_users
+			 WHERE user_id = $1`,
+			[req.internalUserId]
+		);
+
+		if (adminResult.rows.length === 0) {
+			req.isAdmin = false;
+			req.adminRoles = [];
+			req.adminPermissions = [];
+			return;
+		}
+
+		const record = adminResult.rows[0];
+		req.isAdmin = true;
+		const normalizedRoles = Array.isArray(record.roles)
+			? (record.roles.filter(Boolean) as AdminRole[])
+			: [];
+		const normalizedPermissions = Array.isArray(record.permissions)
+			? (record.permissions.filter(Boolean) as AdminPermission[])
+			: [];
+
+		req.adminRoles = normalizedRoles;
+		req.adminPermissions = normalizedPermissions;
+
+		if (record.can_impersonate) {
+			req.adminPermissions = Array.from(
+				new Set([...(req.adminPermissions ?? []), "impersonate" as AdminPermission])
+			);
+		}
+	} catch (error: any) {
+		// Table may not exist yet during initial migrations; default to non-admin.
+		console.warn("Failed to load admin context:", error?.message || error);
+		req.isAdmin = DEFAULT_ADMIN_CONTEXT.isAdmin;
+		req.adminRoles = DEFAULT_ADMIN_CONTEXT.roles;
+		req.adminPermissions = DEFAULT_ADMIN_CONTEXT.permissions;
+	}
+}
 
 // --- Input Validation ---
 if (!AWS_REGION || !COGNITO_USER_POOL_ID || !COGNITO_CLIENT_ID) {
@@ -140,6 +209,8 @@ export const authenticateToken = async (
 			return;
 		}
 
+		await attachAdminContext(req);
+
 		next();
 	} catch (dbError: any) {
 		console.error(
@@ -151,5 +222,72 @@ export const authenticateToken = async (
 			.json({
 				error: "Internal Server Error: Failed to process user authentication.",
 			});
+	}
+};
+
+export const requireAdminRole = (requiredPermission?: AdminPermission) =>
+	async (
+		req: AuthenticatedRequest,
+		res: Response,
+		next: NextFunction
+	) => {
+		try {
+			if (!req.isAdmin) {
+				return res.status(403).json({ error: "Forbidden: Admin access required." });
+			}
+
+			if (requiredPermission) {
+				const permissions = req.adminPermissions ?? [];
+				if (!permissions.includes(requiredPermission)) {
+					return res.status(403).json({
+						error: "Forbidden: Missing required admin permission.",
+						permission: requiredPermission,
+					});
+				}
+			}
+
+			next();
+		} catch (error) {
+			console.error("Admin role check failed:", error);
+			res.status(500).json({ error: "Failed to verify admin permissions." });
+		}
+	};
+
+export const checkPanelBalance = async (
+	req: AuthenticatedRequest,
+	res: Response,
+	next: NextFunction
+) => {
+	if (req.isAdmin) {
+		return next();
+	}
+
+	const internalUserId = req.internalUserId;
+	if (!internalUserId) {
+		return res.status(401).json({
+			error: "Unauthorized: Missing user context for credit validation.",
+		});
+	}
+
+	try {
+		const creditResult = await pool.query<UserCreditsRow>(
+			"SELECT panel_balance FROM user_credits WHERE user_id = $1",
+			[internalUserId]
+		);
+
+		const record = creditResult.rows[0];
+		const balance = record?.panel_balance ?? 0;
+
+		if (balance <= 0) {
+			return res.status(402).json({
+				error: "Insufficient panel balance",
+				purchaseRequired: true,
+			});
+		}
+
+		next();
+	} catch (error) {
+		console.error("Panel balance check failed:", error);
+		res.status(500).json({ error: "Failed to verify panel balance." });
 	}
 };
