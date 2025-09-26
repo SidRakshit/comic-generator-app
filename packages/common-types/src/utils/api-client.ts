@@ -21,12 +21,13 @@ export type ApiRequestFunction = <T = unknown>(
   body?: Record<string, unknown> | null
 ) => Promise<T>;
 
-// API endpoints
+// API endpoints - Single Source of Truth for all API routes
 export const API_ENDPOINTS = {
   // Comic endpoints
   COMICS: '/api/comics',
   COMIC_BY_ID: (id: string) => `/api/comics/${id}`,
-  GENERATE_IMAGE: '/api/comics/generate-image',
+  GENERATE_PANEL_IMAGE: '/api/comics/generate-panel-image',
+  GENERATE_SCRIPT: '/api/comics/generate-script',
   
   // User endpoints
   USERS: '/api/users',
@@ -37,6 +38,10 @@ export const API_ENDPOINTS = {
   LOGIN: '/api/auth/login',
   LOGOUT: '/api/auth/logout',
   REFRESH: '/api/auth/refresh',
+  
+  // Health check endpoints
+  HEALTH: '/health',
+  PING: '/ping',
 } as const;
 
 // Error handling types

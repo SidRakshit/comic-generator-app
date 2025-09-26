@@ -2,12 +2,13 @@
 
 import { z } from 'zod';
 import { ComicCharacterSchema, GeneratedImageDataSchema } from './comic.schema';
+import { COMIC_RULES, PASSWORD_RULES, USER_RULES, FILE_LIMITS } from '../constants/business-rules';
 
 // Request schemas
 export const CreateComicRequestSchema = z.object({
-  title: z.string().min(1, 'Title is required'),
-  description: z.string().optional(),
-  genre: z.string().optional(),
+  title: z.string().min(COMIC_RULES.TITLE.MIN_LENGTH, 'Title is required').max(COMIC_RULES.TITLE.MAX_LENGTH, `Title must be less than ${COMIC_RULES.TITLE.MAX_LENGTH} characters`),
+  description: z.string().max(COMIC_RULES.DESCRIPTION.MAX_LENGTH, `Description must be less than ${COMIC_RULES.DESCRIPTION.MAX_LENGTH} characters`).optional(),
+  genre: z.string().max(COMIC_RULES.GENRE.MAX_LENGTH, `Genre must be less than ${COMIC_RULES.GENRE.MAX_LENGTH} characters`).optional(),
   characters: z.array(ComicCharacterSchema).optional(),
   setting: z.record(z.unknown()).optional(),
   template: z.string().min(1, 'Template is required'),
@@ -15,8 +16,8 @@ export const CreateComicRequestSchema = z.object({
     page_number: z.number().positive(),
     panels: z.array(z.object({
       panel_number: z.number().positive(),
-      prompt: z.string().optional(),
-      dialogue: z.string().optional(),
+      prompt: z.string().min(COMIC_RULES.PANEL.PROMPT.MIN_LENGTH, `Prompt must be at least ${COMIC_RULES.PANEL.PROMPT.MIN_LENGTH} characters`).max(COMIC_RULES.PANEL.PROMPT.MAX_LENGTH, `Prompt must be less than ${COMIC_RULES.PANEL.PROMPT.MAX_LENGTH} characters`).optional(),
+      dialogue: z.string().max(COMIC_RULES.PANEL.DIALOGUE.MAX_LENGTH, `Dialogue must be less than ${COMIC_RULES.PANEL.DIALOGUE.MAX_LENGTH} characters`).optional(),
       layout_position: z.record(z.unknown()).optional(),
       image_base64: z.string().optional(),
     }))
@@ -61,25 +62,25 @@ export const GenerateImageRequestSchema = z.object({
 });
 
 export const GeneratePanelImageRequestSchema = z.object({
-  panelDescription: z.string().min(1, 'Panel description is required'),
+  panelDescription: z.string().min(COMIC_RULES.PANEL.PROMPT.MIN_LENGTH, `Panel description must be at least ${COMIC_RULES.PANEL.PROMPT.MIN_LENGTH} characters`).max(COMIC_RULES.PANEL.PROMPT.MAX_LENGTH, `Panel description must be less than ${COMIC_RULES.PANEL.PROMPT.MAX_LENGTH} characters`),
 });
 
 export const UpdateUserProfileRequestSchema = z.object({
-  display_name: z.string().max(100).optional(),
-  bio: z.string().optional(),
+  display_name: z.string().max(USER_RULES.USERNAME.MAX_LENGTH, `Display name must be less than ${USER_RULES.USERNAME.MAX_LENGTH} characters`).optional(),
+  bio: z.string().max(USER_RULES.BIO.MAX_LENGTH, `Bio must be less than ${USER_RULES.BIO.MAX_LENGTH} characters`).optional(),
   avatar_url: z.string().url().optional(),
   preferences: z.record(z.unknown()).optional(),
 });
 
 export const LoginRequestSchema = z.object({
-  email: z.string().email('Valid email is required'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
+  email: z.string().email('Valid email is required').max(USER_RULES.EMAIL.MAX_LENGTH, 'Email is too long'),
+  password: z.string().min(PASSWORD_RULES.MIN_LENGTH, `Password must be at least ${PASSWORD_RULES.MIN_LENGTH} characters`).max(PASSWORD_RULES.MAX_LENGTH, `Password must be less than ${PASSWORD_RULES.MAX_LENGTH} characters`),
 });
 
 export const SignupRequestSchema = z.object({
-  email: z.string().email('Valid email is required'),
-  password: z.string().min(6, 'Password must be at least 6 characters'),
-  confirmPassword: z.string().min(6, 'Password must be at least 6 characters'),
+  email: z.string().email('Valid email is required').max(USER_RULES.EMAIL.MAX_LENGTH, 'Email is too long'),
+  password: z.string().min(PASSWORD_RULES.MIN_LENGTH, PASSWORD_RULES.REQUIREMENTS_TEXT).max(PASSWORD_RULES.MAX_LENGTH, `Password must be less than ${PASSWORD_RULES.MAX_LENGTH} characters`).regex(PASSWORD_RULES.STRENGTH_REGEX, PASSWORD_RULES.REQUIREMENTS_TEXT),
+  confirmPassword: z.string().min(PASSWORD_RULES.MIN_LENGTH, `Password must be at least ${PASSWORD_RULES.MIN_LENGTH} characters`),
 }).refine((data) => data.password === data.confirmPassword, {
   message: "Passwords don't match",
   path: ["confirmPassword"],

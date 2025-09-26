@@ -18,6 +18,8 @@ export const API_CONFIG = {
 		`http://localhost:${DEFAULT_PORTS.FRONTEND}`,
 		`http://127.0.0.1:${DEFAULT_PORTS.FRONTEND}`,
 	],
+	HEALTH_CHECK_PATH: '/health',
+	PING_PATH: '/ping',
 } as const;
 
 /**

@@ -17,6 +17,7 @@ import {
 	Loader2,
 } from "lucide-react";
 import { Button } from "@repo/ui/button";
+import { COMPONENT_STYLES, SEMANTIC_COLORS, INTERACTIVE_STYLES } from "@repo/common-types";
 
 export default function Navbar() {
 	const [isOpen, setIsOpen] = useState(false);
@@ -24,21 +25,8 @@ export default function Navbar() {
 
 	const closeMobileMenu = () => setIsOpen(false);
 
-	// --- DEFINE COMMON STYLES HERE ---
-	// These are now accessible throughout the Navbar component scope
-	const mobileLoadingClasses =
-		"flex items-center pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-400 cursor-not-allowed";
-	const desktopLoadingClasses =
-		"inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-400 cursor-not-allowed";
-	const mobileActiveClasses =
-		"flex items-center pl-3 pr-4 py-2 border-l-4 border-blue-500 bg-blue-50 text-base font-medium text-blue-700";
-	const desktopActiveClasses =
-		"inline-flex items-center px-1 pt-1 border-b-2 border-blue-500 text-sm font-medium text-blue-600";
-	const mobileInactiveClasses =
-		"flex items-center pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800";
-	const desktopInactiveClasses =
-		"inline-flex items-center px-1 pt-1 border-b-2 border-transparent text-sm font-medium text-gray-500 hover:text-gray-700 hover:border-gray-300";
-	// --- END COMMON STYLE DEFINITIONS ---
+	// Use centralized design tokens instead of hardcoded styles
+	const { NAV } = COMPONENT_STYLES;
 
 	// Helper function for auth links (doesn't need the style vars above)
 	const renderAuthLinks = (isMobile = false) => {
@@ -49,7 +37,7 @@ export default function Navbar() {
 						isMobile ? "px-4 py-2 h-[36px]" : "ml-6 h-[36px]"
 					}`}
 				>
-					<Loader2 className="h-5 w-5 animate-spin text-gray-500" />
+					<Loader2 className={`h-5 w-5 animate-spin ${SEMANTIC_COLORS.TEXT.MUTED}`} />
 				</div>
 			);
 		}
@@ -123,7 +111,7 @@ export default function Navbar() {
 		if (isLoading) {
 			return (
 				<span
-					className={isMobile ? mobileLoadingClasses : desktopLoadingClasses}
+					className={isMobile ? NAV.MOBILE_LOADING : NAV.DESKTOP_LOADING}
 				>
 					{" "}
 					<PlusCircle className="h-4 w-4 mr-1" /> Create{" "}
@@ -135,7 +123,7 @@ export default function Navbar() {
 				<Link
 					href="/comics/create"
 					onClick={closeMobileMenu}
-					className={isMobile ? mobileActiveClasses : desktopActiveClasses}
+					className={isMobile ? NAV.MOBILE_ACTIVE : NAV.DESKTOP_ACTIVE}
 				>
 					{" "}
 					<PlusCircle className="h-4 w-4 mr-1" /> Create{" "}
@@ -146,7 +134,7 @@ export default function Navbar() {
 				<Link
 					href="/signup"
 					onClick={closeMobileMenu}
-					className={isMobile ? mobileInactiveClasses : desktopInactiveClasses}
+					className={isMobile ? NAV.MOBILE_INACTIVE : NAV.DESKTOP_INACTIVE}
 					title="Login to create comics"
 				>
 					{" "}
@@ -171,11 +159,11 @@ export default function Navbar() {
 						</div>
 						<div className="hidden sm:ml-6 sm:flex sm:space-x-8">
 							{/* Use common style variables */}
-							<Link href="/" className={desktopInactiveClasses}>
+							<Link href="/" className={NAV.DESKTOP_INACTIVE}>
 								{" "}
 								<Home className="h-4 w-4 mr-1" /> Home{" "}
 							</Link>
-							{/* <Link href="/comics" className={desktopInactiveClasses}>
+							{/* <Link href="/comics" className={NAV.DESKTOP_INACTIVE}>
 								{" "}
 								<BookOpen className="h-4 w-4 mr-1" /> Browse{" "}
 							</Link> */}
@@ -221,7 +209,7 @@ export default function Navbar() {
 					<Link
 						href="/"
 						onClick={closeMobileMenu}
-						className={mobileInactiveClasses}
+						className={NAV.MOBILE_INACTIVE}
 					>
 						{" "}
 						<Home className="inline-block h-4 w-4 mr-1" /> Home{" "}
@@ -229,7 +217,7 @@ export default function Navbar() {
 					{/* <Link
 						href="/comics"
 						onClick={closeMobileMenu}
-						className={mobileInactiveClasses}
+						className={NAV.MOBILE_INACTIVE}
 					>
 						{" "}
 						<BookOpen className="inline-block h-4 w-4 mr-1" /> Browse{" "}

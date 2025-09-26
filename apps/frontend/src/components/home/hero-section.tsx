@@ -3,6 +3,7 @@
 
 import Link from "next/link";
 import { Button } from "@repo/ui/button";
+import { SEMANTIC_COLORS, INTERACTIVE_STYLES, TYPOGRAPHY } from "@repo/common-types";
 import { useAuth } from "@/hooks/use-auth"; // Use the custom hook from the correct file
 import { Loader2 } from "lucide-react";
 

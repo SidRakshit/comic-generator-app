@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/tabs";
 import { Button } from "@repo/ui/button";
 import { apiRequest } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
-import { ComicListItemResponse } from "@repo/common-types";
+import { ComicListItemResponse, API_ENDPOINTS } from "@repo/common-types";
 import {
 	User,
 	Edit,
@@ -114,7 +114,7 @@ export default function ProfilePage() {
 				setIsLoadingComics(true);
 				setErrorLoadingComics(null);
 				try {
-					const data = await apiRequest<ComicListItemResponse[]>("/comics", "GET");
+					const data = await apiRequest<ComicListItemResponse[]>(API_ENDPOINTS.COMICS, "GET");
 					setMyComics(data || []);
 					// Update created count based on fetched data
 					setProfileData((prev) => ({

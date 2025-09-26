@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback } from "react";
 import { generateId } from "@repo/utils";
 import { apiRequest, GeneratedImageDataResponse } from "@/lib/api";
-import { PanelStatus, Panel, ComicCharacter, Comic, TemplateDefinition, CreateComicRequest, ComicResponse, ComicPanelResponse, ComicPageResponse, COMIC_TEMPLATES } from "@repo/common-types";
+import { PanelStatus, Panel, ComicCharacter, Comic, TemplateDefinition, CreateComicRequest, ComicResponse, ComicPanelResponse, ComicPageResponse, COMIC_TEMPLATES, API_ENDPOINTS } from "@repo/common-types";
 
 // Use shared response type for SSoT compliance
 type SaveComicResponseFromBackend = ComicResponse;
@@ -74,7 +74,7 @@ export function useComic(
 		setError(null);
 		try {
 			const data = await apiRequest<ComicResponse>(
-				`/comics/${comicId}`,
+				API_ENDPOINTS.COMIC_BY_ID(comicId),
 				"GET"
 			);
 			console.log("Raw backend data received:", JSON.stringify(data, null, 2));
@@ -293,7 +293,7 @@ export function useComic(
 			} else {
 				console.log("Hook: Saving (CREATE) new comic");
 				responseData = await apiRequest<SaveComicResponseFromBackend>(
-					"/comics",
+					API_ENDPOINTS.COMICS,
 					"POST",
 					comicPayload
 				);
