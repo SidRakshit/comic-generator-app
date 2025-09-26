@@ -28,6 +28,8 @@ import { PORT, FRONTEND_URL } from './config';
 import { API_CONFIG, SERVER_TIMEOUTS, REQUEST_LIMITS } from '@repo/common-types';
 import mainApiRouter from './routes/index';
 import { errorHandler, notFoundHandler } from './middleware/error.middleware';
+import { metricsMiddleware } from './middleware/metrics.middleware';
+import { getMetricsRegistry } from './utils/metrics';
 const isProd = process.env.NODE_ENV === 'production';
 
 // Dependencies loaded successfully
@@ -45,7 +47,14 @@ try {
     });
   }
 
-  app.use(express.json({ limit: REQUEST_LIMITS.JSON_BODY_LIMIT }));
+  app.use(metricsMiddleware);
+
+  app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
+    if (req.originalUrl.startsWith('/api/webhooks')) {
+      return next();
+    }
+    return express.json({ limit: REQUEST_LIMITS.JSON_BODY_LIMIT })(req, res, next);
+  });
 } catch (error) {
   console.error('[FATAL] Error setting up basic middleware:', error);
   process.exit(1);
@@ -54,7 +63,7 @@ try {
 try {
   // CORS Configuration
   if (FRONTEND_URL && FRONTEND_URL.length > 0) {
-    let allowedOrigins = FRONTEND_URL.split(',').map(origin => origin.trim());
+    const allowedOrigins = FRONTEND_URL.split(',').map(origin => origin.trim());
     
     // Add localhost for development
     if (!isProd) {
@@ -153,6 +162,17 @@ app.get('/', (req: any, res: any) => {
     port: PORT,
     environment: process.env.NODE_ENV || 'development'
   });
+});
+
+app.get('/metrics', async (req: express.Request, res: express.Response) => {
+  try {
+    const registry = getMetricsRegistry();
+    res.set('Content-Type', registry.contentType);
+    res.status(200).send(await registry.metrics());
+  } catch (error) {
+    console.error('Failed to collect metrics', error);
+    res.status(500).json({ error: 'Failed to collect metrics' });
+  }
 });
 
 // Detailed health check endpoint for debugging

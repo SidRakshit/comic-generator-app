@@ -6,6 +6,7 @@ import Link from "next/link";
 import ComicCanvas from "@/components/comic/comic-canvas";
 import PanelPromptModal from "@/components/comic/panel-prompt";
 import ImageZoomModal from "@/components/comic/image-zoom-modal";
+import { CreditBalanceBanner } from "@/components/billing/credit-balance-banner";
 import { useComicContext } from "@/context/comic-context";
 import { COMIC_TEMPLATES as templates } from "@repo/common-types";
 import { Button } from "@repo/ui/button";
@@ -206,6 +207,7 @@ function NewComicEditorContent() {
 
 	return (
 		<div className="container mx-auto py-8 px-4">
+			<CreditBalanceBanner />
 			<div className="mb-6">
 				{" "}
 				<Link

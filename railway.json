@@ -4,7 +4,7 @@
     "buildCommand": "npm run build && npx prisma generate --schema=apps/backend/prisma/schema.prisma"
   },
   "deploy": {
-    "startCommand": "cd apps/backend && node dist/index.js",
+    "startCommand": "cd apps/backend && npx prisma migrate deploy && node dist/index.js",
     "healthcheckPath": "/",
     "healthcheckTimeout": 100,
     "restartPolicyType": "ON_FAILURE",
