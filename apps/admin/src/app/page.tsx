@@ -1,5 +1,7 @@
-import { API_CONFIG, SEMANTIC_COLORS, UI_CONSTANTS } from "@repo/common-types";
+import { API_CONFIG, SEMANTIC_COLORS } from "@repo/common-types";
 import { AdminShell } from "@/components/layout/admin-shell";
+import { MetricCard } from "@/components/dashboard/metric-card";
+import { DashboardCharts } from "@/components/dashboard/dashboard-charts";
 
 interface DashboardData {
   userMetrics: {
@@ -58,20 +60,6 @@ async function fetchDashboardData(): Promise<DashboardData | null> {
   }
 }
 
-function MetricCard({ title, value, helper }: { title: string; value: string; helper?: string }) {
-  return (
-    <div
-      className={`rounded-lg border p-4 shadow-sm ${SEMANTIC_COLORS.BACKGROUND.PRIMARY} ${SEMANTIC_COLORS.BORDER.DEFAULT}`}
-    >
-      <p className={`text-sm font-medium ${SEMANTIC_COLORS.TEXT.SECONDARY}`}>{title}</p>
-      <p className="mt-2 text-2xl font-semibold">{value}</p>
-      {helper ? (
-        <p className={`mt-1 text-xs ${SEMANTIC_COLORS.TEXT.TERTIARY}`}>{helper}</p>
-      ) : null}
-    </div>
-  );
-}
-
 export default async function AdminDashboardPage() {
   const dashboard = (await fetchDashboardData()) ?? FALLBACK_DASHBOARD;
 
@@ -107,6 +95,12 @@ export default async function AdminDashboardPage() {
             helper="Across the entire platform"
           />
         </div>
+
+        <DashboardCharts
+          totalRevenue={dashboard.revenueMetrics.totalRevenue}
+          purchasingUsers={dashboard.userMetrics.purchasingUsers}
+          totalPanelsCreated={dashboard.usageMetrics.totalPanelsCreated}
+        />
 
         <div
           className={`rounded-lg border p-6 ${SEMANTIC_COLORS.BACKGROUND.PRIMARY} ${SEMANTIC_COLORS.BORDER.DEFAULT}`}
