@@ -14,7 +14,7 @@ import {
 	AWS_REGION,
 } from "../config";
 import pool from "../database";
-import { Panel, CreateComicRequest, ComicPageRequest, ComicPanelRequest, ComicResponse, BackendPageData, BackendPanelData } from "@repo/common-types";
+import { Panel, CreateComicRequest, ComicPageRequest, ComicPanelRequest, ComicResponse, ComicPageResponse, ComicPanelResponse } from "@repo/common-types";
 
 // Use shared types from @repo/common-types
 // Map the shared API types to our internal naming for easier migration:
@@ -44,11 +44,11 @@ type FullComicData = ComicResponse & {
 // Use the shared types from common-types for consistency
 
 // Helper types for internal operations (use shared types)
-type FullPanelData = BackendPanelData & {
+type FullPanelData = ComicPanelResponse & {
 	image_url: string; // Make image_url required for internal operations
 };
 
-type FullPageData = BackendPageData;
+type FullPageData = ComicPageResponse;
 
 // Helper function to convert from shared API types to internal format
 function convertApiRequestToInternal(apiRequest: CreateComicRequest): ComicDataFromRequest {
@@ -548,31 +548,31 @@ Guidelines:
 
 				let page = pagesMap.get(row.page_id);
 				if (!page) {
-					page = {
-						page_id: row.page_id,
-						pageNumber: row.page_number,
-						panels: [],
-					};
+				page = {
+					page_id: row.page_id,
+					page_number: row.page_number,
+					panels: [],
+				};
 					pagesMap.set(row.page_id, page);
 					comic.pages.push(page);
 				}
 
 				if (row.panel_id) {
-					page.panels.push({
-						panel_id: row.panel_id,
-						panelNumber: row.panel_number,
-						prompt: row.prompt,
-						dialogue: row.dialogue || undefined,
-						layoutPosition: row.layout_position || {},
-						image_url: row.image_url,
-					});
+				page.panels.push({
+					panel_id: row.panel_id,
+					panel_number: row.panel_number,
+					prompt: row.prompt,
+					dialogue: row.dialogue || undefined,
+					layout_position: row.layout_position || {},
+					image_url: row.image_url,
+				});
 				}
 			}
 
 			// Sort pages and panels after processing all rows
-			comic.pages.sort((a, b) => a.pageNumber - b.pageNumber);
+			comic.pages.sort((a, b) => a.page_number - b.page_number);
 			comic.pages.forEach((page) => {
-				page.panels.sort((a, b) => a.panelNumber - b.panelNumber);
+				page.panels.sort((a, b) => a.panel_number - b.panel_number);
 			});
 
 			console.log(`Successfully fetched comic details for ${comicId}`);

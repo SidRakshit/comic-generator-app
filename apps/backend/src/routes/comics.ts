@@ -2,6 +2,8 @@
 import express from 'express';
 import { comicController } from '../controllers/comics.controller';
 import { authenticateToken } from '../middleware/auth.middleware';
+import { validateRequestBody } from '../middleware/validation.middleware';
+import { CreateComicRequestSchema, GeneratePanelImageRequestSchema } from '@repo/common-types';
 
 const router = express.Router();
 
@@ -10,17 +12,20 @@ router.post('/generate-script',
     comicController.generateScript);
 router.post('/generate-panel-image',
     authenticateToken,
+    validateRequestBody(GeneratePanelImageRequestSchema),
     comicController.generateImage);
 
 router.post(
     '/comics',
     authenticateToken,
+    validateRequestBody(CreateComicRequestSchema),
     comicController.saveComic
 );
 
 router.put(
     '/comics/:comicId',
     authenticateToken,
+    validateRequestBody(CreateComicRequestSchema),
     comicController.saveComic
 );
 

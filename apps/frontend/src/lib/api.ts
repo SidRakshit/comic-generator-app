@@ -1,9 +1,8 @@
 import { fetchAuthSession } from "aws-amplify/auth";
+import { GeneratedImageDataResponse, API_CONFIG } from "@repo/common-types";
 
 const API_BASE_URL =
-	process.env.NEXT_PUBLIC_API_BASE_URL || "http://localhost:8080/api";
-
-import { GeneratedImageDataResponse } from "@repo/common-types";
+	process.env.NEXT_PUBLIC_API_BASE_URL || API_CONFIG.DEFAULT_BACKEND_URL;
 
 // Re-export for backward compatibility
 export type { GeneratedImageDataResponse };

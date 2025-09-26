@@ -1,6 +1,6 @@
 // API Response DTOs
 
-import type { Comic, User, UserProfile, BackendComicData, BackendPageData, BackendPanelData, GeneratedImageData } from '../domain';
+import type { Comic, User, UserProfile, GeneratedImageData } from '../domain';
 
 // Comic responses
 export interface ComicResponse {
@@ -13,7 +13,22 @@ export interface ComicResponse {
   template?: string;
   created_at: string;
   updated_at: string;
-  pages?: BackendPageData[];
+  pages?: ComicPageResponse[];
+}
+
+export interface ComicPageResponse {
+  page_id: string;
+  page_number: number;
+  panels: ComicPanelResponse[];
+}
+
+export interface ComicPanelResponse {
+  panel_id: string;
+  panel_number: number;
+  prompt?: string;
+  dialogue?: string;
+  layout_position?: Record<string, unknown>;
+  image_url?: string;
 }
 
 export interface ComicsListResponse {

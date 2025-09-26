@@ -1,12 +1,13 @@
 // src/database/index.ts
 import { Pool } from "pg";
 import { DATABASE_URL } from '../config';
+import { SERVER_TIMEOUTS } from '@repo/common-types';
 
 // Create a connection pool with better configuration
 const pool = new Pool({
   connectionString: DATABASE_URL,
   max: 20, // Maximum number of clients in the pool
-  idleTimeoutMillis: 30000, // Close idle clients after 30 seconds
+  idleTimeoutMillis: SERVER_TIMEOUTS.DATABASE_IDLE_TIMEOUT, // Close idle clients after timeout
   connectionTimeoutMillis: 5000, // Return an error after 5 seconds if connection could not be established
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
 });

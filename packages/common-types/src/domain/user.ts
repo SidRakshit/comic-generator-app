@@ -21,15 +21,8 @@ export interface UserProfile {
 }
 
 // Frontend-specific user types
-export interface ComicListItem {
-  comic_id: string;
-  title: string;
-  description?: string;
-  created_at: string;
-  updated_at: string;
-  panel_count: number;
-  published: boolean;
-}
+// REMOVED: Duplicate type - use ComicListItemResponse from api/responses.ts instead
+// This ensures consistent comic list data structure across frontend/backend
 
 // Backend service types
 export interface UserModel {

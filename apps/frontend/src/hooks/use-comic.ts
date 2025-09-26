@@ -3,39 +3,14 @@
 import { useState, useEffect, useCallback } from "react";
 import { generateId } from "@repo/utils";
 import { apiRequest, GeneratedImageDataResponse } from "@/lib/api";
-import { PanelStatus, Panel, ComicCharacter, Comic, TemplateDefinition, BackendPanelData, BackendPageData, FullComicDataFromBackend, CreateComicRequest, ComicResponse } from "@repo/common-types";
+import { PanelStatus, Panel, ComicCharacter, Comic, TemplateDefinition, CreateComicRequest, ComicResponse, ComicPanelResponse, ComicPageResponse, COMIC_TEMPLATES } from "@repo/common-types";
 
 // Use shared response type for SSoT compliance
 type SaveComicResponseFromBackend = ComicResponse;
 
-// --- Templates Definition ---
-export const templates: Record<string, TemplateDefinition> = {
-	"template-1": {
-		id: "template-1",
-		name: "2x2 Grid",
-		panelCount: 4,
-	},
-	"template-2": {
-		id: "template-2",
-		name: "3x2 Grid",
-		panelCount: 6,
-	},
-	"template-3": {
-		id: "template-3",
-		name: "Single Panel",
-		panelCount: 1,
-	},
-	"template-4": {
-		id: "template-4",
-		name: "3x3 Grid",
-		panelCount: 9,
-	},
-	"template-5": {
-		id: "template-5",
-		name: "Manga Style",
-		panelCount: 5,
-	},
-};
+// --- Templates Definition (SSoT) ---
+// Use shared templates from common-types for consistency
+export const templates = COMIC_TEMPLATES;
 
 // --- Hook ---
 export function useComic(
@@ -98,7 +73,7 @@ export function useComic(
 		setIsLoading(true);
 		setError(null);
 		try {
-			const data = await apiRequest<FullComicDataFromBackend>(
+			const data = await apiRequest<ComicResponse>(
 				`/comics/${comicId}`,
 				"GET"
 			);
@@ -107,17 +82,17 @@ export function useComic(
 			// Use helper function for parsing
 			const loadedCharacters = parseCharacters(data.characters);
 
-			// CORRECTED: Add ?? [] before .map and type 'p'
+			// CORRECTED: Add ?? [] before .map and type 'p' - using consolidated types
 			const loadedPanels: Panel[] =
-				(data.pages?.[0]?.panels ?? []).map((p: BackendPanelData) => ({
+				(data.pages?.[0]?.panels ?? []).map((p: ComicPanelResponse) => ({
 					id: p.panel_id,
 					status: p.image_url ? "complete" : "empty",
 					prompt: p.prompt || "",
 					imageUrl: p.image_url || undefined,
 					imageBase64: undefined, // Ensure base64 is not stored for loaded comics
 					error: undefined,
-					panelNumber: p.panelNumber,
-					layoutPosition: (p.layoutPosition as Record<string, unknown>) || {},
+					panelNumber: p.panel_number,
+					layoutPosition: (p.layout_position as Record<string, unknown>) || {},
 				})) || []; // Fallback to empty array if map fails (less likely now)
 
 			const loadedTemplateKey =
@@ -333,21 +308,21 @@ export function useComic(
 			// Use helper function for parsing
 			const savedCharacters = parseCharacters(responseData.characters);
 
-			// Refactored logic for panels
-			const firstPage: BackendPageData | undefined = responseData.pages?.[0];
-			const panelsArray: BackendPanelData[] | undefined = firstPage?.panels;
-			const panelsToMap: BackendPanelData[] = panelsArray ?? [];
+			// Refactored logic for panels using consolidated types
+			const firstPage: ComicPageResponse | undefined = responseData.pages?.[0];
+			const panelsArray: ComicPanelResponse[] | undefined = firstPage?.panels;
+			const panelsToMap: ComicPanelResponse[] = panelsArray ?? [];
 
 			const savedPanels: Panel[] =
-				panelsToMap.map((p: BackendPanelData) => ({
+				panelsToMap.map((p: ComicPanelResponse) => ({
 					id: p.panel_id,
 					status: p.image_url ? "complete" : "empty",
 					prompt: p.prompt || "",
 					imageUrl: p.image_url || undefined,
 					imageBase64: undefined,
 					error: undefined,
-					panelNumber: p.panelNumber,
-					layoutPosition: (p.layoutPosition as Record<string, unknown>) || {},
+					panelNumber: p.panel_number,
+					layoutPosition: (p.layout_position as Record<string, unknown>) || {},
 				})) || comic.panels; // Keep fallback
 
 			const finalComicState: Comic = {

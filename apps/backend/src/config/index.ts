@@ -1,5 +1,6 @@
 import 'dotenv/config';
 import { S3Client } from '@aws-sdk/client-s3';
+import { DEFAULT_PORTS } from '@repo/common-types';
 
 const requiredEnvVars = [
   'DATABASE_URL',
@@ -34,7 +35,7 @@ if (missingEnvVars.length > 0) {
   process.exit(1);
 }
 
-export const PORT = process.env.PORT || '8080';
+export const PORT = process.env.PORT || DEFAULT_PORTS.BACKEND;
 export const DATABASE_URL = process.env.DATABASE_URL!;
 export const AWS_REGION = process.env.AWS_REGION!;
 export const S3_BUCKET_NAME = process.env.S3_BUCKET_NAME!;

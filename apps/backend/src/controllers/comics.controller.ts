@@ -35,8 +35,8 @@ export class ComicController {
 
 	generateImage = async (req: Request, res: Response): Promise<void> => {
 		try {
+			// Request body is already validated by middleware
 			const { panelDescription } = req.body;
-			if (!panelDescription) throw new Error("panelDescription is required.");
 			const panelImage = await this.comicService.generatePanelImage(
 				panelDescription
 			);
@@ -62,13 +62,8 @@ export class ComicController {
 				return;
 			}
 
+			// Request body is already validated by middleware - no manual validation needed
 			const comicData: CreateComicRequest = req.body;
-			if (!comicData || !comicData.title || !comicData.pages) {
-				res
-					.status(400)
-					.json({ error: "Invalid comic data: title and pages are required." });
-				return;
-			}
 
 			const { comicId } = req.params;
 

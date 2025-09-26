@@ -25,6 +25,7 @@ process.on('SIGINT', () => {
 import express from 'express';
 import cors from 'cors';
 import { PORT, FRONTEND_URL } from './config';
+import { API_CONFIG, SERVER_TIMEOUTS, REQUEST_LIMITS } from '@repo/common-types';
 import mainApiRouter from './routes/index';
 const isProd = process.env.NODE_ENV === 'production';
 
@@ -43,7 +44,7 @@ try {
     });
   }
 
-  app.use(express.json({ limit: '50mb' }));
+  app.use(express.json({ limit: REQUEST_LIMITS.JSON_BODY_LIMIT }));
 } catch (error) {
   console.error('[FATAL] Error setting up basic middleware:', error);
   process.exit(1);
@@ -56,8 +57,7 @@ try {
     
     // Add localhost for development
     if (!isProd) {
-      allowedOrigins.push('http://localhost:3000');
-      allowedOrigins.push('http://127.0.0.1:3000');
+      allowedOrigins.push(...API_CONFIG.DEFAULT_FRONTEND_URLS);
     }
 
   const corsOptions = {
@@ -184,7 +184,7 @@ app.get('/health', async (req: any, res: any) => {
     const pool = require('./database').default;
     const client = await Promise.race([
       pool.connect(),
-      new Promise((_, reject) => setTimeout(() => reject(new Error('Database connection timeout')), 3000))
+      new Promise((_, reject) => setTimeout(() => reject(new Error('Database connection timeout')), SERVER_TIMEOUTS.DATABASE_CONNECTION_TIMEOUT))
     ]);
     client.release();
     health.services.database = 'connected';
@@ -247,9 +247,9 @@ try {
   });
 
   // Set server timeout to prevent hanging connections
-  server.timeout = 120000; // 120 seconds - increased for long image generation
-  server.keepAliveTimeout = 65000; // 65 seconds
-  server.headersTimeout = 66000; // 66 seconds - must be > keepAliveTimeout
+  server.timeout = SERVER_TIMEOUTS.REQUEST_TIMEOUT; // Increased for long image generation
+  server.keepAliveTimeout = SERVER_TIMEOUTS.KEEP_ALIVE_TIMEOUT;
+  server.headersTimeout = SERVER_TIMEOUTS.HEADERS_TIMEOUT; // Must be > keepAliveTimeout
   
   // Handle server errors
   server.on('error', (error: any) => {

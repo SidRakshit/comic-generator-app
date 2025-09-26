@@ -68,45 +68,11 @@ export interface ComicContextType {
   saveComic: () => Promise<Comic | undefined>;
 }
 
-// Backend-specific comic types
-export interface BackendComicData {
-  comic_id: string;
-  user_id: string;
-  title: string;
-  description?: string;
-  characters?: ComicCharacter[];
-  setting?: Record<string, unknown>;
-  created_at: string;
-  updated_at: string;
-}
-
-export interface BackendPageData {
-  page_id: string;
-  pageNumber: number;
-  panels: BackendPanelData[];
-}
-
-export interface BackendPanelData {
-  panel_id: string;
-  panelNumber: number;
-  prompt?: string;
-  dialogue?: string;
-  layoutPosition?: Record<string, unknown>;
-  image_url?: string;
-}
-
-export interface FullComicDataFromBackend {
-  comic_id: string;
-  title: string;
-  description?: string;
-  genre?: string;
-  characters?: unknown;
-  setting?: unknown;
-  template?: string;
-  pages: BackendPageData[];
-  created_at: string;
-  updated_at: string;
-}
+// REMOVED: Duplicate backend types - use API response types instead
+// All backend communication should use types from api/responses.ts:
+// - ComicResponse instead of BackendComicData/FullComicDataFromBackend
+// - Use ComicPageRequest/ComicPanelRequest from api/requests.ts for requests
+// - Frontend domain types (Panel, Comic) remain for UI state management
 
 // Service layer types
 export interface Dialogue {

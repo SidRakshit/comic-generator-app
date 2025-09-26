@@ -7,6 +7,7 @@ import { ComicCharacterSchema, GeneratedImageDataSchema } from './comic.schema';
 export const CreateComicRequestSchema = z.object({
   title: z.string().min(1, 'Title is required'),
   description: z.string().optional(),
+  genre: z.string().optional(),
   characters: z.array(ComicCharacterSchema).optional(),
   setting: z.record(z.unknown()).optional(),
   template: z.string().min(1, 'Template is required'),
@@ -17,6 +18,7 @@ export const CreateComicRequestSchema = z.object({
       prompt: z.string().optional(),
       dialogue: z.string().optional(),
       layout_position: z.record(z.unknown()).optional(),
+      image_base64: z.string().optional(),
     }))
   }))
 });
@@ -56,6 +58,10 @@ export const ComicPanelRequestSchema = z.object({
 
 export const GenerateImageRequestSchema = z.object({
   prompt: z.string().min(1, 'Prompt is required'),
+});
+
+export const GeneratePanelImageRequestSchema = z.object({
+  panelDescription: z.string().min(1, 'Panel description is required'),
 });
 
 export const UpdateUserProfileRequestSchema = z.object({
