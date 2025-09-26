@@ -6,10 +6,10 @@
       "express"
     ],
     "outDir": "./dist",
-    "rootDir": "."
+    "rootDir": "./src"
   },
   "include": [
-    "src"
+    "src/**/*"
   ],
   "exclude": [
     "node_modules",

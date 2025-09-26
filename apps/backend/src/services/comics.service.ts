@@ -3,601 +3,446 @@
 // --- Core Dependencies ---
 import { PutObjectCommand, ObjectCannedACL } from "@aws-sdk/client-s3";
 import axios from "axios";
-import crypto from "crypto";
+import * as crypto from "crypto";
 import { PoolClient } from "pg";
 import {
-  s3Client,
-  S3_BUCKET_NAME,
-  OPENAI_API_KEY,
-  AWS_REGION,
+	s3Client,
+	S3_BUCKET_NAME,
+	OPENAI_API_KEY,
+	OPENAI_CHAT_MODEL,
+	OPENAI_IMAGE_MODEL,
 } from "../config";
-
-// --- Database Pool Import ---
 import pool from "../database";
+import { Panel } from "@repo/common-types";
 
-// --- Shared Types ---
-import { 
-  Dialogue, 
-  ScriptPanel, 
-  GeneratedImageData,
-  PanelDataFromRequest,
-  PageDataFromRequest,
-  ComicDataFromRequest,
-  FullPageData,
-  FullPanelData,
-  FullComicData
-} from "@repo/common-types";
-import { ComicListItem } from "@repo/common-types";
+// Local types for database operations
+interface Comic {
+	comic_id: string;
+	user_id: string;
+	title: string;
+	description?: string;
+	created_at: string;
+	updated_at: string;
+}
 
-// --- Types now imported from @repo/common-types ---
+interface ComicPage {
+	page_id: string;
+	comic_id: string;
+	page_number: number;
+	created_at: string;
+	panels: Panel[];
+}
 
-// --- Comic Service Class ---
+interface ComicWithPanels extends Comic {
+	pages: ComicPage[];
+}
+
+// Panel type for script generation (simpler than the full Panel interface)
+interface ScriptPanel {
+	panelNumber: number;
+	dialogueText: string;
+	panelDescription: string;
+}
+
 export class ComicService {
-  // --- OpenAI Interaction Methods ---
+	constructor() {}
 
-  async generateSinglePanelScript(prompt: string): Promise<ScriptPanel | null> {
-    if (!OPENAI_API_KEY) {
-      throw new Error("OpenAI API key is not configured.");
-    }
-    if (!prompt || prompt.trim() === "") {
-      throw new Error("Prompt cannot be empty.");
-    }
-    console.log(`Generating script for single panel prompt: "${prompt}"`);
-    try {
-      const storyResponse = await axios.post(
-        "https://api.openai.com/v1/chat/completions",
-        {
-          model: "gpt-4",
-          messages: [
-            {
-              role: "system",
-              content: `You are a comic writer. Describe a single comic panel based on the user's prompt. Provide a scene description and any character dialogue. Format clearly. Example:\nDescription: [Scene description]\nCHARACTER: "Dialogue"\nCHARACTER 2: "Dialogue"`,
-            },
-            {
-              role: "user",
-              content: `Generate a single comic panel description and dialogue for: ${prompt}`,
-            },
-          ],
-        },
-        {
-          headers: {
-            Authorization: `Bearer ${OPENAI_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+	/**
+	 * Generates a single comic panel script using OpenAI Chat API.
+	 * @param prompt - User input prompt for the comic panel.
+	 * @returns Generated panel script object or null if parsing fails.
+	 */
+	async generateSinglePanelScript(prompt: string): Promise<ScriptPanel | null> {
+		if (!OPENAI_API_KEY) {
+			throw new Error("OpenAI API key is not configured.");
+		}
 
-      const panelContent = storyResponse.data.choices[0]?.message?.content;
-      if (!panelContent) {
-        throw new Error("Failed to get panel content from OpenAI response.");
-      }
-      console.log("Raw panel content received:", panelContent);
-      const panels = this.parseComicScript(`Panel 1: ${panelContent}`);
-      console.log("Parsed single panel:", panels);
-      return panels.length > 0 ? panels[0] : null;
-    } catch (error: any) {
-      console.error(
-        "Error calling OpenAI for single panel script generation:",
-        error.response?.data || error.message
-      );
-      if (axios.isAxiosError(error) && error.response?.status === 401) {
-        throw new Error("OpenAI API key is invalid or expired.");
-      }
-      throw new Error("Failed to generate panel script from OpenAI.");
-    }
-  }
+		const systemMessage = `
+You are a creative comic book writer. Generate a single comic panel based on the user's prompt.
 
-  /**
-   * Generates base64 encoded image data for a given panel description using OpenAI.
-   * Handles both b64_json and url responses from the API, always returning base64.
-   * Includes enhanced logging for debugging OpenAI API calls.
-   * @param panelDescription Text description of the panel scene.
-   * @returns A promise that resolves to a GeneratedImageData object containing the base64 string.
-   */
-  async generatePanelImage(
-    panelDescription: string
-  ): Promise<GeneratedImageData> {
-    if (!OPENAI_API_KEY) {
-      throw new Error("OpenAI API key is not configured.");
-    }
-    if (!panelDescription || panelDescription.trim() === "") {
-      throw new Error("Panel description cannot be empty.");
-    }
-    console.log(`Generating image for description: "${panelDescription}"`);
+Return ONLY a valid JSON object with this exact structure:
+{
+  "panelNumber": 1,
+  "dialogueText": "Character dialogue here",
+  "panelDescription": "Detailed visual description of the scene, characters, and setting for the artist"
+}
 
-    // --- Use the model you specified ---
-    const modelToUse = "gpt-image-1";
-    const size = "1024x1024";
+Guidelines:
+- Keep dialogue concise and impactful (max 2-3 sentences)
+- Make panel descriptions vivid and specific for visual artists
+- Ensure the content is appropriate for all audiences
+- Focus on visual storytelling elements
+`;
 
-    try {
-      const fullPrompt = `Comic book panel illustration: ${panelDescription}. Style: vibrant, detailed.`;
+		try {
+			const response = await axios.post(
+				"https://api.openai.com/v1/chat/completions",
+				{
+					model: OPENAI_CHAT_MODEL,
+					messages: [
+						{ role: "system", content: systemMessage },
+						{ role: "user", content: prompt },
+					],
+					max_tokens: 300,
+					temperature: 0.8,
+				},
+				{
+					headers: {
+						Authorization: `Bearer ${OPENAI_API_KEY}`,
+						"Content-Type": "application/json",
+					},
+				}
+			);
 
-      // Prepare the request payload
-      const requestPayload = {
-        model: modelToUse,
-        prompt: fullPrompt,
-        size: size,
-        quality: "low",
-        moderation: "low",
-      };
+			const content = response.data.choices[0]?.message?.content?.trim();
+			if (!content) {
+				throw new Error("Empty response from OpenAI API.");
+			}
 
-      // --- ADDED LOGGING: Log the request payload ---
-      console.log(
-        "Sending payload to OpenAI:",
-        JSON.stringify(requestPayload, null, 2)
-      );
+			// Parse the JSON response
+			try {
+				const panelScript = JSON.parse(content);
+				return panelScript as ScriptPanel;
+			} catch (parseError) {
+				console.error("Failed to parse OpenAI response as JSON:", content);
+				return null;
+			}
+		} catch (error: any) {
+			console.error("Error generating comic panel script:", error.message);
+			throw error;
+		}
+	}
 
-      const imageResponse = await axios.post(
-        "https://api.openai.com/v1/images/generations",
-        requestPayload, // Use the payload object
-        {
-          headers: {
-            Authorization: `Bearer ${OPENAI_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-        }
-      );
+	/**
+	 * Generates an image for a comic panel using OpenAI DALL-E API.
+	 * @param panelDescription - Description of the panel to generate image for.
+	 * @returns Object containing the image URL and metadata.
+	 */
+	async generatePanelImage(panelDescription: string): Promise<{
+		imageUrl: string;
+		s3Key: string;
+		s3Url: string;
+	}> {
+		if (!OPENAI_API_KEY) {
+			throw new Error("OpenAI API key is not configured.");
+		}
 
-      let imageDataBase64: string | null = null;
-      const responseData = imageResponse.data.data[0];
+		const imagePrompt = `
+Create a comic book panel illustration with the following description: ${panelDescription}
 
-      if (responseData?.b64_json) {
-        console.log("Received b64_json from OpenAI.");
-        imageDataBase64 = responseData.b64_json;
-      } else if (responseData?.url) {
-        console.log(
-          `Received URL from OpenAI: ${responseData.url}. Downloading...`
-        );
-        const imageUrl = responseData.url;
-        try {
-          const downloadResponse = await axios.get(imageUrl, {
-            responseType: "arraybuffer",
-          });
-          if (downloadResponse.status !== 200) {
-            throw new Error(
-              `Failed to download image from URL ${imageUrl}. Status: ${downloadResponse.status}`
-            );
-          }
-          const imageBuffer: Buffer = downloadResponse.data;
-          imageDataBase64 = imageBuffer.toString("base64");
-          console.log(
-            "Successfully downloaded and converted image URL to base64."
-          );
-        } catch (downloadError: any) {
-          console.error(
-            `Error downloading image from URL ${imageUrl}:`,
-            downloadError.message
-          );
-          throw new Error(
-            `Failed to download image from provided URL: ${downloadError.message}`
-          );
-        }
-      }
+Style: Clean comic book art style, vibrant colors, clear line work, professional comic illustration quality. Avoid any text or speech bubbles in the image.
+`;
 
-      if (!imageDataBase64) {
-        console.error(
-          "OpenAI response format not recognized or missing data:",
-          imageResponse.data
-        );
-        throw new Error(
-          "Failed to get image data (b64_json or url) from OpenAI response."
-        );
-      }
+		try {
+			// Generate image using DALL-E
+			const response = await axios.post(
+				"https://api.openai.com/v1/images/generations",
+				{
+					model: OPENAI_IMAGE_MODEL,
+					prompt: imagePrompt,
+					n: 1,
+					size: "1024x1024",
+					quality: "standard",
+				},
+				{
+					headers: {
+						Authorization: `Bearer ${OPENAI_API_KEY}`,
+						"Content-Type": "application/json",
+					},
+				}
+			);
 
-      console.log(
-        "Image data prepared (first 50 chars):",
-        imageDataBase64.substring(0, 50) + "..."
-      );
-      return { imageData: imageDataBase64, promptUsed: fullPrompt };
-    } catch (error: any) {
-      // --- ENHANCED LOGGING in CATCH block ---
-      console.error(
-        "Error calling OpenAI for image generation or processing response. Status:",
-        error.response?.status // Log status code if available
-      );
-      // Log the detailed error response body from OpenAI if available
-      console.error(
-        "OpenAI Error Response Body:",
-        JSON.stringify(error.response?.data, null, 2) // Log the full JSON error
-      );
+			const imageUrl = response.data.data[0]?.url;
+			if (!imageUrl) {
+				throw new Error("No image URL returned from OpenAI API.");
+			}
 
-      // Keep specific error checks
-      if (axios.isAxiosError(error) && error.response?.status === 401) {
-        throw new Error("OpenAI API key is invalid or expired.");
-      } else if (
-        axios.isAxiosError(error) &&
-        error.response?.data?.error?.code === "content_policy_violation"
-      ) {
-        throw new Error(
-          "Image generation failed due to content policy violation."
-        );
-      }
-      // Check if the error occurred during download (keep this check)
-      if (error.message.includes("Failed to download image")) {
-        throw error; // Re-throw download-specific error
-      }
+			// Download and upload to S3
+			const s3Data = await this.uploadImageToS3(imageUrl);
 
-      // Construct a more informative general error message
-      const statusText = error.response?.status
-        ? ` (Status ${error.response.status})`
-        : "";
-      // Try to get the specific error message from OpenAI's response data
-      const openAIErrorMessage =
-        error.response?.data?.error?.message || error.message;
-      throw new Error(
-        `Failed to generate or process panel image from OpenAI${statusText}: ${openAIErrorMessage}`
-      );
-    }
-  }
+			return {
+				imageUrl,
+				s3Key: s3Data.s3Key,
+				s3Url: s3Data.s3Url,
+			};
+		} catch (error: any) {
+			console.error("Error generating panel image:", error.message);
+			throw error;
+		}
+	}
 
-  /**
-   * Uploads image data (from base64 string) to S3.
-   * @param imageDataBase64 The base64 encoded image data.
-   * @param userId The user's ID.
-   * @param comicId The comic's ID.
-   * @param panelId The panel's ID.
-   * @returns The final public URL of the uploaded image in S3.
-   */
-  private async uploadImageToS3(
-    imageBase64: string,
-    userId: string,
-    comicId: string,
-    panelId: string
-  ): Promise<string> {
-    if (!imageBase64) {
-      throw new Error("Image data (base64) is missing, cannot upload.");
-    }
+	/**
+	 * Downloads an image from a URL and uploads it to S3.
+	 * @param imageUrl - URL of the image to download and upload.
+	 * @returns Object containing S3 key and URL.
+	 */
+	private async uploadImageToS3(imageUrl: string): Promise<{
+		s3Key: string;
+		s3Url: string;
+	}> {
+		if (!S3_BUCKET_NAME) {
+			throw new Error("S3 bucket name is not configured.");
+		}
 
-    if (!s3Client) {
-      throw new Error("S3 client is not configured. Please check AWS credentials.");
-    }
+		if (!s3Client) {
+			throw new Error("S3 client is not initialized.");
+		}
 
-    try {
-      const imageData: Buffer = Buffer.from(imageBase64, "base64");
-      const contentType = "image/png";
-      const fileExtension = "png";
+		try {
+			// Download the image
+			const imageResponse = await axios.get(imageUrl, {
+				responseType: "arraybuffer",
+			});
+			const imageBuffer = Buffer.from(imageResponse.data);
 
-      const s3Key = `users/${userId}/comics/${comicId}/panels/${panelId}.${fileExtension}`;
-      console.log(`Uploading image to S3 bucket: ${S3_BUCKET_NAME}, Key: ${s3Key}`);
+			// Generate a unique key for the image
+			const timestamp = Date.now();
+			const randomString = crypto.randomBytes(8).toString("hex");
+			const s3Key = `comic-panels/${timestamp}-${randomString}.png`;
 
-      const putObjectParams = {
-        Bucket: S3_BUCKET_NAME,
-        Key: s3Key,
-        Body: imageData,
-        ContentType: contentType,
-        ACL: "public-read" as ObjectCannedACL,
-      };
-      const command = new PutObjectCommand(putObjectParams);
-      await s3Client.send(command);
+			// Upload to S3
+			const uploadCommand = new PutObjectCommand({
+				Bucket: S3_BUCKET_NAME,
+				Key: s3Key,
+				Body: imageBuffer,
+				ContentType: "image/png",
+				ACL: ObjectCannedACL.public_read,
+			});
 
-      const s3Url = `https://${S3_BUCKET_NAME}.s3.${AWS_REGION}.amazonaws.com/${s3Key}`;
-      console.log(`Successfully uploaded image to: ${s3Url}`);
-      return s3Url;
-    } catch (error: any) {
-      console.error("Error in uploadImageToS3:", error);
-      if (error.message?.includes("base64")) {
-        throw new Error(`Invalid Base64 data provided: ${error.message}`);
-      } else if (
-        error.name?.includes("Credentials") ||
-        error.message?.includes("credentials")
-      ) {
-        throw new Error(`AWS Credentials error: ${error.message}`);
-      }
-      throw new Error(`Failed to process image upload: ${error.message}`);
-    }
-  }
+			await s3Client.send(uploadCommand);
 
-  /**
-   * Saves or updates a comic, handling panel image uploads (from base64) to S3 and DB operations.
-   * @param internalUserId - The ID (UUID) of the user creating/updating the comic.
-   * @param comicData - The comic data received from the request (expects imageBase64 per panel).
-   * @param existingComicId - Optional ID (UUID) if updating an existing comic.
-   * @returns The saved/updated comic object.
-   */
-  async saveComicWithPanels(
-    internalUserId: string,
-    comicData: ComicDataFromRequest,
-    existingComicId?: string
-  ): Promise<FullComicData | null> {
-    const client: PoolClient = await pool.connect();
-    console.log(
-      `Starting saveComicWithPanels for user: ${internalUserId}, comicId: ${
-        existingComicId || "NEW"
-      }`
-    );
+			const s3Url = `https://${S3_BUCKET_NAME}.s3.amazonaws.com/${s3Key}`;
 
-    try {
-      await client.query("BEGIN");
+			return { s3Key, s3Url };
+		} catch (error: any) {
+			console.error("Error uploading image to S3:", error.message);
+			throw error;
+		}
+	}
 
-      const userCheckResult = await client.query(
-        "SELECT user_id FROM users WHERE user_id = $1",
-        [internalUserId]
-      );
-      if (userCheckResult.rows.length === 0) {
-        console.error(`User not found for internal ID: ${internalUserId}`);
-        throw new Error("User not found");
-      }
-      console.log(`User ${internalUserId} verified.`);
+	/**
+	 * Saves a comic with its pages and panels to the database.
+	 * Handles both creating new comics and updating existing ones.
+	 */
+	async saveComicWithPanels(
+		internalUserId: string,
+		comicData: ComicWithPanels,
+		comicId?: string
+	): Promise<ComicWithPanels> {
+		const client: PoolClient = await pool.connect();
 
-      let comicId: string;
+		try {
+			await client.query("BEGIN");
 
-      if (existingComicId) {
-        comicId = existingComicId;
-        console.log(`Updating existing comic: ${comicId}`);
-        const comicCheckResult = await client.query(
-          "SELECT comic_id FROM comics WHERE comic_id = $1 AND user_id = $2 FOR UPDATE",
-          [comicId, internalUserId]
-        );
-        if (comicCheckResult.rows.length === 0) {
-          throw new Error("Comic not found or user mismatch");
-        }
-        await client.query(
-          "UPDATE comics SET title = $1, description = $2, characters = $3, setting = $4, updated_at = NOW() WHERE comic_id = $5",
-          [
-            comicData.title,
-            comicData.description,
-            JSON.stringify(comicData.characters ?? null),
-            JSON.stringify(comicData.setting ?? null),
-            comicId,
-          ]
-        );
-        console.log(`Comic ${comicId} metadata updated.`);
-        console.log(`Clearing old pages/panels for comic ${comicId}`);
-        await client.query(
-          "DELETE FROM panels WHERE page_id IN (SELECT page_id FROM pages WHERE comic_id = $1)",
-          [comicId]
-        );
-        await client.query("DELETE FROM pages WHERE comic_id = $1", [comicId]);
-        console.log(`Old pages/panels cleared for comic ${comicId}.`);
-      } else {
-        console.log(`Creating new comic for user: ${internalUserId}`);
-        comicId = crypto.randomUUID();
-        await client.query(
-          "INSERT INTO comics (comic_id, user_id, title, description, characters, setting) VALUES ($1, $2, $3, $4, $5, $6)",
-          [
-            comicId,
-            internalUserId,
-            comicData.title,
-            comicData.description,
-            JSON.stringify(comicData.characters ?? null),
-            JSON.stringify(comicData.setting ?? null),
-          ]
-        );
-        console.log(`New comic created with ID: ${comicId}.`);
-      }
+			let savedComic: Comic;
 
-      for (const pageData of comicData.pages) {
-        const pageId = crypto.randomUUID();
-        await client.query(
-          "INSERT INTO pages (page_id, comic_id, page_number) VALUES ($1, $2, $3)",
-          [pageId, comicId, pageData.pageNumber]
-        );
-        console.log(
-          `Created page number: ${pageData.pageNumber}, DB ID: ${pageId}`
-        );
+			if (comicId) {
+				// Update existing comic
+				console.log(
+					`Service: Updating existing comic ${comicId} for user ${internalUserId}`
+				);
 
-        for (const panelData of pageData.panels) {
-          const panelId = crypto.randomUUID();
-          await client.query(
-            "INSERT INTO panels (panel_id, page_id, panel_number, prompt, dialogue, layout_position) VALUES ($1, $2, $3, $4, $5, $6)",
-            [
-              panelId,
-              pageId,
-              panelData.panelNumber,
-              panelData.prompt,
-              panelData.dialogue,
-              JSON.stringify(panelData.layoutPosition ?? null),
-            ]
-          );
-          console.log(
-            `Created panel number: ${panelData.panelNumber}, DB ID: ${panelId}`
-          );
+				// Verify the comic belongs to the user
+				const existingComicResult = await client.query(
+					"SELECT * FROM comics WHERE comic_id = $1 AND user_id = $2",
+					[comicId, internalUserId]
+				);
 
-          console.log(
-            `Uploading image for panel ${panelId} using provided base64 data.`
-          );
-          if (!panelData.imageBase64) {
-            console.warn(
-              `Panel ${panelId} is missing image data. Skipping upload.`
-            );
-            await client.query(
-              "UPDATE panels SET image_url = NULL, updated_at = NOW() WHERE panel_id = $1",
-              [panelId]
-            );
-            continue;
-          }
+				if (existingComicResult.rows.length === 0) {
+					throw new Error("Comic not found or user mismatch");
+				}
 
-          const s3ImageUrl = await this.uploadImageToS3(
-            panelData.imageBase64,
-            internalUserId,
-            comicId,
-            panelId
-          );
+				// Update the comic
+				const updateComicResult = await client.query(
+					`UPDATE comics 
+           SET title = $1, description = $2, updated_at = NOW()
+           WHERE comic_id = $3 AND user_id = $4
+           RETURNING *`,
+					[comicData.title, comicData.description, comicId, internalUserId]
+				);
 
-          await client.query(
-            "UPDATE panels SET image_url = $1, updated_at = NOW() WHERE panel_id = $2",
-            [s3ImageUrl, panelId]
-          );
-          console.log(`Updated panel ${panelId} with S3 URL: ${s3ImageUrl}`);
-        }
-      }
+				savedComic = updateComicResult.rows[0];
 
-      await client.query("COMMIT");
-      console.log(`Successfully saved comic ${comicId}. Transaction committed.`);
-      return this.getComicById(comicId, internalUserId);
-    } catch (error: any) {
-      await client.query("ROLLBACK");
-      console.error(
-        `Error during saveComicWithPanels for comic ${
-          existingComicId || "NEW"
-        }. Rolling back transaction.`,
-        error
-      );
-      if (error instanceof Error) {
-        throw error;
-      } else {
-        throw new Error(`Failed to save comic: ${error.message || error}`);
-      }
-    } finally {
-      client.release();
-      console.log(
-        `Finished saveComicWithPanels attempt for comic ${
-          existingComicId || "NEW"
-        }. Client released.`
-      );
-    }
-  }
+				// Delete existing pages and panels for this comic
+				await client.query("DELETE FROM panels WHERE comic_id = $1", [comicId]);
+				await client.query("DELETE FROM pages WHERE comic_id = $1", [comicId]);
+			} else {
+				// Create new comic
+				console.log(
+					`Service: Creating new comic for user ${internalUserId}: ${comicData.title}`
+				);
 
-  private parseComicScript(script: string): ScriptPanel[] {
-    console.log("Parsing script...");
-    const panelRegex = /Panel\s*(\d+):\s*([\s\S]*?)(?=Panel\s*\d+:|$)/gi;
-    const dialogueRegex = /([A-Z\s0-9]+):\s*"([^"]+)"/g;
-    const panels: ScriptPanel[] = [];
-    let match;
-    while ((match = panelRegex.exec(script)) !== null) {
-      const panelNumber = match[1].trim();
-      const panelContent = match[2].trim();
-      const dialogue: Dialogue[] = [];
-      let dialogueMatch;
-      let remainingContent = panelContent;
-      dialogueRegex.lastIndex = 0;
-      while ((dialogueMatch = dialogueRegex.exec(panelContent)) !== null) {
-        const character = dialogueMatch[1].trim();
-        const text = dialogueMatch[2].trim();
-        dialogue.push({ character, text });
-        remainingContent = remainingContent.replace(dialogueMatch[0], "");
-      }
-      const description = remainingContent
-        .replace(/Description:\s*/i, "")
-        .replace(/^[A-Z\s0-9]+:\s*".*"$/gm, "")
-        .replace(/\n+/g, " ")
-        .trim();
-      panels.push({ panelNumber, description, dialogue });
-    }
-    if (panels.length === 0 && script.trim().length > 0) {
-      console.warn(
-        "Script parsing did not find 'Panel X:'. Attempting direct parse."
-      );
-      const dialogue: Dialogue[] = [];
-      let dialogueMatch;
-      let remainingContent = script;
-      dialogueRegex.lastIndex = 0;
-      while ((dialogueMatch = dialogueRegex.exec(script)) !== null) {
-        const character = dialogueMatch[1].trim();
-        const text = dialogueMatch[2].trim();
-        dialogue.push({ character, text });
-        remainingContent = remainingContent.replace(dialogueMatch[0], "");
-      }
-      const description = remainingContent
-        .replace(/Description:\s*/i, "")
-        .replace(/^[A-Z\s0-9]+:\s*".*"$/gm, "")
-        .trim();
-      panels.push({ panelNumber: "1", description, dialogue });
-    }
-    return panels;
-  }
+				const insertComicResult = await client.query(
+					`INSERT INTO comics (user_id, title, description, created_at, updated_at) 
+           VALUES ($1, $2, $3, NOW(), NOW()) 
+           RETURNING *`,
+					[internalUserId, comicData.title, comicData.description]
+				);
 
-  async listComicsByUser(internalUserId: string): Promise<ComicListItem[]> {
-    console.log(`Listing comics list for user: ${internalUserId}`);
-    const query = `
-                SELECT
-                    comic_id,
-                    title,
-                    created_at,
-                    updated_at
-                FROM comics
-                WHERE user_id = $1
-                ORDER BY updated_at DESC;
-            `;
-    try {
-      const result = await pool.query<ComicListItem>(query, [internalUserId]);
-      console.log(`Found ${result.rowCount} comics for user ${internalUserId}.`);
-      return result.rows;
-    } catch (error: any) {
-      console.error(`Error fetching comics for user ${internalUserId}:`, error);
-      throw new Error("Failed to retrieve comics list.");
-    }
-  }
+				savedComic = insertComicResult.rows[0];
+			}
 
-  async getComicById(
-    comicId: string,
-    internalUserId: string
-  ): Promise<FullComicData | null> {
-    console.log(
-      `Fetching comic details for comic: ${comicId}, user: ${internalUserId}`
-    );
-    const query = `
-            SELECT
-                c.comic_id, c.title, c.description, c.characters, c.setting, c.created_at, c.updated_at,
-                p.page_id, p.page_number,
-                pn.panel_id, pn.panel_number, pn.prompt, pn.dialogue, pn.layout_position, pn.image_url
-            FROM comics c
-            LEFT JOIN pages p ON c.comic_id = p.comic_id
-            LEFT JOIN panels pn ON p.page_id = pn.page_id
-            WHERE c.comic_id = $1 AND c.user_id = $2
-            ORDER BY p.page_number ASC, pn.panel_number ASC;
-        `;
+			// Save pages and panels
+			const savedPages: ComicPage[] = [];
 
-    try {
-      const result = await pool.query(query, [comicId, internalUserId]);
+			for (const page of comicData.pages) {
+				console.log(
+					`Service: Saving page ${page.page_number} for comic ${savedComic.comic_id}`
+				);
 
-      if (result.rows.length === 0) {
-        console.log(
-          `Comic ${comicId} not found or user ${internalUserId} not authorized.`
-        );
-        return null;
-      }
+				// Insert the page
+				const insertPageResult = await client.query(
+					`INSERT INTO pages (comic_id, page_number, created_at) 
+           VALUES ($1, $2, NOW()) 
+           RETURNING *`,
+					[savedComic.comic_id, page.page_number]
+				);
 
-      const comic: FullComicData = {
-        comic_id: result.rows[0].comic_id,
-        title: result.rows[0].title,
-        description: result.rows[0].description || undefined,
-        characters: result.rows[0].characters || undefined,
-        setting: result.rows[0].setting || undefined,
-        created_at: result.rows[0].created_at,
-        updated_at: result.rows[0].updated_at,
-        pages: [],
-      };
+				const savedPage = insertPageResult.rows[0];
 
-      const pagesMap = new Map<string, FullPageData>();
+				// Save panels for this page
+				const savedPanels: Panel[] = [];
 
-      for (const row of result.rows) {
-        if (!row.page_id) continue;
+				for (const panel of page.panels) {
+					console.log(
+						`Service: Saving panel ${panel.panelNumber || 'unknown'} for page ${savedPage.page_id}`
+					);
 
-        let page = pagesMap.get(row.page_id);
-        if (!page) {
-          page = {
-            page_id: row.page_id,
-            pageNumber: row.page_number,
-            panels: [],
-          };
-          pagesMap.set(row.page_id, page);
-          comic.pages.push(page);
-        }
+					const insertPanelResult = await client.query(
+						`INSERT INTO panels (comic_id, page_id, panel_number, dialogue_text, panel_description, image_url, s3_key, s3_url, created_at) 
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW()) 
+             RETURNING *`,
+						[
+							savedComic.comic_id,
+							savedPage.page_id,
+							panel.panelNumber || 1,
+							panel.prompt || '',
+							panel.prompt || '',
+							panel.imageUrl || null,
+							null, // s3_key
+							panel.imageUrl || null,
+						]
+					);
 
-        if (row.panel_id) {
-          page.panels.push({
-            panel_id: row.panel_id,
-            panelNumber: row.panel_number,
-            prompt: row.prompt,
-            dialogue: row.dialogue || undefined,
-            layoutPosition: row.layout_position || {},
-            image_url: row.image_url,
-          });
-        }
-      }
+					savedPanels.push(insertPanelResult.rows[0]);
+				}
 
-      // Sort pages and panels after processing all rows
-      comic.pages.sort((a, b) => a.pageNumber - b.pageNumber);
-      comic.pages.forEach((page) => {
-        page.panels.sort((a, b) => a.panelNumber - b.panelNumber);
-      });
+				savedPages.push({
+					...savedPage,
+					panels: savedPanels,
+				});
+			}
 
-      console.log(`Successfully fetched comic details for ${comicId}`);
-      return comic;
-    } catch (error: any) {
-      console.error(`Error fetching comic ${comicId} details:`, error);
-      throw new Error("Failed to retrieve comic details.");
-    }
-  }
-} // End of ComicService class
+			await client.query("COMMIT");
+
+			console.log(
+				`Service: Successfully saved comic ${savedComic.comic_id} with ${savedPages.length} pages`
+			);
+
+			return {
+				...savedComic,
+				pages: savedPages,
+			};
+		} catch (error: any) {
+			await client.query("ROLLBACK");
+			console.error("Error in saveComicWithPanels:", error.message);
+			throw error;
+		} finally {
+			client.release();
+		}
+	}
+
+	/**
+	 * Retrieves all comics for a specific user.
+	 */
+	async listComicsByUser(internalUserId: string): Promise<Comic[]> {
+		try {
+			console.log(`Service: Listing comics for user ${internalUserId}`);
+
+			const result = await pool.query(
+				`SELECT comic_id, title, description, created_at, updated_at 
+         FROM comics 
+         WHERE user_id = $1 
+         ORDER BY updated_at DESC`,
+				[internalUserId]
+			);
+
+			console.log(`Service: Found ${result.rows.length} comics for user`);
+			return result.rows;
+		} catch (error: any) {
+			console.error("Error in listComicsByUser:", error.message);
+			throw error;
+		}
+	}
+
+	/**
+	 * Retrieves a specific comic with all its pages and panels.
+	 */
+	async getComicById(
+		comicId: string,
+		internalUserId: string
+	): Promise<ComicWithPanels | null> {
+		try {
+			console.log(
+				`Service: Fetching comic ${comicId} for user ${internalUserId}`
+			);
+
+			// Get the comic
+			const comicResult = await pool.query(
+				`SELECT * FROM comics 
+         WHERE comic_id = $1 AND user_id = $2`,
+				[comicId, internalUserId]
+			);
+
+			if (comicResult.rows.length === 0) {
+				console.log(`Service: Comic ${comicId} not found for user`);
+				return null;
+			}
+
+			const comic = comicResult.rows[0];
+
+			// Get pages with panels
+			const pagesResult = await pool.query(
+				`SELECT p.*, 
+            json_agg(
+              json_build_object(
+                'panel_id', pan.panel_id,
+                'panelNumber', pan.panel_number,
+                'dialogueText', pan.dialogue_text,
+                'panelDescription', pan.panel_description,
+                'imageUrl', pan.image_url,
+                's3Key', pan.s3_key,
+                's3Url', pan.s3_url,
+                'createdAt', pan.created_at
+              ) ORDER BY pan.panel_number
+            ) as panels
+         FROM pages p
+         LEFT JOIN panels pan ON p.page_id = pan.page_id
+         WHERE p.comic_id = $1
+         GROUP BY p.page_id, p.comic_id, p.page_number, p.created_at
+         ORDER BY p.page_number`,
+				[comicId]
+			);
+
+			const pages = pagesResult.rows.map((page) => ({
+				...page,
+				panels: page.panels.filter((panel: any) => panel.panel_id !== null),
+			}));
+
+			console.log(
+				`Service: Found comic with ${pages.length} pages and ${pages.reduce(
+					(total: number, page: any) => total + page.panels.length,
+					0
+				)} panels`
+			);
+
+			return {
+				...comic,
+				pages,
+			};
+		} catch (error: any) {
+			console.error("Error in getComicById:", error.message);
+			throw error;
+		}
+	}
+}

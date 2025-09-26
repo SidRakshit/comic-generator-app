@@ -41,6 +41,8 @@ export const S3_BUCKET_NAME = process.env.S3_BUCKET_NAME!;
 export const COGNITO_USER_POOL_ID = process.env.COGNITO_USER_POOL_ID!;
 export const COGNITO_CLIENT_ID = process.env.COGNITO_CLIENT_ID!;
 export const OPENAI_API_KEY = process.env.OPENAI_API_KEY!;
+export const OPENAI_CHAT_MODEL = process.env.OPENAI_CHAT_MODEL || 'gpt-4o-mini';
+export const OPENAI_IMAGE_MODEL = process.env.OPENAI_IMAGE_MODEL || 'dall-e-3';
 export const FRONTEND_URL = process.env.FRONTEND_URL!;
 
 // Create S3 client with error handling
