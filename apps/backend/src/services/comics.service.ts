@@ -14,7 +14,7 @@ import {
 	AWS_REGION,
 } from "../config";
 import pool from "../database";
-import { Panel, CreateComicRequest, ComicPageRequest, ComicPanelRequest, ComicResponse, ComicPageResponse, ComicPanelResponse, ErrorFactory } from "@repo/common-types";
+import { Panel, CreateComicRequest, ComicPageRequest, ComicPanelRequest, ComicResponse, ComicPageResponse, ComicPanelResponse, ErrorFactory, EXTERNAL_APIS, AI_CONFIG } from "@repo/common-types";
 
 // Use shared types from @repo/common-types
 // Map the shared API types to our internal naming for easier migration:
@@ -138,15 +138,15 @@ Guidelines:
 
 		try {
 			const response = await axios.post(
-				"https://api.openai.com/v1/chat/completions",
+				EXTERNAL_APIS.OPENAI.CHAT_COMPLETIONS,
 				{
 					model: OPENAI_CHAT_MODEL,
 					messages: [
 						{ role: "system", content: systemMessage },
 						{ role: "user", content: prompt },
 					],
-					max_tokens: 300,
-					temperature: 0.8,
+					max_tokens: AI_CONFIG.OPENAI.CHAT.MAX_TOKENS,
+					temperature: AI_CONFIG.OPENAI.CHAT.TEMPERATURE,
 				},
 				{
 					headers: {
@@ -192,19 +192,19 @@ Guidelines:
 
 		console.log(`🎨 Generating image for description: "${panelDescription}"`);
 
-		const fullPrompt = `Comic book panel illustration: ${panelDescription}. Style: vibrant, detailed comic book art, clear line work, professional quality.`;
+		const fullPrompt = `Comic book panel illustration: ${panelDescription}. ${AI_CONFIG.OPENAI.PROMPTS.IMAGE_STYLE_SUFFIX}`;
 
 		try {
 			// Generate image using DALL-E
 			const response = await axios.post(
-				"https://api.openai.com/v1/images/generations",
+				EXTERNAL_APIS.OPENAI.IMAGE_GENERATIONS,
 				{
 					model: OPENAI_IMAGE_MODEL,
 					prompt: fullPrompt,
-					n: 1,
-					size: "1024x1024",
-					quality: "standard",
-					response_format: "b64_json", // Request base64 format directly
+					n: AI_CONFIG.OPENAI.IMAGE.N,
+					size: AI_CONFIG.OPENAI.IMAGE.SIZE,
+					quality: AI_CONFIG.OPENAI.IMAGE.QUALITY,
+					response_format: AI_CONFIG.OPENAI.IMAGE.RESPONSE_FORMAT,
 				},
 				{
 					headers: {
@@ -293,8 +293,8 @@ Guidelines:
 			const command = new PutObjectCommand(putObjectParams);
 			await s3Client.send(command);
 
-			// RESTORED: Original working S3 URL format
-			const s3Url = `https://${S3_BUCKET_NAME}.s3.${AWS_REGION}.amazonaws.com/${s3Key}`;
+			// Use centralized S3 URL template
+			const s3Url = EXTERNAL_APIS.AWS.S3_URL_TEMPLATE(S3_BUCKET_NAME, AWS_REGION, s3Key);
 			console.log(`✅ Successfully uploaded image to: ${s3Url}`);
 			return s3Url;
 		} catch (error: any) {

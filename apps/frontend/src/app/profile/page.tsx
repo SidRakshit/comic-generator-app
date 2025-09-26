@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/tabs";
 import { Button } from "@repo/ui/button";
 import { apiRequest } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
-import { ComicListItemResponse, API_ENDPOINTS } from "@repo/common-types";
+import { ComicListItemResponse, API_ENDPOINTS, SEMANTIC_COLORS, INTERACTIVE_STYLES, COMPONENT_STYLES } from "@repo/common-types";
 import {
 	User,
 	Edit,
@@ -171,15 +171,15 @@ export default function ProfilePage() {
 	};
 
 	// --- Render JSX ---
-	return (
-		<div className="min-h-screen bg-gray-50 pb-12">
-			{/* Profile header */}
-			<div className="bg-white shadow">
+		return (
+			<div className={`min-h-screen ${SEMANTIC_COLORS.BACKGROUND.SECONDARY} pb-12`}>
+				{/* Profile header */}
+				<div className={`${SEMANTIC_COLORS.BACKGROUND.PRIMARY} shadow`}>
 				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 					{/* Basic loading state for header */}
 					{isLoadingAuth ? (
 						<div className="flex justify-center items-center h-40">
-							<Loader2 className="h-8 w-8 animate-spin text-gray-400" />
+							<Loader2 className={`h-8 w-8 animate-spin ${SEMANTIC_COLORS.TEXT.DISABLED}`} />
 						</div>
 					) : (
 						<div className="flex flex-col md:flex-row items-center md:items-start">
@@ -194,7 +194,7 @@ export default function ProfilePage() {
 									priority // Prioritize loading avatar image
 								/>
 								{isEditingProfile && (
-									<button className="absolute bottom-0 right-0 bg-blue-600 text-white rounded-full p-2 shadow-md hover:bg-blue-700">
+									<button className={`absolute bottom-0 right-0 ${INTERACTIVE_STYLES.BUTTON.PRIMARY} rounded-full p-2 shadow-md`}>
 										<ImageIcon size={16} />
 									</button>
 								)}
@@ -219,7 +219,7 @@ export default function ProfilePage() {
 														name: e.target.value,
 													})
 												}
-												className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+												className={COMPONENT_STYLES.FORM.INPUT}
 											/>{" "}
 										</div>
 										<div>
@@ -231,7 +231,7 @@ export default function ProfilePage() {
 												type="text"
 												value={profileData.username}
 												disabled
-												className="mt-1 block w-full rounded-md border-gray-300 shadow-sm bg-gray-100 cursor-not-allowed"
+												className={`${COMPONENT_STYLES.FORM.INPUT} ${SEMANTIC_COLORS.BACKGROUND.TERTIARY} cursor-not-allowed`}
 											/>{" "}
 										</div>{" "}
 										{/* Usually username is not editable */}
@@ -249,7 +249,7 @@ export default function ProfilePage() {
 													})
 												}
 												rows={3}
-												className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500"
+												className={COMPONENT_STYLES.FORM.INPUT}
 											/>{" "}
 										</div>
 									</div>
@@ -258,7 +258,7 @@ export default function ProfilePage() {
 										<h1 className="text-2xl font-bold text-gray-900">
 											{profileData.name}
 										</h1>
-										<p className="text-gray-600">@{profileData.username}</p>
+										<p className={SEMANTIC_COLORS.TEXT.TERTIARY}>@{profileData.username}</p>
 										<p className="mt-2 text-gray-700 max-w-2xl">
 											{profileData.bio}
 										</p>
@@ -301,28 +301,28 @@ export default function ProfilePage() {
 							{/* Stats */}
 							<div className="mt-6 md:mt-0 flex flex-col items-center md:items-end space-y-2 w-full md:w-auto">
 								<div className="grid grid-cols-2 gap-4 text-center">
-									<div className="bg-gray-50 px-4 py-2 rounded-lg">
+									<div className={`${SEMANTIC_COLORS.BACKGROUND.SECONDARY} px-4 py-2 rounded-lg`}>
 										{" "}
 										<div className="text-2xl font-bold text-gray-900">
 											{profileData.stats.created}
 										</div>{" "}
 										<div className="text-sm text-gray-500">Comics</div>{" "}
 									</div>
-									<div className="bg-gray-50 px-4 py-2 rounded-lg">
+									<div className={`${SEMANTIC_COLORS.BACKGROUND.SECONDARY} px-4 py-2 rounded-lg`}>
 										{" "}
 										<div className="text-2xl font-bold text-gray-900">
 											{profileData.stats.favorites}
 										</div>{" "}
 										<div className="text-sm text-gray-500">Favorites</div>{" "}
 									</div>
-									<div className="bg-gray-50 px-4 py-2 rounded-lg">
+									<div className={`${SEMANTIC_COLORS.BACKGROUND.SECONDARY} px-4 py-2 rounded-lg`}>
 										{" "}
 										<div className="text-2xl font-bold text-gray-900">
 											{profileData.stats.followers}
 										</div>{" "}
 										<div className="text-sm text-gray-500">Followers</div>{" "}
 									</div>
-									<div className="bg-gray-50 px-4 py-2 rounded-lg">
+									<div className={`${SEMANTIC_COLORS.BACKGROUND.SECONDARY} px-4 py-2 rounded-lg`}>
 										{" "}
 										<div className="text-2xl font-bold text-gray-900">
 											{profileData.stats.following}
@@ -368,7 +368,7 @@ export default function ProfilePage() {
 							{isAuthenticated && (
 								<Link
 									href="/comics/create"
-									className="flex items-center text-blue-600 hover:text-blue-800"
+									className={`flex items-center ${INTERACTIVE_STYLES.LINK.PRIMARY}`}
 								>
 									<PlusCircle size={16} className="mr-1" /> Create New Comic
 								</Link>

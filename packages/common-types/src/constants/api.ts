@@ -39,3 +39,71 @@ export const SERVER_TIMEOUTS = {
 export const REQUEST_LIMITS = {
 	JSON_BODY_LIMIT: '50mb', // For base64 image uploads
 } as const;
+
+/**
+ * External service endpoints - Single Source of Truth
+ */
+export const EXTERNAL_APIS = {
+	OPENAI: {
+		CHAT_COMPLETIONS: 'https://api.openai.com/v1/chat/completions',
+		IMAGE_GENERATIONS: 'https://api.openai.com/v1/images/generations',
+	},
+	AWS: {
+		S3_URL_TEMPLATE: (bucketName: string, region: string, key: string) => 
+			`https://${bucketName}.s3.${region}.amazonaws.com/${key}`,
+	},
+} as const;
+
+/**
+ * AI generation configuration constants
+ */
+export const AI_CONFIG = {
+	OPENAI: {
+		IMAGE: {
+			SIZE: '1024x1024',
+			QUALITY: 'standard',
+			RESPONSE_FORMAT: 'b64_json',
+			N: 1,
+		},
+		CHAT: {
+			MAX_TOKENS: 300,
+			TEMPERATURE: 0.8,
+		},
+		PROMPTS: {
+			IMAGE_STYLE_SUFFIX: 'Style: vibrant, detailed comic book art, clear line work, professional quality.',
+		},
+	},
+} as const;
+
+/**
+ * Environment variable names - Single Source of Truth
+ */
+export const ENV_VARS = {
+	DATABASE_URL: 'DATABASE_URL',
+	AWS_REGION: 'AWS_REGION',
+	AWS_ACCESS_KEY_ID: 'AWS_ACCESS_KEY_ID',
+	AWS_SECRET_ACCESS_KEY: 'AWS_SECRET_ACCESS_KEY',
+	S3_BUCKET_NAME: 'S3_BUCKET_NAME',
+	COGNITO_USER_POOL_ID: 'COGNITO_USER_POOL_ID',
+	COGNITO_CLIENT_ID: 'COGNITO_CLIENT_ID',
+	OPENAI_API_KEY: 'OPENAI_API_KEY',
+	FRONTEND_URL: 'FRONTEND_URL',
+	PORT: 'PORT',
+	NODE_ENV: 'NODE_ENV',
+} as const;
+
+/**
+ * HTTP status codes - Single Source of Truth
+ */
+export const HTTP_STATUS = {
+	OK: 200,
+	CREATED: 201,
+	BAD_REQUEST: 400,
+	UNAUTHORIZED: 401,
+	FORBIDDEN: 403,
+	NOT_FOUND: 404,
+	CONFLICT: 409,
+	INTERNAL_SERVER_ERROR: 500,
+	BAD_GATEWAY: 502,
+	SERVICE_UNAVAILABLE: 503,
+} as const;

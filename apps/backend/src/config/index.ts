@@ -1,17 +1,18 @@
 import 'dotenv/config';
 import { S3Client } from '@aws-sdk/client-s3';
-import { DEFAULT_PORTS } from '@repo/common-types';
+import { DEFAULT_PORTS, ENV_VARS } from '@repo/common-types';
 
+// Use centralized environment variable names
 const requiredEnvVars = [
-  'DATABASE_URL',
-  'AWS_REGION',
-  'AWS_ACCESS_KEY_ID',
-  'AWS_SECRET_ACCESS_KEY',
-  'S3_BUCKET_NAME',
-  'COGNITO_USER_POOL_ID',
-  'COGNITO_CLIENT_ID',
-  'OPENAI_API_KEY',
-  'FRONTEND_URL',
+  ENV_VARS.DATABASE_URL,
+  ENV_VARS.AWS_REGION,
+  ENV_VARS.AWS_ACCESS_KEY_ID,
+  ENV_VARS.AWS_SECRET_ACCESS_KEY,
+  ENV_VARS.S3_BUCKET_NAME,
+  ENV_VARS.COGNITO_USER_POOL_ID,
+  ENV_VARS.COGNITO_CLIENT_ID,
+  ENV_VARS.OPENAI_API_KEY,
+  ENV_VARS.FRONTEND_URL,
 ];
 
 const missingEnvVars = requiredEnvVars.filter((varName) => !process.env[varName]);
@@ -35,16 +36,17 @@ if (missingEnvVars.length > 0) {
   process.exit(1);
 }
 
-export const PORT = process.env.PORT || DEFAULT_PORTS.BACKEND;
-export const DATABASE_URL = process.env.DATABASE_URL!;
-export const AWS_REGION = process.env.AWS_REGION!;
-export const S3_BUCKET_NAME = process.env.S3_BUCKET_NAME!;
-export const COGNITO_USER_POOL_ID = process.env.COGNITO_USER_POOL_ID!;
-export const COGNITO_CLIENT_ID = process.env.COGNITO_CLIENT_ID!;
-export const OPENAI_API_KEY = process.env.OPENAI_API_KEY!;
+// Use centralized environment variable names for all exports
+export const PORT = process.env[ENV_VARS.PORT] || DEFAULT_PORTS.BACKEND;
+export const DATABASE_URL = process.env[ENV_VARS.DATABASE_URL]!;
+export const AWS_REGION = process.env[ENV_VARS.AWS_REGION]!;
+export const S3_BUCKET_NAME = process.env[ENV_VARS.S3_BUCKET_NAME]!;
+export const COGNITO_USER_POOL_ID = process.env[ENV_VARS.COGNITO_USER_POOL_ID]!;
+export const COGNITO_CLIENT_ID = process.env[ENV_VARS.COGNITO_CLIENT_ID]!;
+export const OPENAI_API_KEY = process.env[ENV_VARS.OPENAI_API_KEY]!;
 export const OPENAI_CHAT_MODEL = process.env.OPENAI_CHAT_MODEL || 'gpt-4o-mini';
 export const OPENAI_IMAGE_MODEL = process.env.OPENAI_IMAGE_MODEL || 'dall-e-3';
-export const FRONTEND_URL = process.env.FRONTEND_URL!;
+export const FRONTEND_URL = process.env[ENV_VARS.FRONTEND_URL]!;
 
 // Create S3 client with error handling
 let s3Client: S3Client | null = null;
@@ -52,8 +54,8 @@ try {
   s3Client = new S3Client({
     region: AWS_REGION,
     credentials: {
-      accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
-      secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+      accessKeyId: process.env[ENV_VARS.AWS_ACCESS_KEY_ID]!,
+      secretAccessKey: process.env[ENV_VARS.AWS_SECRET_ACCESS_KEY]!,
     },
   });
   console.log('✅ S3 client initialized successfully');

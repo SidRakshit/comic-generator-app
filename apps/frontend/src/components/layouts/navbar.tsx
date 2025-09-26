@@ -42,14 +42,11 @@ export default function Navbar() {
 			);
 		}
 		if (user) {
-			const desktopProfileClasses =
-				"inline-flex items-center px-2 py-1 text-sm font-medium text-gray-700 hover:text-gray-900 hover:bg-gray-100 rounded-md ml-4";
-			const desktopSignOutClasses =
-				"ml-2 text-gray-700 hover:text-gray-900 hover:bg-gray-100";
-			const mobileLinkClasses =
-				"flex items-center pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800";
-			const mobileButtonClasses =
-				"w-full text-left flex items-center pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800";
+			// Use centralized design tokens for profile/auth links
+			const desktopProfileClasses = `inline-flex items-center px-2 py-1 text-sm font-medium ${SEMANTIC_COLORS.TEXT.SECONDARY} hover:${SEMANTIC_COLORS.TEXT.PRIMARY} ${INTERACTIVE_STYLES.BUTTON.GHOST} rounded-md ml-4`;
+			const desktopSignOutClasses = `ml-2 ${SEMANTIC_COLORS.TEXT.SECONDARY} hover:${SEMANTIC_COLORS.TEXT.PRIMARY} ${INTERACTIVE_STYLES.BUTTON.GHOST}`;
+			const mobileLinkClasses = NAV.MOBILE_INACTIVE;
+			const mobileButtonClasses = `w-full text-left ${NAV.MOBILE_INACTIVE}`;
 			return (
 				<>
 					{" "}
@@ -76,12 +73,10 @@ export default function Navbar() {
 				</>
 			);
 		} else {
-			const mobileLinkClasses =
-				"flex items-center pl-3 pr-4 py-2 border-l-4 border-transparent text-base font-medium text-gray-600 hover:bg-gray-50 hover:border-gray-300 hover:text-gray-800";
-			const desktopLoginClasses =
-				"inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-gray-700 bg-gray-100 hover:bg-gray-200 ml-4";
-			const desktopSignupClasses =
-				"inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 ml-2";
+			// Use centralized design tokens for auth links
+			const mobileLinkClasses = NAV.MOBILE_INACTIVE;
+			const desktopLoginClasses = `inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md ${INTERACTIVE_STYLES.BUTTON.SECONDARY} ml-4`;
+			const desktopSignupClasses = `inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md ${INTERACTIVE_STYLES.BUTTON.PRIMARY} ml-2`;
 			return (
 				<>
 					{" "}
@@ -146,7 +141,7 @@ export default function Navbar() {
 
 	// --- Main Component Render ---
 	return (
-		<nav className="bg-white shadow-sm sticky top-0 z-50">
+		<nav className={`${SEMANTIC_COLORS.BACKGROUND.PRIMARY} shadow-sm sticky top-0 z-50`}>
 			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 				<div className="flex justify-between h-16">
 					{/* Left side */}
@@ -181,7 +176,7 @@ export default function Navbar() {
 					<div className="-mr-2 flex items-center sm:hidden">
 						<button
 							onClick={() => setIsOpen(!isOpen)}
-							className="inline-flex items-center justify-center p-2 rounded-md text-gray-400 hover:text-gray-500 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-inset focus:ring-blue-500"
+							className={`inline-flex items-center justify-center p-2 rounded-md ${SEMANTIC_COLORS.TEXT.DISABLED} hover:${SEMANTIC_COLORS.TEXT.MUTED} ${INTERACTIVE_STYLES.BUTTON.GHOST} focus:outline-none focus:ring-2 focus:ring-inset focus:${SEMANTIC_COLORS.BRAND.PRIMARY_BORDER}`}
 							aria-controls="mobile-menu"
 							aria-expanded={isOpen}
 						>
