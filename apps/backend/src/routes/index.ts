@@ -7,6 +7,7 @@ import adminRoutes from "./admin";
 import billingRoutes from "./billing";
 import webhookRoutes from "./webhooks";
 import impersonationRoutes from "./impersonation";
+import favoritesRoutes from "./favorites";
 
 const router = express.Router();
 
@@ -16,6 +17,7 @@ router.use("/impersonation", impersonationRoutes);
 router.use("/", comicRoutes);
 router.use("/", userRoutes);
 router.use("/webhooks", webhookRoutes);
+router.use("/", favoritesRoutes);
 
 router.get("/", (req, res) => {
 	res.json({ message: "API is running!" });

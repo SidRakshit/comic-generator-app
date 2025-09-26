@@ -22,6 +22,7 @@ model comics {
   users       users     @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
   pages       pages[]
   usage_logs  panel_usage_log[]
+  favorited_by user_favorite_comics[]
 
   @@index([user_id], map: "idx_comics_user_id")
 }
@@ -87,6 +88,7 @@ model users {
   impersonation_tokens_issued   admin_impersonation_tokens[] @relation("admin_token_admin_user")
   impersonation_tokens_received admin_impersonation_tokens[] @relation("admin_token_target_user")
   admin_mfa         admin_mfa_enrollments?
+  favorite_comics user_favorite_comics[]
 
   @@index([auth_provider_id], map: "idx_users_auth_provider_id")
   @@index([email], map: "idx_users_email")
@@ -202,4 +204,13 @@ model admin_mfa_enrollments {
   admin_user       users     @relation(fields: [admin_user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([verified_at], map: "idx_admin_mfa_verified")
+}
+
+model user_favorite_comics {
+  user_id  String @db.Uuid
+  comic_id String @db.Uuid
+  users    users  @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+  comics   comics @relation(fields: [comic_id], references: [comic_id], onDelete: Cascade)
+
+  @@id([user_id, comic_id])
 }

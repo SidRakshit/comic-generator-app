@@ -37,23 +37,6 @@ const initialUserData = {
 	twitter: "",
 	stats: { created: 0, favorites: 0, followers: 0, following: 0 },
 };
-// Mock favorites (replace with fetched data if implementing)
-const userFavoriteComics = [
-	{
-		id: "comic-4",
-		title: "Heroes of Tomorrow",
-		author: "CosmicCreator",
-		coverImage: "/api/placeholder/300/400?text=Heroes+Tomorrow",
-		likes: 87,
-	},
-	{
-		id: "comic-5",
-		title: "Mystery Island",
-		author: "StoryWeaver",
-		coverImage: "/api/placeholder/300/400?text=Mystery+Island",
-		likes: 56,
-	},
-];
 
 export default function ProfilePage() {
 	const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -66,6 +49,9 @@ export default function ProfilePage() {
 	const [errorLoadingComics, setErrorLoadingComics] = useState<string | null>(
 		null
 	);
+
+	const [userFavoriteComics, setUserFavoriteComics] = useState<any[]>([]);
+	const [isLoadingFavorites, setIsLoadingFavorites] = useState(true);
 
 	// Get auth state from context
 	const {
@@ -142,6 +128,37 @@ export default function ProfilePage() {
 			})); // Reset count
 		}
 	}, [isLoadingAuth, isAuthenticated]); // Re-run when auth state changes
+
+	useEffect(() => {
+		if (isAuthenticated) {
+			const fetchFavorites = async () => {
+				setIsLoadingFavorites(true);
+				try {
+					const data = await apiRequest<any[]>("/api/favorites", "GET");
+					setUserFavoriteComics(data || []);
+				} catch (err: unknown) {
+					console.error("Failed to fetch user favorites:", err);
+				} finally {
+					setIsLoadingFavorites(false);
+				}
+			};
+			fetchFavorites();
+		}
+	}, [isAuthenticated]);
+
+	const toggleFavorite = async (comicId: string) => {
+		const isFavorite = userFavoriteComics.some((comic) => comic.comic_id === comicId);
+		if (isFavorite) {
+			await apiRequest(`/api/favorites/${comicId}`, "DELETE");
+			setUserFavoriteComics(userFavoriteComics.filter((comic) => comic.comic_id !== comicId));
+		} else {
+			await apiRequest("/api/favorites", "POST", { comicId });
+			// Ideally, the API would return the newly favorited comic
+			// For now, we just refetch the list
+			const data = await apiRequest<any[]>("/api/favorites", "GET");
+			setUserFavoriteComics(data || []);
+		}
+	};
 
 	// --- Profile Edit Handlers (Keep or modify as needed) ---
 	const handleSaveProfile = () => {
@@ -285,14 +302,21 @@ export default function ProfilePage() {
 												</Button>
 											</>
 										) : (
-											<Button
-												variant="outline"
-												className="flex items-center"
-												onClick={() => setIsEditingProfile(true)}
-											>
-												{" "}
-												<Edit size={16} className="mr-1" /> Edit Profile{" "}
-											</Button>
+											<>
+												<Button
+													variant="outline"
+													className="flex items-center"
+													onClick={() => setIsEditingProfile(true)}
+												>
+													{" "}
+													<Edit size={16} className="mr-1" /> Edit Profile{" "}
+												</Button>
+												<Link href="/billing">
+													<Button variant="outline" className="flex items-center">
+														<PlusCircle size={16} className="mr-1" /> Buy Credits
+													</Button>
+												</Link>
+											</>
 										)}
 									</div>
 								)}
@@ -311,7 +335,7 @@ export default function ProfilePage() {
 									<div className={`${SEMANTIC_COLORS.BACKGROUND.SECONDARY} px-4 py-2 ${UI_CONSTANTS.BORDER_RADIUS.LARGE}`}>
 										{" "}
 										<div className="text-2xl font-bold text-gray-900">
-											{profileData.stats.favorites}
+											{userFavoriteComics.length}
 										</div>{" "}
 										<div className="text-sm text-gray-500">Favorites</div>{" "}
 									</div>
@@ -438,26 +462,34 @@ export default function ProfilePage() {
 							myComics.length > 0 && (
 								<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
 									{myComics.map((comic) => (
-										<Link
-											href={`/comics/${comic.comic_id}`}
-											key={comic.comic_id}
-										>
-											<div className="${SEMANTIC_COLORS.BACKGROUND.PRIMARY} border ${UI_CONSTANTS.BORDER_RADIUS.LARGE} overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-												{/* Placeholder for Cover Image */}
-												<div className={`${UI_CONSTANTS.ASPECT_RATIOS.COMIC_COVER} ${SEMANTIC_COLORS.BACKGROUND.TERTIARY} relative flex items-center justify-center ${SEMANTIC_COLORS.TEXT.DISABLED}`}>
-													<ImageIcon size={48} />
-												</div>
-												<div className="p-4">
-													<h3 className="font-medium text-lg text-gray-900 mb-1 truncate">
-														{comic.title}
-													</h3>
-													<div className="flex justify-between text-sm text-gray-500">
-														<span>Updated: {formatDate(comic.updated_at)}</span>
-														{/* Add likes if available */}
+										<div key={comic.comic_id} className="relative">
+											<Link
+												href={`/comics/${comic.comic_id}`}
+											>
+												<div className="${SEMANTIC_COLORS.BACKGROUND.PRIMARY} border ${UI_CONSTANTS.BORDER_RADIUS.LARGE} overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+													{/* Placeholder for Cover Image */}
+													<div className={`${UI_CONSTANTS.ASPECT_RATIOS.COMIC_COVER} ${SEMANTIC_COLORS.BACKGROUND.TERTIARY} relative flex items-center justify-center ${SEMANTIC_COLORS.TEXT.DISABLED}`}>
+														<ImageIcon size={48} />
+													</div>
+													<div className="p-4">
+														<h3 className="font-medium text-lg text-gray-900 mb-1 truncate">
+															{comic.title}
+														</h3>
+														<div className="flex justify-between text-sm text-gray-500">
+															<span>Updated: {formatDate(comic.updated_at)}</span>
+															{/* Add likes if available */}
+														</div>
 													</div>
 												</div>
-											</div>
-										</Link>
+											</Link>
+											<Button
+												variant="outline"
+												className="absolute top-2 right-2"
+												onClick={() => toggleFavorite(comic.comic_id)}
+											>
+												<Heart size={16} className={`${userFavoriteComics.some((fav) => fav.comic_id === comic.comic_id) ? "fill-red-500" : ""}`} />
+											</Button>
+										</div>
 									))}
 								</div>
 							)}
@@ -467,39 +499,39 @@ export default function ProfilePage() {
 					<TabsContent value="favorites" className="space-y-6">
 						{/* Keep mock data or implement fetching similar to 'My Comics' */}
 						<h2 className="text-xl font-bold text-gray-900">Favorite Comics</h2>
-						{userFavoriteComics.length > 0 ? (
+						{isLoadingFavorites ? (
+							<div className="text-center py-12">
+								<Loader2 className="h-8 w-8 mx-auto animate-spin text-gray-500" />
+								<p className="mt-2 text-gray-600">Loading...</p>
+							</div>
+						) : userFavoriteComics.length > 0 ? (
 							<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-								{userFavoriteComics.map((comic) => (
-									<Link href={`/comics/${comic.id}`} key={comic.id}>
-										{" "}
-										{/* Link to external comics if needed */}
+								{userFavoriteComics.map((fav) => (
+									<Link href={`/comics/${fav.comic.comic_id}`} key={fav.comic.comic_id}>
 										<div className="${SEMANTIC_COLORS.BACKGROUND.PRIMARY} border ${UI_CONSTANTS.BORDER_RADIUS.LARGE} overflow-hidden shadow-sm hover:shadow-md transition-shadow">
 											<div className={`${UI_CONSTANTS.ASPECT_RATIOS.COMIC_COVER} ${SEMANTIC_COLORS.BACKGROUND.TERTIARY} relative`}>
 												<Image
-													src={comic.coverImage}
-													alt={comic.title}
+													src={fav.comic.coverImage || "/api/placeholder/300/400?text=Comic"}
+													alt={fav.comic.title}
 													fill
 													style={{ objectFit: "cover" }}
 													sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
 												/>
 											</div>
 											<div className="p-4">
-												{" "}
 												<h3 className="font-medium text-lg text-gray-900 mb-1">
-													{comic.title}
-												</h3>{" "}
+													{fav.comic.title}
+												</h3>
 												<div className="flex justify-between text-sm text-gray-500">
-													{" "}
-													<span>By: {comic.author}</span>{" "}
+													<span>By: {fav.comic.author}</span>
 													<span className="flex items-center">
-														{" "}
 														<Heart
 															size={14}
 															className="mr-1 text-red-500"
-														/>{" "}
-														{comic.likes}{" "}
-													</span>{" "}
-												</div>{" "}
+														/>
+														{fav.comic.likes}
+													</span>
+												</div>
 											</div>
 										</div>
 									</Link>
@@ -507,18 +539,16 @@ export default function ProfilePage() {
 							</div>
 						) : (
 							<div className="text-center py-12 ${SEMANTIC_COLORS.BACKGROUND.PRIMARY} ${UI_CONSTANTS.BORDER_RADIUS.LARGE} border">
-								{" "}
-								<Heart size={48} className="mx-auto text-gray-400 mb-4" />{" "}
+								<Heart size={48} className="mx-auto text-gray-400 mb-4" />
 								<h3 className="text-lg font-medium text-gray-900 mb-2">
 									No favorites yet
-								</h3>{" "}
+								</h3>
 								<p className={`${SEMANTIC_COLORS.TEXT.TERTIARY} mb-4`}>
 									Browse comics and add some!
-								</p>{" "}
+								</p>
 								<Button asChild>
-									{" "}
-									<Link href="/comics"> Browse Comics </Link>{" "}
-								</Button>{" "}
+									<Link href="/comics"> Browse Comics </Link>
+								</Button>
 							</div>
 						)}
 					</TabsContent>
@@ -574,7 +604,7 @@ export default function ProfilePage() {
 										<Button
 											variant="destructive"
 											onClick={() => {
-												/* TODO: Implement delete account flow */
+													/* TODO: Implement delete account flow */
 											}}
 										>
 											{" "}
