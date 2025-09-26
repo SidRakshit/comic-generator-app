@@ -27,6 +27,7 @@ import cors from 'cors';
 import { PORT, FRONTEND_URL } from './config';
 import { API_CONFIG, SERVER_TIMEOUTS, REQUEST_LIMITS } from '@repo/common-types';
 import mainApiRouter from './routes/index';
+import { errorHandler, notFoundHandler } from './middleware/error.middleware';
 const isProd = process.env.NODE_ENV === 'production';
 
 // Dependencies loaded successfully
@@ -230,6 +231,12 @@ if (!isProd) {
 try {
   // Routes
   app.use('/api', mainApiRouter);
+  
+  // 404 handler for unknown routes
+  app.use(notFoundHandler);
+  
+  // Global error handler (must be last)
+  app.use(errorHandler);
 } catch (error) {
   console.error('[FATAL] Error setting up routes:', error);
   process.exit(1);

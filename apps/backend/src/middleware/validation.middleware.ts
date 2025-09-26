@@ -3,6 +3,7 @@
 
 import { Request, Response, NextFunction } from 'express';
 import { ZodSchema, ZodError } from 'zod';
+import { ErrorFactory } from '@repo/common-types';
 
 /**
  * Generic validation middleware factory
@@ -20,27 +21,26 @@ export function validateRequestBody<T>(schema: ZodSchema<T>) {
 			next();
 		} catch (error) {
 			if (error instanceof ZodError) {
-				// Format Zod validation errors for consistent API responses
-				const formattedErrors = error.errors.map(err => ({
-					field: err.path.join('.'),
-					message: err.message,
-					code: err.code,
-				}));
+				// Format Zod validation errors using shared error utilities
+				const fieldErrors = error.errors.reduce((acc, err) => {
+					const field = err.path.join('.');
+					acc[field] = err.message;
+					return acc;
+				}, {} as Record<string, string>);
 
-				res.status(400).json({
-					error: 'Validation failed',
-					message: 'The request data does not meet the required format',
-					details: formattedErrors,
-				});
+				const appError = ErrorFactory.validationFailed(
+					'Request body validation failed',
+					{ fields: fieldErrors }
+				);
+				
+				res.status(appError.statusCode).json(appError.toResponse());
 				return;
 			}
 
-			// Handle unexpected errors
+			// Handle unexpected errors using shared utilities
 			console.error('Unexpected validation error:', error);
-			res.status(500).json({
-				error: 'Internal validation error',
-				message: 'An unexpected error occurred during validation',
-			});
+			const appError = ErrorFactory.internalError('Validation processing failed');
+			res.status(appError.statusCode).json(appError.toResponse());
 		}
 	};
 }

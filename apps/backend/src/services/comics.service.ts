@@ -14,7 +14,7 @@ import {
 	AWS_REGION,
 } from "../config";
 import pool from "../database";
-import { Panel, CreateComicRequest, ComicPageRequest, ComicPanelRequest, ComicResponse, ComicPageResponse, ComicPanelResponse } from "@repo/common-types";
+import { Panel, CreateComicRequest, ComicPageRequest, ComicPanelRequest, ComicResponse, ComicPageResponse, ComicPanelResponse, ErrorFactory } from "@repo/common-types";
 
 // Use shared types from @repo/common-types
 // Map the shared API types to our internal naming for easier migration:
@@ -374,16 +374,18 @@ Guidelines:
 					throw new Error("Comic not found or user mismatch");
 				}
 				
-				await client.query(
-					"UPDATE comics SET title = $1, description = $2, characters = $3, setting = $4, updated_at = NOW() WHERE comic_id = $5",
-					[
-						comicData.title,
-						comicData.description,
-						JSON.stringify(comicData.characters ?? null),
-						JSON.stringify(comicData.setting ?? null),
-						comicId,
-					]
-				);
+			await client.query(
+				"UPDATE comics SET title = $1, description = $2, genre = $3, characters = $4, setting = $5, template = $6, updated_at = NOW() WHERE comic_id = $7",
+				[
+					comicData.title,
+					comicData.description,
+					comicData.genre || null,
+					JSON.stringify(comicData.characters ?? null),
+					JSON.stringify(comicData.setting ?? null),
+					comicData.template || null,
+					comicId,
+				]
+			);
 				console.log(`Comic ${comicId} metadata updated.`);
 				
 				// Clear old pages/panels
@@ -399,17 +401,19 @@ Guidelines:
 				console.log(`Creating new comic for user: ${internalUserId}`);
 				comicId = crypto.randomUUID();
 				
-				await client.query(
-					"INSERT INTO comics (comic_id, user_id, title, description, characters, setting, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())",
-					[
-						comicId,
-						internalUserId,
-						comicData.title,
-						comicData.description,
-						JSON.stringify(comicData.characters ?? null),
-						JSON.stringify(comicData.setting ?? null),
-					]
-				);
+			await client.query(
+				"INSERT INTO comics (comic_id, user_id, title, description, genre, characters, setting, template, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW(), NOW())",
+				[
+					comicId,
+					internalUserId,
+					comicData.title,
+					comicData.description,
+					comicData.genre || null,
+					JSON.stringify(comicData.characters ?? null),
+					JSON.stringify(comicData.setting ?? null),
+					comicData.template || null,
+				]
+			);
 				console.log(`Created new comic with ID: ${comicId}`);
 			}
 
@@ -509,7 +513,7 @@ Guidelines:
 		);
 		const query = `
             SELECT
-                c.comic_id, c.title, c.description, c.characters, c.setting, c.created_at, c.updated_at,
+                c.comic_id, c.title, c.description, c.genre, c.characters, c.setting, c.template, c.created_at, c.updated_at,
                 p.page_id, p.page_number,
                 pn.panel_id, pn.panel_number, pn.prompt, pn.dialogue, pn.layout_position, pn.image_url
             FROM comics c
@@ -533,6 +537,7 @@ Guidelines:
 				comic_id: result.rows[0].comic_id,
 				title: result.rows[0].title,
 				description: result.rows[0].description || undefined,
+				genre: result.rows[0].genre || undefined,
 				characters: result.rows[0].characters || undefined,
 				setting: result.rows[0].setting || undefined,
 				template: result.rows[0].template || undefined,
