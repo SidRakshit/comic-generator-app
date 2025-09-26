@@ -6,6 +6,7 @@ import { useState, ChangeEvent } from "react"; // Keep useState, ChangeEvent
 // Remove Button, Loader2, Plus, Trash2, Input, Label, Textarea if not used directly
 // Keep useComicContext
 import { useComicContext } from "@/context/comic-context";
+import { SEMANTIC_COLORS, UI_CONSTANTS } from "@repo/common-types";
 // Remove TemplateSelector import
 
 // Import the new components
@@ -78,11 +79,11 @@ export default function CreateComicPage() {
 		<div className="container mx-auto py-8">
 			{/* Keep the main page title */}
 			<div className="flex justify-between items-center mb-6">
-				<h1 className="text-3xl font-bold text-gray-900">Create New Comic</h1>
+				<h1 className={`text-3xl font-bold ${SEMANTIC_COLORS.TEXT.PRIMARY}`}>Create New Comic</h1>
 			</div>
 
 			{/* Render steps conditionally within the card */}
-			<div className="bg-white rounded-lg shadow p-6">
+			<div className={`${SEMANTIC_COLORS.BACKGROUND.PRIMARY} ${UI_CONSTANTS.BORDER_RADIUS.LARGE} shadow p-6`}>
 				{step === "metadata" && (
 					<ComicMetadataForm
 						comic={comic}

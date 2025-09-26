@@ -2,6 +2,7 @@
 
 import React from 'react';
 import { templates } from '@/hooks/use-comic';
+import { SEMANTIC_COLORS, UI_CONSTANTS, INTERACTIVE_STYLES } from '@repo/common-types';
 
 interface TemplateSelectorProps {
   onSelect: (templateId: string) => void;
@@ -16,8 +17,8 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({ onSelect, disabled 
       {templateList.map((template) => (
         <div
           key={template.id}
-          className={`border rounded-lg p-4 cursor-pointer hover:shadow-md hover:border-blue-500 transition-all ${
-            disabled ? 'cursor-not-allowed bg-gray-100' : 'bg-white'
+          className={`border ${UI_CONSTANTS.BORDER_RADIUS.LARGE} p-4 cursor-pointer hover:shadow-md ${INTERACTIVE_STYLES.BORDER.HOVER_ACCENT_LIGHT} transition-all ${
+            disabled ? `cursor-not-allowed ${SEMANTIC_COLORS.BACKGROUND.SECONDARY}` : `${SEMANTIC_COLORS.BACKGROUND.PRIMARY}`
           }`}
           onClick={() => {            
             if (!disabled) {
@@ -25,11 +26,11 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({ onSelect, disabled 
             }
           }}
         >
-          <div className="aspect-square bg-gray-200 mb-2 flex items-center justify-center">         
-            <span className="text-gray-400 text-sm">Preview</span>
+          <div className={`${UI_CONSTANTS.ASPECT_RATIOS.SQUARE} ${SEMANTIC_COLORS.BACKGROUND.TERTIARY} mb-2 flex items-center justify-center`}>         
+            <span className={`${SEMANTIC_COLORS.TEXT.MUTED} text-sm`}>Preview</span>
           </div>
           <h3 className="font-semibold">{template.name}</h3>
-          <p className="text-sm text-gray-500">{template.panelCount} panels</p>
+          <p className={`text-sm ${SEMANTIC_COLORS.TEXT.TERTIARY}`}>{template.panelCount} panels</p>
         </div>
       ))}
     </div>

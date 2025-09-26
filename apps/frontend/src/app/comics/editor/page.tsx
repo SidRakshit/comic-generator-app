@@ -232,7 +232,7 @@ function NewComicEditorContent() {
 					</Button>
 				</div>
 			</div>
-			<div className={`bg-white ${UI_CONSTANTS.BORDER_RADIUS.LARGE} shadow-md p-4 md:p-6`}>
+			<div className={`${SEMANTIC_COLORS.BACKGROUND.PRIMARY} ${UI_CONSTANTS.BORDER_RADIUS.LARGE} shadow-md p-4 md:p-6`}>
 				<h2 className="text-xl font-semibold mb-2">
 					Edit Panels ({comic.panels?.length || 0} total - {templateName})
 				</h2>

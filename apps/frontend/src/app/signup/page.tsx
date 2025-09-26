@@ -8,7 +8,7 @@ import { signUp } from "aws-amplify/auth";
 import { Button } from "@repo/ui/button";
 import { Input } from "@repo/ui/input";
 import { Label } from "@repo/ui/label";
-import { UI_CONSTANTS } from "@repo/common-types";
+import { UI_CONSTANTS, SEMANTIC_COLORS, INTERACTIVE_STYLES } from "@repo/common-types";
 
 export default function SignupPage() {
 	const [email, setEmail] = useState("");
@@ -64,16 +64,16 @@ export default function SignupPage() {
 
 	return (
 		<div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
-			<div className={`w-full max-w-md p-8 space-y-6 bg-white ${UI_CONSTANTS.BORDER_RADIUS.LARGE} shadow-md`}>
+			<div className={`w-full max-w-md p-8 space-y-6 ${SEMANTIC_COLORS.BACKGROUND.PRIMARY} ${UI_CONSTANTS.BORDER_RADIUS.LARGE} shadow-md`}>
 				{/* Make title explicitly dark */}
-				<h2 className="text-2xl font-bold text-center text-gray-900">
+				<h2 className={`text-2xl font-bold text-center ${SEMANTIC_COLORS.TEXT.PRIMARY}`}>
 					Create Account
 				</h2>
-				{error && <p className="text-red-500 text-sm text-center">{error}</p>}
+				{error && <p className={`${SEMANTIC_COLORS.ERROR.TEXT} text-sm text-center`}>{error}</p>}
 				<form onSubmit={handleSignup} className="space-y-4">
 					<div>
 						{/* Add dark text color to Label */}
-						<Label htmlFor="email" className="text-gray-700">
+						<Label htmlFor="email" className={SEMANTIC_COLORS.TEXT.SECONDARY}>
 							Email
 						</Label>
 						<Input
@@ -88,7 +88,7 @@ export default function SignupPage() {
 					</div>
 					<div>
 						{/* Add dark text color to Label */}
-						<Label htmlFor="password" className="text-gray-700">
+						<Label htmlFor="password" className={SEMANTIC_COLORS.TEXT.SECONDARY}>
 							Password
 						</Label>
 						<Input
@@ -101,7 +101,7 @@ export default function SignupPage() {
 							disabled={isLoading}
 						/>
 						{/* Make descriptive text darker */}
-						<p className="text-xs text-gray-600 mt-1">
+						<p className={`text-xs ${SEMANTIC_COLORS.TEXT.TERTIARY} mt-1`}>
 							{" "}
 							{/* Changed from text-gray-500 */}
 							Min. 8 characters. Consider adding complexity requirements.
@@ -110,19 +110,19 @@ export default function SignupPage() {
 					<Button
 						type="submit"
 						variant="outline" // Use outline variant
-						className="w-full border-black text-black hover:bg-gray-100 hover:text-black" // Override colors
+						className={`w-full ${SEMANTIC_COLORS.BORDER.DEFAULT} ${SEMANTIC_COLORS.TEXT.PRIMARY} ${INTERACTIVE_STYLES.BUTTON.HOVER_LIGHT}`} // Override colors
 						disabled={isLoading}
 					>
 						{isLoading ? "Creating Account..." : "Sign Up"}
 					</Button>
 				</form>
 				{/* Make descriptive text darker */}
-				<p className="text-center text-sm text-gray-700">
+				<p className={`text-center text-sm ${SEMANTIC_COLORS.TEXT.SECONDARY}`}>
 					{" "}
 					{/* Changed from text-gray-600 */}
 					Already have an account?{" "}
 					<Link href="/login" legacyBehavior>
-						<a className="font-medium text-blue-600 hover:text-blue-500">
+						<a className={`font-medium ${SEMANTIC_COLORS.TEXT.ACCENT} ${INTERACTIVE_STYLES.TEXT.HOVER_ACCENT}`}>
 							Login
 						</a>
 					</Link>

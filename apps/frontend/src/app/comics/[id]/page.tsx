@@ -11,7 +11,7 @@ import { useComicContext } from "@/context/comic-context"; // Use context hook
 import { Button } from "@repo/ui/button";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { apiRequest } from "@/lib/api";
-import { ComicCharacter, Panel } from "@repo/common-types";
+import { ComicCharacter, Panel, SEMANTIC_COLORS, UI_CONSTANTS } from "@repo/common-types";
 
 export default function ComicEditorPage() {
 	const params = useParams();
@@ -217,11 +217,11 @@ export default function ComicEditorPage() {
 			{/* ... (Error display logic) ... */}
 
 			{/* Editor Area */}
-			<div className="bg-white rounded-lg shadow-md p-4 md:p-6">
-				<h2 className="text-xl font-semibold mb-2 text-gray-900">
+			<div className={`${SEMANTIC_COLORS.BACKGROUND.PRIMARY} ${UI_CONSTANTS.BORDER_RADIUS.LARGE} shadow-md p-4 md:p-6`}>
+				<h2 className={`text-xl font-semibold mb-2 ${SEMANTIC_COLORS.TEXT.PRIMARY}`}>
 					Edit Panels ({comic.panels?.length || 0} total)
 				</h2>
-				<p className="text-gray-600 mb-6 text-sm">
+				<p className={`${SEMANTIC_COLORS.TEXT.SECONDARY} mb-6 text-sm`}>
 					Click empty panels to generate content. Click generated images to
 					zoom. Use the ✏️ icon to regenerate.
 				</p>

@@ -190,7 +190,7 @@ export default function ProfilePage() {
 									alt={`${profileData.name}'s avatar`}
 									width={128}
 									height={128}
-									className="rounded-full object-cover border-4 border-white shadow"
+									className={`${UI_CONSTANTS.BORDER_RADIUS.FULL} object-cover border-4 ${SEMANTIC_COLORS.BORDER.INVERTED} shadow`}
 									priority // Prioritize loading avatar image
 								/>
 								{isEditingProfile && (
@@ -416,7 +416,7 @@ export default function ProfilePage() {
 							!errorLoadingComics &&
 							isAuthenticated &&
 							myComics.length === 0 && (
-								<div className="text-center py-12 bg-white ${UI_CONSTANTS.BORDER_RADIUS.LARGE} border">
+								<div className="text-center py-12 ${SEMANTIC_COLORS.BACKGROUND.PRIMARY} ${UI_CONSTANTS.BORDER_RADIUS.LARGE} border">
 									<BookOpen size={48} className="mx-auto text-gray-400 mb-4" />
 									<h3 className="text-lg font-medium text-gray-900 mb-2">
 										No comics yet
@@ -442,7 +442,7 @@ export default function ProfilePage() {
 											href={`/comics/${comic.comic_id}`}
 											key={comic.comic_id}
 										>
-											<div className="bg-white border ${UI_CONSTANTS.BORDER_RADIUS.LARGE} overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+											<div className="${SEMANTIC_COLORS.BACKGROUND.PRIMARY} border ${UI_CONSTANTS.BORDER_RADIUS.LARGE} overflow-hidden shadow-sm hover:shadow-md transition-shadow">
 												{/* Placeholder for Cover Image */}
 												<div className={`${UI_CONSTANTS.ASPECT_RATIOS.COMIC_COVER} ${SEMANTIC_COLORS.BACKGROUND.TERTIARY} relative flex items-center justify-center ${SEMANTIC_COLORS.TEXT.DISABLED}`}>
 													<ImageIcon size={48} />
@@ -473,7 +473,7 @@ export default function ProfilePage() {
 									<Link href={`/comics/${comic.id}`} key={comic.id}>
 										{" "}
 										{/* Link to external comics if needed */}
-										<div className="bg-white border ${UI_CONSTANTS.BORDER_RADIUS.LARGE} overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+										<div className="${SEMANTIC_COLORS.BACKGROUND.PRIMARY} border ${UI_CONSTANTS.BORDER_RADIUS.LARGE} overflow-hidden shadow-sm hover:shadow-md transition-shadow">
 											<div className={`${UI_CONSTANTS.ASPECT_RATIOS.COMIC_COVER} ${SEMANTIC_COLORS.BACKGROUND.TERTIARY} relative`}>
 												<Image
 													src={comic.coverImage}
@@ -506,7 +506,7 @@ export default function ProfilePage() {
 								))}
 							</div>
 						) : (
-							<div className="text-center py-12 bg-white ${UI_CONSTANTS.BORDER_RADIUS.LARGE} border">
+							<div className="text-center py-12 ${SEMANTIC_COLORS.BACKGROUND.PRIMARY} ${UI_CONSTANTS.BORDER_RADIUS.LARGE} border">
 								{" "}
 								<Heart size={48} className="mx-auto text-gray-400 mb-4" />{" "}
 								<h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -532,7 +532,7 @@ export default function ProfilePage() {
 						{/* Only show settings if authenticated */}
 						{isAuthenticated ? (
 							<>
-								<div className="bg-white shadow overflow-hidden ${UI_CONSTANTS.BORDER_RADIUS.LARGE}">
+								<div className="${SEMANTIC_COLORS.BACKGROUND.PRIMARY} shadow overflow-hidden ${UI_CONSTANTS.BORDER_RADIUS.LARGE}">
 									{/* ... Settings form JSX (Personal Info, Contact, Preferences) ... */}
 									{/* Example Save Settings Button */}
 									<div className={`px-4 py-5 border-t ${SEMANTIC_COLORS.BORDER.DEFAULT} sm:px-6`}>
@@ -550,7 +550,7 @@ export default function ProfilePage() {
 									</div>
 								</div>
 								{/* Security Settings */}
-								<div className="mt-4 bg-white shadow overflow-hidden ${UI_CONSTANTS.BORDER_RADIUS.LARGE}">
+								<div className="mt-4 ${SEMANTIC_COLORS.BACKGROUND.PRIMARY} shadow overflow-hidden ${UI_CONSTANTS.BORDER_RADIUS.LARGE}">
 									<div className="px-4 py-5 sm:px-6 border-b">
 										{" "}
 										<h3 className="text-lg font-medium text-gray-900">
@@ -563,7 +563,7 @@ export default function ProfilePage() {
 									</div>
 								</div>
 								{/* Danger Zone */}
-								<div className="mt-4 bg-white shadow overflow-hidden ${UI_CONSTANTS.BORDER_RADIUS.LARGE}">
+								<div className="mt-4 ${SEMANTIC_COLORS.BACKGROUND.PRIMARY} shadow overflow-hidden ${UI_CONSTANTS.BORDER_RADIUS.LARGE}">
 									<div className="px-4 py-5 sm:px-6 border-b">
 										{" "}
 										<h3 className="text-lg font-medium text-red-600">

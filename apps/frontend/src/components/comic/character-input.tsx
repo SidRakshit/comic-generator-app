@@ -5,7 +5,7 @@ import { Input } from "@repo/ui/input";
 import { Label } from "@repo/ui/label";
 import { Trash2 } from "lucide-react";
 // *** FIX: Import type directly from the hook file ***
-import { ComicCharacter } from "@repo/common-types";
+import { ComicCharacter, SEMANTIC_COLORS } from "@repo/common-types";
 
 interface CharacterInputProps {
 	character: ComicCharacter; // Use the imported type
@@ -30,9 +30,9 @@ export default function CharacterInput({
 	return (
 		<div
 			key={character.id}
-			className="p-3 border rounded mb-3 space-y-2 relative bg-gray-50"
+			className={`p-3 border rounded mb-3 space-y-2 relative ${SEMANTIC_COLORS.BACKGROUND.SECONDARY}`}
 		>
-			<Label className="font-medium text-gray-900">Character {index + 1}</Label>
+			<Label className={`font-medium ${SEMANTIC_COLORS.TEXT.PRIMARY}`}>Character {index + 1}</Label>
 			<div className="grid grid-cols-1 md:grid-cols-2 gap-2">
 				<div>
 					<Label

@@ -6,6 +6,7 @@
 import { useRouter } from 'next/navigation';
 import TemplateSelector from '@/components/comic/template-selector'; // Ensure this path is correct
 import { useState } from 'react';
+import { SEMANTIC_COLORS, UI_CONSTANTS } from "@repo/common-types";
 
 // Mock function to simulate creating a new comic entry in the backend
 // Replace this with your actual API call logic.
@@ -57,9 +58,9 @@ export default function CreateComicPage() {
       </div>
 
   
-      <div className="bg-white rounded-lg shadow p-6">
+      <div className={`${SEMANTIC_COLORS.BACKGROUND.PRIMARY} ${UI_CONSTANTS.BORDER_RADIUS.LARGE} shadow p-6`}>
         <h2 className="text-xl font-semibold mb-4">1. Choose a Template</h2>
-        <p className="text-gray-600 mb-6">Select a layout to start your comic.</p>
+        <p className={`${SEMANTIC_COLORS.TEXT.SECONDARY} mb-6`}>Select a layout to start your comic.</p>
 
         {error && (
             <div className="mb-4 p-3 bg-red-100 text-red-700 border border-red-300 rounded">

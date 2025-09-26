@@ -11,7 +11,7 @@ export default function HeroSection() {
 	const { user, isLoading } = useAuth();
 
 	return (
-		<section className={`bg-gradient-to-b from-blue-600 to-blue-800 text-white ${SPACING.LAYOUT.SECTION_PADDING}`}>
+		<section className={`${SEMANTIC_COLORS.BRAND.GRADIENT} ${SEMANTIC_COLORS.TEXT.INVERTED} ${SPACING.LAYOUT.SECTION_PADDING}`}>
 			<div className="container mx-auto px-4">
 				<div className="max-w-3xl mx-auto text-center">
 					<h1 className="text-4xl sm:text-5xl font-bold mb-6">
@@ -60,7 +60,7 @@ export default function HeroSection() {
 							size="lg"
 							variant="outline"
 							asChild
-							className={`border-white text-white ${SEMANTIC_COLORS.BRAND.PRIMARY_HOVER}`}
+							className={`${SEMANTIC_COLORS.BORDER.INVERTED} ${SEMANTIC_COLORS.TEXT.INVERTED} ${SEMANTIC_COLORS.BRAND.PRIMARY_HOVER}`}
 						>
 							<Link href="/comics"> Browse Comics </Link>
 						</Button> */}

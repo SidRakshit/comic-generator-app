@@ -12,7 +12,7 @@ export default function CallToActionSection() {
 	const { user, isLoading } = useAuth();
 
 	return (
-		<section className={`${SPACING.LAYOUT.SECTION_PADDING} bg-blue-900 text-white`}>
+		<section className={`${SPACING.LAYOUT.SECTION_PADDING} ${SEMANTIC_COLORS.BRAND.PRIMARY_BG_DARK} ${SEMANTIC_COLORS.TEXT.INVERTED}`}>
 			<div className="container mx-auto px-4 text-center">
 				<h2 className="text-3xl font-bold mb-4">Ready to Create Your Comic?</h2>
 				<p className="text-xl mb-8 max-w-2xl mx-auto">
@@ -26,7 +26,7 @@ export default function CallToActionSection() {
 					<Button
 						size="lg"
 						disabled
-						className={`${SEMANTIC_COLORS.BACKGROUND.PRIMARY} text-blue-900 opacity-75 cursor-wait`} // Style as disabled/loading
+						className={`${SEMANTIC_COLORS.BACKGROUND.PRIMARY} ${SEMANTIC_COLORS.TEXT.ACCENT} opacity-75 cursor-wait`} // Style as disabled/loading
 					>
 						<Loader2 className="mr-2 h-5 w-5 animate-spin" />
 						Loading...
@@ -36,7 +36,7 @@ export default function CallToActionSection() {
 					<Button
 						size="lg"
 						asChild // Use asChild to make the button a link wrapper
-						className={`${SEMANTIC_COLORS.BACKGROUND.PRIMARY} text-blue-900 ${INTERACTIVE_STYLES.BUTTON.GHOST}`}
+						className={`${SEMANTIC_COLORS.BACKGROUND.PRIMARY} ${SEMANTIC_COLORS.TEXT.ACCENT} ${INTERACTIVE_STYLES.BUTTON.GHOST}`}
 					>
 						<Link href="/comics/create">Get Started Now</Link>
 					</Button>
@@ -45,7 +45,7 @@ export default function CallToActionSection() {
 					<Button
 						size="lg"
 						asChild // Use asChild to make the button a link wrapper
-						className={`${SEMANTIC_COLORS.BACKGROUND.PRIMARY} text-blue-900 ${INTERACTIVE_STYLES.BUTTON.GHOST}`} // Keep original active style
+						className={`${SEMANTIC_COLORS.BACKGROUND.PRIMARY} ${SEMANTIC_COLORS.TEXT.ACCENT} ${INTERACTIVE_STYLES.BUTTON.GHOST}`} // Keep original active style
 						title="Sign up to get started" // Optional tooltip
 					>
 						<Link href="/signup">Get Started Now</Link>

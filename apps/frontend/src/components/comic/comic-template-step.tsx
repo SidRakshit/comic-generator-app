@@ -3,6 +3,7 @@ import React from "react";
 import { Button } from "@repo/ui/button";
 import { Loader2 } from "lucide-react";
 import TemplateSelector from "@/components/comic/template-selector";
+import { SEMANTIC_COLORS } from "@repo/common-types";
 
 interface ComicTemplateStepProps {
 	onSelectTemplate: (templateId: string) => void;
@@ -18,11 +19,11 @@ export default function ComicTemplateStep({
 	return (
 		<div>
 			{/* Make Step title black */}
-			<h2 className="text-xl font-semibold mb-4 text-gray-900">
+			<h2 className={`text-xl font-semibold mb-4 ${SEMANTIC_COLORS.TEXT.PRIMARY}`}>
 				2. Choose a Template
 			</h2>
 			{/* Make descriptive text darker */}
-			<p className="text-gray-800 mb-6">Select a layout to begin.</p>
+			<p className={`${SEMANTIC_COLORS.TEXT.SECONDARY} mb-6`}>Select a layout to begin.</p>
 
 			{/* TemplateSelector component */}
 			<TemplateSelector onSelect={onSelectTemplate} disabled={isNavigating} />
@@ -30,7 +31,7 @@ export default function ComicTemplateStep({
 			{/* Loading indicator */}
 			{isNavigating && (
 				// Make loading text darker
-				<div className="mt-4 flex justify-center items-center text-gray-700">
+				<div className={`mt-4 flex justify-center items-center ${SEMANTIC_COLORS.TEXT.SECONDARY}`}>
 					<Loader2 className="mr-2 h-4 w-4 animate-spin" />
 					Loading editor...
 				</div>

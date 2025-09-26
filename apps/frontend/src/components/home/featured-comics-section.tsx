@@ -57,7 +57,7 @@ export default function FeaturedComicsSection() {
 		<section className={`${SPACING.LAYOUT.SECTION_PADDING} ${SEMANTIC_COLORS.BACKGROUND.SECONDARY}`}>
 			<div className="container mx-auto px-4">
 				<div className="flex justify-between items-center mb-8">
-					<h2 className="text-3xl font-bold text-gray-900">Featured Comics</h2>
+					<h2 className={`text-3xl font-bold ${SEMANTIC_COLORS.TEXT.PRIMARY}`}>Featured Comics</h2>
 				</div>
 				<div className="text-center py-12">
 					<p className={`${SEMANTIC_COLORS.TEXT.TERTIARY} text-lg mb-4`}>

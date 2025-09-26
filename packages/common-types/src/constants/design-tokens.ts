@@ -23,6 +23,7 @@ export const SEMANTIC_COLORS = {
 		SECONDARY: 'bg-gray-50',       // Page backgrounds, sections
 		TERTIARY: 'bg-gray-100',       // Cards, elevated surfaces
 		MUTED: 'bg-gray-200',          // Subtle backgrounds
+		PRIMARY_DARK: 'bg-gray-800',   // Dark backgrounds for modals
 		OVERLAY: 'bg-black bg-opacity-50', // Modal overlays, tooltips
 		ACCENT_LIGHT: 'bg-blue-50',    // Light accent backgrounds
 	},
@@ -34,13 +35,16 @@ export const SEMANTIC_COLORS = {
 		PRIMARY: 'border-blue-500',    // Active/selected states
 		SUCCESS: 'border-green-400',   // Success states
 		ERROR: 'border-red-400',
-		ACCENT_LIGHT: 'border-blue-400', // Light accent borders       // Error states
+		ACCENT_LIGHT: 'border-blue-400', // Light accent borders
+		INVERTED: 'border-white', // White borders on dark backgrounds       // Error states
 	},
 	
 	// Brand colors
 	BRAND: {
 		PRIMARY: 'text-blue-600',      // Main brand color
 		PRIMARY_BG: 'bg-blue-600',
+		PRIMARY_BG_DARK: 'bg-blue-900', // Dark brand background
+		GRADIENT: 'bg-gradient-to-b from-blue-600 to-blue-800', // Brand gradient
 		PRIMARY_HOVER: 'hover:bg-blue-700',
 		PRIMARY_LIGHT: 'bg-blue-50 text-blue-700',
 		PRIMARY_BORDER: 'border-blue-500',
@@ -75,6 +79,8 @@ export const INTERACTIVE_STYLES = {
 		PRIMARY: 'bg-blue-600 hover:bg-blue-700 text-white',
 		SECONDARY: 'bg-white hover:bg-gray-100 text-blue-600 border border-blue-600',
 		GHOST: 'hover:bg-gray-100 text-gray-700',
+		HOVER_LIGHT: 'hover:bg-gray-100', // Light hover background
+		HOVER_DARK: 'hover:bg-gray-600', // Dark hover background
 		LOADING: 'bg-blue-600 text-white opacity-75 cursor-wait',
 		OUTLINE: 'border border-input bg-background hover:bg-accent hover:text-accent-foreground',
 	},

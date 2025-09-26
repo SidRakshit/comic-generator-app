@@ -3,6 +3,7 @@
 import { ReactNode } from 'react';
 import Link from 'next/link';
 import { PlusCircle, Grid, Award, Clock, BookOpen } from 'lucide-react';
+import { SEMANTIC_COLORS, UI_CONSTANTS, INTERACTIVE_STYLES } from '@repo/common-types';
 
 interface ComicsLayoutProps {
   children: ReactNode;
@@ -19,7 +20,7 @@ export default function ComicsLayout({ children, currentPath = '' }: ComicsLayou
       <div className="flex flex-col md:flex-row gap-8">
         {/* Sidebar */}
         <aside className="w-full md:w-64 shrink-0">
-          <div className="bg-white rounded-lg shadow overflow-hidden">
+          <div className={`${SEMANTIC_COLORS.BACKGROUND.PRIMARY} ${UI_CONSTANTS.BORDER_RADIUS.LARGE} shadow overflow-hidden`}>
             <div className="p-4 border-b">
               <h2 className="text-lg font-bold">Comics</h2>
             </div>
@@ -28,10 +29,10 @@ export default function ComicsLayout({ children, currentPath = '' }: ComicsLayou
                 <li>
                   <Link
                     href="/comics"
-                    className={`flex items-center px-3 py-2 rounded-md text-sm ${
+                    className={`flex items-center px-3 py-2 ${UI_CONSTANTS.BORDER_RADIUS.MEDIUM} text-sm ${
                       isActive('/comics') && !isActive('/comics/create')
-                        ? 'bg-blue-50 text-blue-700'
-                        : 'text-gray-700 hover:bg-gray-100'
+                        ? `${SEMANTIC_COLORS.BACKGROUND.ACCENT_LIGHT} ${SEMANTIC_COLORS.TEXT.ACCENT}`
+                        : `${SEMANTIC_COLORS.TEXT.SECONDARY} ${INTERACTIVE_STYLES.BUTTON.HOVER_LIGHT}`
                     }`}
                   >
                     <BookOpen className="h-4 w-4 mr-2" />
@@ -41,10 +42,10 @@ export default function ComicsLayout({ children, currentPath = '' }: ComicsLayou
                 <li>
                   <Link
                     href="/comics/create"
-                    className={`flex items-center px-3 py-2 rounded-md text-sm ${
+                    className={`flex items-center px-3 py-2 ${UI_CONSTANTS.BORDER_RADIUS.MEDIUM} text-sm ${
                       isActive('/comics/create')
-                        ? 'bg-blue-50 text-blue-700'
-                        : 'text-gray-700 hover:bg-gray-100'
+                        ? `${SEMANTIC_COLORS.BACKGROUND.ACCENT_LIGHT} ${SEMANTIC_COLORS.TEXT.ACCENT}`
+                        : `${SEMANTIC_COLORS.TEXT.SECONDARY} ${INTERACTIVE_STYLES.BUTTON.HOVER_LIGHT}`
                     }`}
                   >
                     <PlusCircle className="h-4 w-4 mr-2" />
@@ -59,7 +60,7 @@ export default function ComicsLayout({ children, currentPath = '' }: ComicsLayou
                 <li>
                   <Link
                     href="/comics?category=featured"
-                    className="flex items-center px-3 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-100"
+                    className="flex items-center px-3 py-2 ${UI_CONSTANTS.BORDER_RADIUS.MEDIUM} text-sm ${SEMANTIC_COLORS.TEXT.SECONDARY} ${INTERACTIVE_STYLES.BUTTON.HOVER_LIGHT}"
                   >
                     <Award className="h-4 w-4 mr-2" />
                     Featured
@@ -68,7 +69,7 @@ export default function ComicsLayout({ children, currentPath = '' }: ComicsLayou
                 <li>
                   <Link
                     href="/comics?category=latest"
-                    className="flex items-center px-3 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-100"
+                    className="flex items-center px-3 py-2 ${UI_CONSTANTS.BORDER_RADIUS.MEDIUM} text-sm ${SEMANTIC_COLORS.TEXT.SECONDARY} ${INTERACTIVE_STYLES.BUTTON.HOVER_LIGHT}"
                   >
                     <Clock className="h-4 w-4 mr-2" />
                     Latest
@@ -77,7 +78,7 @@ export default function ComicsLayout({ children, currentPath = '' }: ComicsLayou
                 <li>
                   <Link
                     href="/comics?view=grid"
-                    className="flex items-center px-3 py-2 rounded-md text-sm text-gray-700 hover:bg-gray-100"
+                    className="flex items-center px-3 py-2 ${UI_CONSTANTS.BORDER_RADIUS.MEDIUM} text-sm ${SEMANTIC_COLORS.TEXT.SECONDARY} ${INTERACTIVE_STYLES.BUTTON.HOVER_LIGHT}"
                   >
                     <Grid className="h-4 w-4 mr-2" />
                     Gallery View
@@ -87,15 +88,15 @@ export default function ComicsLayout({ children, currentPath = '' }: ComicsLayou
             </nav>
           </div>
           
-          <div className="bg-white rounded-lg shadow mt-4 p-4">
+          <div className={`${SEMANTIC_COLORS.BACKGROUND.PRIMARY} ${UI_CONSTANTS.BORDER_RADIUS.LARGE} shadow mt-4 p-4`}>
             <h3 className="font-medium mb-2">My Comics</h3>
             <div className="space-y-2">
-              <p className="text-sm text-gray-600">
+              <p className="text-sm ${SEMANTIC_COLORS.TEXT.SECONDARY}">
                 You have <span className="font-semibold">3</span> published comics.
               </p>
               <Link
                 href="/profile/comics"
-                className="text-sm text-blue-600 hover:text-blue-800"
+                className="text-sm ${SEMANTIC_COLORS.TEXT.ACCENT} ${INTERACTIVE_STYLES.TEXT.HOVER_ACCENT}"
               >
                 View all my comics
               </Link>

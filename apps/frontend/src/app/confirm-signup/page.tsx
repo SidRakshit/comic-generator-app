@@ -8,6 +8,7 @@ import { confirmSignUp, resendSignUpCode } from "aws-amplify/auth";
 import { Button } from "@repo/ui/button";
 import { Input } from "@repo/ui/input";
 import { Label } from "@repo/ui/label";
+import { SEMANTIC_COLORS, INTERACTIVE_STYLES, UI_CONSTANTS } from "@repo/common-types";
 
 function ConfirmSignupContent() {
 	const router = useRouter();
@@ -122,13 +123,13 @@ function ConfirmSignupContent() {
 
 	return (
 		<div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
-			<div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
+			<div className={`w-full max-w-md p-8 space-y-6 ${SEMANTIC_COLORS.BACKGROUND.PRIMARY} ${UI_CONSTANTS.BORDER_RADIUS.LARGE} shadow-md`}>
 				{/* Make title explicitly dark */}
-				<h2 className="text-2xl font-bold text-center text-gray-900">
+				<h2 className={`text-2xl font-bold text-center ${SEMANTIC_COLORS.TEXT.PRIMARY}`}>
 					Confirm Sign Up
 				</h2>
 				{/* Make descriptive text darker */}
-				<p className="text-center text-sm text-gray-700">
+				<p className="text-center text-sm ${SEMANTIC_COLORS.TEXT.SECONDARY}">
 					{" "}
 					{/* Changed from text-gray-600 */}
 					We sent a confirmation code to your email:{" "}
@@ -142,7 +143,7 @@ function ConfirmSignupContent() {
 				<form onSubmit={handleConfirm} className="space-y-4">
 					<div>
 						{/* Add dark text color to Label */}
-						<Label htmlFor="email" className="text-gray-700">
+						<Label htmlFor="email" className="${SEMANTIC_COLORS.TEXT.SECONDARY}">
 							Email
 						</Label>
 						<Input
@@ -154,12 +155,12 @@ function ConfirmSignupContent() {
 							placeholder="you@example.com"
 							readOnly={!!initialEmail}
 							disabled={isLoading}
-							className={!!initialEmail ? "bg-gray-100" : ""}
+							className={!!initialEmail ? SEMANTIC_COLORS.BACKGROUND.SECONDARY : ""}
 						/>
 					</div>
 					<div>
 						{/* Add dark text color to Label */}
-						<Label htmlFor="confirmationCode" className="text-gray-700">
+						<Label htmlFor="confirmationCode" className="${SEMANTIC_COLORS.TEXT.SECONDARY}">
 							Confirmation Code
 						</Label>
 						<Input
@@ -175,7 +176,7 @@ function ConfirmSignupContent() {
 					<Button
 						type="submit"
 						variant="outline" // Use outline variant
-						className="w-full border-black text-black hover:bg-gray-100 hover:text-black" // Override colors
+						className={`w-full ${SEMANTIC_COLORS.BORDER.DEFAULT} ${SEMANTIC_COLORS.TEXT.PRIMARY} ${INTERACTIVE_STYLES.BUTTON.HOVER_LIGHT}`} // Override colors
 						disabled={isLoading}
 					>
 						{isLoading ? "Confirming..." : "Confirm Account"}
@@ -186,18 +187,18 @@ function ConfirmSignupContent() {
 						variant="link"
 						onClick={handleResendCode}
 						disabled={isLoading || !canResend || !email}
-						className="font-medium text-blue-600 hover:text-blue-500 p-0 h-auto"
+						className="font-medium ${SEMANTIC_COLORS.TEXT.ACCENT} ${INTERACTIVE_STYLES.TEXT.HOVER_ACCENT} p-0 h-auto"
 					>
 						{canResend ? "Resend Code" : `Resend available in ${resendTimer}s`}
 					</Button>
 				</div>
 				{/* Make descriptive text darker */}
-				<p className="text-center text-sm text-gray-700">
+				<p className="text-center text-sm ${SEMANTIC_COLORS.TEXT.SECONDARY}">
 					{" "}
 					{/* Changed from text-gray-600 */}
 					Already confirmed?{" "}
 					<Link href="/login" legacyBehavior>
-						<a className="font-medium text-blue-600 hover:text-blue-500">
+						<a className="font-medium ${SEMANTIC_COLORS.TEXT.ACCENT} ${INTERACTIVE_STYLES.TEXT.HOVER_ACCENT}">
 							Login
 						</a>
 					</Link>

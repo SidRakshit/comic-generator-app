@@ -1,9 +1,17 @@
 @import "tailwindcss";
 
-/* Basic CSS reset and variables */
+/* Design token CSS custom properties - Single Source of Truth */
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  
+  /* Comic-specific colors derived from design tokens */
+  --comic-panel-border: #000000;
+  --comic-panel-bg: #ffffff;
+  --comic-speech-bubble-bg: #ffffff;
+  --comic-speech-bubble-border: #000000;
+  --comic-caption-bg: #f9e076;
+  --comic-caption-border: #000000;
 }
 
 @media (prefers-color-scheme: dark) {
@@ -19,11 +27,11 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-/* Comic-specific styles */
+/* Comic-specific styles using CSS custom properties */
 .comic-panel {
     position: relative;
-    border: 2px solid #000;
-    background-color: white;
+    border: 2px solid var(--comic-panel-border);
+    background-color: var(--comic-panel-bg);
     overflow: hidden;
 }
 
@@ -35,10 +43,10 @@ body {
 
 .speech-bubble {
     position: relative;
-    background: white;
+    background: var(--comic-speech-bubble-bg);
     border-radius: 0.8em;
     padding: 0.5em 1em;
-    border: 2px solid black;
+    border: 2px solid var(--comic-speech-bubble-border);
 }
 
 .speech-bubble:after {
@@ -49,7 +57,7 @@ body {
     width: 0;
     height: 0;
     border: 10px solid transparent;
-    border-top-color: white;
+    border-top-color: var(--comic-speech-bubble-bg);
     border-bottom: 0;
     margin-left: -10px;
     margin-bottom: -10px;
@@ -64,7 +72,7 @@ body {
     width: 0;
     height: 0;
     border: 12px solid transparent;
-    border-top-color: black;
+    border-top-color: var(--comic-speech-bubble-border);
     border-bottom: 0;
     margin-left: -12px;
     margin-bottom: -12px;
@@ -73,15 +81,15 @@ body {
 
 .thought-bubble {
     position: relative;
-    background: white;
+    background: var(--comic-speech-bubble-bg);
     border-radius: 50%;
     padding: 0.5em 1em;
-    border: 2px solid black;
+    border: 2px solid var(--comic-speech-bubble-border);
 }
 
 .caption {
-    background: #f9e076;
-    border: 2px solid black;
+    background: var(--comic-caption-bg);
+    border: 2px solid var(--comic-caption-border);
     padding: 0.5em;
     font-style: italic;
 }
