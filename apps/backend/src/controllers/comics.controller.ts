@@ -1,7 +1,10 @@
 // src/controllers/comics.controller.ts
 import { Request, Response } from "express";
 import { ComicService } from "../services/comics.service";
-import { AuthenticatedRequest } from "@repo/common-types";
+import { AuthenticatedRequestFields } from "@repo/common-types";
+
+// Create the final AuthenticatedRequest type by intersecting Express Request with our fields
+type AuthenticatedRequest = Request & AuthenticatedRequestFields;
 
 export class ComicController {
 	private comicService: ComicService;

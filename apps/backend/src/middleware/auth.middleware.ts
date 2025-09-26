@@ -1,11 +1,14 @@
 // backend/src/middleware/auth.middleware.ts
 
-import { Response, NextFunction } from "express";
+import { Request, Response, NextFunction } from "express";
 import { CognitoJwtVerifier } from "aws-jwt-verify"; // Import the verifier
 import { CognitoAccessTokenPayload } from "aws-jwt-verify/jwt-model"; // Type for payload
 import { AWS_REGION, COGNITO_USER_POOL_ID, COGNITO_CLIENT_ID } from "../config"; // Import Cognito config
 import pool from "../database"; // <<< Import the database pool
-import { AuthenticatedRequest } from "@repo/common-types"; // Import shared type
+import { AuthenticatedRequestFields } from "@repo/common-types"; // Import shared type
+
+// Create the final AuthenticatedRequest type by intersecting Express Request with our fields
+type AuthenticatedRequest = Request & AuthenticatedRequestFields;
 
 // --- Input Validation ---
 if (!AWS_REGION || !COGNITO_USER_POOL_ID || !COGNITO_CLIENT_ID) {

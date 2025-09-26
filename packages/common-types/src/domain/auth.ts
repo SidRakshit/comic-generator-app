@@ -1,7 +1,6 @@
 // Domain types for Authentication
 
 import type { AuthUser, FetchUserAttributesOutput } from "aws-amplify/auth";
-import type { Request } from "express";
 
 export type UserAttributes = FetchUserAttributesOutput;
 
@@ -15,15 +14,20 @@ export interface AuthContextType {
   handleSignOut: () => Promise<void>;
 }
 
-// Backend authentication types - use intersection type for better compatibility
-export type AuthenticatedRequest = Request & {
+// Generic request interface for backend authentication
+// This will be intersected with Express Request in the backend
+export interface AuthenticatedRequestFields {
   user?: {
     sub: string;
     email?: string;
     [key: string]: unknown;
   };
   internalUserId?: string;
-};
+}
+
+// Type alias for backend - to be used with Express Request
+// Usage: AuthenticatedRequest = Request & AuthenticatedRequestFields
+export type AuthenticatedRequest<T = any> = T & AuthenticatedRequestFields;
 
 // Cognito JWT payload type (simplified)
 export interface CognitoAccessTokenPayload {
