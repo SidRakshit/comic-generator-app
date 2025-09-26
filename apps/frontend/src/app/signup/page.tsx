@@ -8,6 +8,7 @@ import { signUp } from "aws-amplify/auth";
 import { Button } from "@repo/ui/button";
 import { Input } from "@repo/ui/input";
 import { Label } from "@repo/ui/label";
+import { UI_CONSTANTS } from "@repo/common-types";
 
 export default function SignupPage() {
 	const [email, setEmail] = useState("");
@@ -63,7 +64,7 @@ export default function SignupPage() {
 
 	return (
 		<div className="flex items-center justify-center min-h-[calc(100vh-200px)]">
-			<div className="w-full max-w-md p-8 space-y-6 bg-white rounded-lg shadow-md">
+			<div className={`w-full max-w-md p-8 space-y-6 bg-white ${UI_CONSTANTS.BORDER_RADIUS.LARGE} shadow-md`}>
 				{/* Make title explicitly dark */}
 				<h2 className="text-2xl font-bold text-center text-gray-900">
 					Create Account

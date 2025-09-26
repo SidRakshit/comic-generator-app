@@ -17,7 +17,7 @@ import {
 	Loader2,
 } from "lucide-react";
 import { Button } from "@repo/ui/button";
-import { COMPONENT_STYLES, SEMANTIC_COLORS, INTERACTIVE_STYLES } from "@repo/common-types";
+import { COMPONENT_STYLES, SEMANTIC_COLORS, INTERACTIVE_STYLES, UI_CONSTANTS } from "@repo/common-types";
 
 export default function Navbar() {
 	const [isOpen, setIsOpen] = useState(false);
@@ -43,7 +43,7 @@ export default function Navbar() {
 		}
 		if (user) {
 			// Use centralized design tokens for profile/auth links
-			const desktopProfileClasses = `inline-flex items-center px-2 py-1 text-sm font-medium ${SEMANTIC_COLORS.TEXT.SECONDARY} hover:${SEMANTIC_COLORS.TEXT.PRIMARY} ${INTERACTIVE_STYLES.BUTTON.GHOST} rounded-md ml-4`;
+			const desktopProfileClasses = `inline-flex items-center px-2 py-1 text-sm font-medium ${SEMANTIC_COLORS.TEXT.SECONDARY} hover:${SEMANTIC_COLORS.TEXT.PRIMARY} ${INTERACTIVE_STYLES.BUTTON.GHOST} ${UI_CONSTANTS.BORDER_RADIUS.MEDIUM} ml-4`;
 			const desktopSignOutClasses = `ml-2 ${SEMANTIC_COLORS.TEXT.SECONDARY} hover:${SEMANTIC_COLORS.TEXT.PRIMARY} ${INTERACTIVE_STYLES.BUTTON.GHOST}`;
 			const mobileLinkClasses = NAV.MOBILE_INACTIVE;
 			const mobileButtonClasses = `w-full text-left ${NAV.MOBILE_INACTIVE}`;
@@ -75,8 +75,8 @@ export default function Navbar() {
 		} else {
 			// Use centralized design tokens for auth links
 			const mobileLinkClasses = NAV.MOBILE_INACTIVE;
-			const desktopLoginClasses = `inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md ${INTERACTIVE_STYLES.BUTTON.SECONDARY} ml-4`;
-			const desktopSignupClasses = `inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium rounded-md ${INTERACTIVE_STYLES.BUTTON.PRIMARY} ml-2`;
+			const desktopLoginClasses = `inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium ${UI_CONSTANTS.BORDER_RADIUS.MEDIUM} ${INTERACTIVE_STYLES.BUTTON.SECONDARY} ml-4`;
+			const desktopSignupClasses = `inline-flex items-center px-3 py-1 border border-transparent text-sm font-medium ${UI_CONSTANTS.BORDER_RADIUS.MEDIUM} ${INTERACTIVE_STYLES.BUTTON.PRIMARY} ml-2`;
 			return (
 				<>
 					{" "}
@@ -141,13 +141,13 @@ export default function Navbar() {
 
 	// --- Main Component Render ---
 	return (
-		<nav className={`${SEMANTIC_COLORS.BACKGROUND.PRIMARY} shadow-sm sticky top-0 z-50`}>
+			<nav className={`${SEMANTIC_COLORS.BACKGROUND.PRIMARY} shadow-sm sticky top-0 ${UI_CONSTANTS.Z_INDEX.NAVBAR}`}>
 			<div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
 				<div className="flex justify-between h-16">
 					{/* Left side */}
 					<div className="flex">
 						<div className="flex-shrink-0 flex items-center">
-							<Link href="/" className="font-bold text-xl text-blue-600">
+							<Link href="/" className={`font-bold text-xl ${SEMANTIC_COLORS.BRAND.PRIMARY}`}>
 								{" "}
 								Comic Creator{" "}
 							</Link>
@@ -176,7 +176,7 @@ export default function Navbar() {
 					<div className="-mr-2 flex items-center sm:hidden">
 						<button
 							onClick={() => setIsOpen(!isOpen)}
-							className={`inline-flex items-center justify-center p-2 rounded-md ${SEMANTIC_COLORS.TEXT.DISABLED} hover:${SEMANTIC_COLORS.TEXT.MUTED} ${INTERACTIVE_STYLES.BUTTON.GHOST} focus:outline-none focus:ring-2 focus:ring-inset focus:${SEMANTIC_COLORS.BRAND.PRIMARY_BORDER}`}
+							className={`inline-flex items-center justify-center p-2 ${UI_CONSTANTS.BORDER_RADIUS.MEDIUM} ${SEMANTIC_COLORS.TEXT.DISABLED} hover:${SEMANTIC_COLORS.TEXT.MUTED} ${INTERACTIVE_STYLES.BUTTON.GHOST} focus:outline-none focus:ring-2 focus:ring-inset focus:${SEMANTIC_COLORS.BRAND.PRIMARY_BORDER}`}
 							aria-controls="mobile-menu"
 							aria-expanded={isOpen}
 						>
@@ -196,7 +196,7 @@ export default function Navbar() {
 			<div
 				className={`${
 					isOpen ? "block" : "hidden"
-				} sm:hidden border-t border-gray-200`}
+				} sm:hidden border-t ${SEMANTIC_COLORS.BORDER.DEFAULT}`}
 				id="mobile-menu"
 			>
 				<div className="pt-2 pb-3 space-y-1">
@@ -221,7 +221,7 @@ export default function Navbar() {
 					{renderCreateLink(true)}
 				</div>
 				{/* Auth links */}
-				<div className="pt-4 pb-3 border-t border-gray-200">
+				<div className={`pt-4 pb-3 border-t ${SEMANTIC_COLORS.BORDER.DEFAULT}`}>
 					<div className="px-2 space-y-1">{renderAuthLinks(true)}</div>
 				</div>
 			</div>

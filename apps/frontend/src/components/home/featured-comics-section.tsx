@@ -1,6 +1,8 @@
 // src/components/home/featured-comics-section.tsx
 "use client"; // Add this if you uncomment the data fetching logic
 
+import { SEMANTIC_COLORS, SPACING } from "@repo/common-types";
+
 // Imports needed when uncommented:
 // import Link from "next/link";
 // import Image from "next/image";
@@ -52,16 +54,16 @@ export default function FeaturedComicsSection() {
 
 	// For now, show a simple placeholder that matches the original design
 	return (
-		<section className="py-16 bg-gray-50">
+		<section className={`${SPACING.LAYOUT.SECTION_PADDING} ${SEMANTIC_COLORS.BACKGROUND.SECONDARY}`}>
 			<div className="container mx-auto px-4">
 				<div className="flex justify-between items-center mb-8">
 					<h2 className="text-3xl font-bold text-gray-900">Featured Comics</h2>
 				</div>
 				<div className="text-center py-12">
-					<p className="text-gray-600 text-lg mb-4">
+					<p className={`${SEMANTIC_COLORS.TEXT.TERTIARY} text-lg mb-4`}>
 						Discover amazing comics created by our community
 					</p>
-					<p className="text-gray-500">
+					<p className={SEMANTIC_COLORS.TEXT.MUTED}>
 						Featured comics will appear here soon!
 					</p>
 				</div>

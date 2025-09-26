@@ -301,28 +301,28 @@ export default function ProfilePage() {
 							{/* Stats */}
 							<div className="mt-6 md:mt-0 flex flex-col items-center md:items-end space-y-2 w-full md:w-auto">
 								<div className="grid grid-cols-2 gap-4 text-center">
-									<div className={`${SEMANTIC_COLORS.BACKGROUND.SECONDARY} px-4 py-2 rounded-lg`}>
+									<div className={`${SEMANTIC_COLORS.BACKGROUND.SECONDARY} px-4 py-2 ${UI_CONSTANTS.BORDER_RADIUS.LARGE}`}>
 										{" "}
 										<div className="text-2xl font-bold text-gray-900">
 											{profileData.stats.created}
 										</div>{" "}
 										<div className="text-sm text-gray-500">Comics</div>{" "}
 									</div>
-									<div className={`${SEMANTIC_COLORS.BACKGROUND.SECONDARY} px-4 py-2 rounded-lg`}>
+									<div className={`${SEMANTIC_COLORS.BACKGROUND.SECONDARY} px-4 py-2 ${UI_CONSTANTS.BORDER_RADIUS.LARGE}`}>
 										{" "}
 										<div className="text-2xl font-bold text-gray-900">
 											{profileData.stats.favorites}
 										</div>{" "}
 										<div className="text-sm text-gray-500">Favorites</div>{" "}
 									</div>
-									<div className={`${SEMANTIC_COLORS.BACKGROUND.SECONDARY} px-4 py-2 rounded-lg`}>
+									<div className={`${SEMANTIC_COLORS.BACKGROUND.SECONDARY} px-4 py-2 ${UI_CONSTANTS.BORDER_RADIUS.LARGE}`}>
 										{" "}
 										<div className="text-2xl font-bold text-gray-900">
 											{profileData.stats.followers}
 										</div>{" "}
 										<div className="text-sm text-gray-500">Followers</div>{" "}
 									</div>
-									<div className={`${SEMANTIC_COLORS.BACKGROUND.SECONDARY} px-4 py-2 rounded-lg`}>
+									<div className={`${SEMANTIC_COLORS.BACKGROUND.SECONDARY} px-4 py-2 ${UI_CONSTANTS.BORDER_RADIUS.LARGE}`}>
 										{" "}
 										<div className="text-2xl font-bold text-gray-900">
 											{profileData.stats.following}
@@ -384,7 +384,7 @@ export default function ProfilePage() {
 						)}
 
 						{!isLoadingAuth && !isLoadingComics && errorLoadingComics && (
-							<div className="text-center py-12 bg-red-50 border border-red-200 rounded-lg">
+							<div className="text-center py-12 bg-red-50 border border-red-200 ${UI_CONSTANTS.BORDER_RADIUS.LARGE}">
 								<BookOpen size={48} className="mx-auto text-red-400 mb-4" />
 								<h3 className="text-lg font-medium text-red-700 mb-2">
 									Error Loading Comics
@@ -416,7 +416,7 @@ export default function ProfilePage() {
 							!errorLoadingComics &&
 							isAuthenticated &&
 							myComics.length === 0 && (
-								<div className="text-center py-12 bg-white rounded-lg border">
+								<div className="text-center py-12 bg-white ${UI_CONSTANTS.BORDER_RADIUS.LARGE} border">
 									<BookOpen size={48} className="mx-auto text-gray-400 mb-4" />
 									<h3 className="text-lg font-medium text-gray-900 mb-2">
 										No comics yet
@@ -442,7 +442,7 @@ export default function ProfilePage() {
 											href={`/comics/${comic.comic_id}`}
 											key={comic.comic_id}
 										>
-											<div className="bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+											<div className="bg-white border ${UI_CONSTANTS.BORDER_RADIUS.LARGE} overflow-hidden shadow-sm hover:shadow-md transition-shadow">
 												{/* Placeholder for Cover Image */}
 												<div className={`${UI_CONSTANTS.ASPECT_RATIOS.COMIC_COVER} ${SEMANTIC_COLORS.BACKGROUND.TERTIARY} relative flex items-center justify-center ${SEMANTIC_COLORS.TEXT.DISABLED}`}>
 													<ImageIcon size={48} />
@@ -473,7 +473,7 @@ export default function ProfilePage() {
 									<Link href={`/comics/${comic.id}`} key={comic.id}>
 										{" "}
 										{/* Link to external comics if needed */}
-										<div className="bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+										<div className="bg-white border ${UI_CONSTANTS.BORDER_RADIUS.LARGE} overflow-hidden shadow-sm hover:shadow-md transition-shadow">
 											<div className={`${UI_CONSTANTS.ASPECT_RATIOS.COMIC_COVER} ${SEMANTIC_COLORS.BACKGROUND.TERTIARY} relative`}>
 												<Image
 													src={comic.coverImage}
@@ -506,7 +506,7 @@ export default function ProfilePage() {
 								))}
 							</div>
 						) : (
-							<div className="text-center py-12 bg-white rounded-lg border">
+							<div className="text-center py-12 bg-white ${UI_CONSTANTS.BORDER_RADIUS.LARGE} border">
 								{" "}
 								<Heart size={48} className="mx-auto text-gray-400 mb-4" />{" "}
 								<h3 className="text-lg font-medium text-gray-900 mb-2">
@@ -532,7 +532,7 @@ export default function ProfilePage() {
 						{/* Only show settings if authenticated */}
 						{isAuthenticated ? (
 							<>
-								<div className="bg-white shadow overflow-hidden rounded-lg">
+								<div className="bg-white shadow overflow-hidden ${UI_CONSTANTS.BORDER_RADIUS.LARGE}">
 									{/* ... Settings form JSX (Personal Info, Contact, Preferences) ... */}
 									{/* Example Save Settings Button */}
 									<div className={`px-4 py-5 border-t ${SEMANTIC_COLORS.BORDER.DEFAULT} sm:px-6`}>
@@ -550,7 +550,7 @@ export default function ProfilePage() {
 									</div>
 								</div>
 								{/* Security Settings */}
-								<div className="mt-4 bg-white shadow overflow-hidden rounded-lg">
+								<div className="mt-4 bg-white shadow overflow-hidden ${UI_CONSTANTS.BORDER_RADIUS.LARGE}">
 									<div className="px-4 py-5 sm:px-6 border-b">
 										{" "}
 										<h3 className="text-lg font-medium text-gray-900">
@@ -563,7 +563,7 @@ export default function ProfilePage() {
 									</div>
 								</div>
 								{/* Danger Zone */}
-								<div className="mt-4 bg-white shadow overflow-hidden rounded-lg">
+								<div className="mt-4 bg-white shadow overflow-hidden ${UI_CONSTANTS.BORDER_RADIUS.LARGE}">
 									<div className="px-4 py-5 sm:px-6 border-b">
 										{" "}
 										<h3 className="text-lg font-medium text-red-600">

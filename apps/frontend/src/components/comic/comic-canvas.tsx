@@ -2,7 +2,7 @@
 "use client";
 
 import Image from "next/image";
-import { Panel } from "@repo/common-types";
+import { Panel, UI_CONSTANTS, SEMANTIC_COLORS, INTERACTIVE_STYLES } from "@repo/common-types";
 import { Loader2, ImageOff, Plus, Edit } from "lucide-react";
 
 interface ComicCanvasProps {
@@ -75,23 +75,23 @@ function ComicPanel({
 	return (
 		<div
 			className={`
-        group aspect-square border-2 rounded-md overflow-hidden cursor-pointer relative
+        group aspect-square border-2 ${UI_CONSTANTS.BORDER_RADIUS.MEDIUM} overflow-hidden cursor-pointer relative
         ${
 					panel.status === "loading"
-						? "border-blue-400 bg-blue-50"
+						? `${SEMANTIC_COLORS.BORDER.ACCENT_LIGHT} ${SEMANTIC_COLORS.BACKGROUND.ACCENT_LIGHT}`
 						: panel.status === "error"
 						? "border-red-400 bg-red-50"
 						: panel.status === "complete"
 						? "border-green-400"
-						: "border-gray-200 bg-gray-50 hover:border-blue-200"
+						: `${SEMANTIC_COLORS.BORDER.DEFAULT} ${SEMANTIC_COLORS.BACKGROUND.SECONDARY} ${INTERACTIVE_STYLES.BORDER.HOVER_ACCENT_LIGHT}`
 				}
       `}
 			onClick={onClick}
 		>
 			{panel.status === "loading" ? (
 				<div className="flex flex-col items-center justify-center h-full pointer-events-none">
-					<Loader2 className="h-8 w-8 md:h-10 md:w-10 text-blue-500 animate-spin mb-1 md:mb-2" />
-					<p className="text-xs md:text-sm text-blue-500">Generating...</p>
+					<Loader2 className={`h-8 w-8 md:h-10 md:w-10 ${SEMANTIC_COLORS.TEXT.ACCENT} animate-spin mb-1 md:mb-2`} />
+					<p className={`text-xs md:text-sm ${SEMANTIC_COLORS.TEXT.ACCENT}`}>Generating...</p>
 				</div>
 			) : panel.status === "error" ? (
 				<div className="flex flex-col items-center justify-center h-full text-center p-1 md:p-2">
@@ -117,7 +117,7 @@ function ComicPanel({
 					</div>
 					<button
 						type="button"
-						className="absolute top-1 right-1 md:top-2 md:right-2 z-10 p-1 md:p-1.5 bg-black bg-opacity-50 text-white rounded-full opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity hover:bg-opacity-75"
+						className={`absolute top-1 right-1 md:top-2 md:right-2 z-10 p-1 md:p-1.5 ${SEMANTIC_COLORS.BACKGROUND.OVERLAY} ${SEMANTIC_COLORS.TEXT.INVERTED} ${UI_CONSTANTS.BORDER_RADIUS.FULL} opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity hover:bg-opacity-75`}
 						onClick={(e) => {
 							e.stopPropagation();
 							onEditClick();

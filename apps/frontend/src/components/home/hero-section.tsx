@@ -3,7 +3,7 @@
 
 import Link from "next/link";
 import { Button } from "@repo/ui/button";
-import { SEMANTIC_COLORS, INTERACTIVE_STYLES, TYPOGRAPHY } from "@repo/common-types";
+import { SEMANTIC_COLORS, INTERACTIVE_STYLES, TYPOGRAPHY, SPACING } from "@repo/common-types";
 import { useAuth } from "@/hooks/use-auth"; // Use the custom hook from the correct file
 import { Loader2 } from "lucide-react";
 
@@ -11,7 +11,7 @@ export default function HeroSection() {
 	const { user, isLoading } = useAuth();
 
 	return (
-		<section className="bg-gradient-to-b from-blue-600 to-blue-800 text-white py-16">
+		<section className={`bg-gradient-to-b from-blue-600 to-blue-800 text-white ${SPACING.LAYOUT.SECTION_PADDING}`}>
 			<div className="container mx-auto px-4">
 				<div className="max-w-3xl mx-auto text-center">
 					<h1 className="text-4xl sm:text-5xl font-bold mb-6">
@@ -60,7 +60,7 @@ export default function HeroSection() {
 							size="lg"
 							variant="outline"
 							asChild
-							className="border-white text-white hover:bg-blue-700"
+							className={`border-white text-white ${SEMANTIC_COLORS.BRAND.PRIMARY_HOVER}`}
 						>
 							<Link href="/comics"> Browse Comics </Link>
 						</Button> */}

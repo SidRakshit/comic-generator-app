@@ -13,6 +13,8 @@ export const SEMANTIC_COLORS = {
 		TERTIARY: 'text-gray-600',     // Body text, descriptions  
 		MUTED: 'text-gray-500',        // Helper text, captions
 		DISABLED: 'text-gray-400',     // Disabled states
+		ACCENT: 'text-blue-600',       // Links, accent text
+		INVERTED: 'text-white',        // Text on dark backgrounds
 	},
 	
 	// Background colors - surface hierarchy
@@ -21,6 +23,8 @@ export const SEMANTIC_COLORS = {
 		SECONDARY: 'bg-gray-50',       // Page backgrounds, sections
 		TERTIARY: 'bg-gray-100',       // Cards, elevated surfaces
 		MUTED: 'bg-gray-200',          // Subtle backgrounds
+		OVERLAY: 'bg-black bg-opacity-50', // Modal overlays, tooltips
+		ACCENT_LIGHT: 'bg-blue-50',    // Light accent backgrounds
 	},
 	
 	// Border colors - visual separation
@@ -29,7 +33,8 @@ export const SEMANTIC_COLORS = {
 		STRONG: 'border-gray-300',     // Emphasized borders
 		PRIMARY: 'border-blue-500',    // Active/selected states
 		SUCCESS: 'border-green-400',   // Success states
-		ERROR: 'border-red-400',       // Error states
+		ERROR: 'border-red-400',
+		ACCENT_LIGHT: 'border-blue-400', // Light accent borders       // Error states
 	},
 	
 	// Brand colors
@@ -78,6 +83,18 @@ export const INTERACTIVE_STYLES = {
 	LINK: {
 		PRIMARY: 'text-blue-600 hover:text-blue-800',
 		SECONDARY: 'text-gray-700 hover:text-gray-900',
+	},
+	
+	// Text hover states
+	TEXT: {
+		HOVER_ACCENT: 'hover:text-blue-800',
+		HOVER_PRIMARY: 'hover:text-gray-900',
+	},
+	
+	// Border hover states
+	BORDER: {
+		HOVER_ACCENT_LIGHT: 'hover:border-blue-200',
+		HOVER_PRIMARY: 'hover:border-gray-300',
 	},
 } as const;
 

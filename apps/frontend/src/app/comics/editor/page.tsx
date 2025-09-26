@@ -11,7 +11,7 @@ import { COMIC_TEMPLATES as templates } from "@repo/common-types";
 import { Button } from "@repo/ui/button";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { apiRequest, GeneratedImageDataResponse } from "@/lib/api";
-import { ComicCharacter, Panel } from "@repo/common-types";
+import { ComicCharacter, Panel, SEMANTIC_COLORS, INTERACTIVE_STYLES, UI_CONSTANTS } from "@repo/common-types";
 
 async function generateImageAPI(
 	prompt: string
@@ -210,7 +210,7 @@ function NewComicEditorContent() {
 				{" "}
 				<Link
 					href="/comics/create"
-					className="inline-flex items-center text-blue-600 hover:text-blue-800"
+					className={`inline-flex items-center ${SEMANTIC_COLORS.TEXT.ACCENT} ${INTERACTIVE_STYLES.TEXT.HOVER_ACCENT}`}
 				>
 					<ArrowLeft className="h-4 w-4 mr-1" /> Back{" "}
 				</Link>{" "}
@@ -232,11 +232,11 @@ function NewComicEditorContent() {
 					</Button>
 				</div>
 			</div>
-			<div className="bg-white rounded-lg shadow-md p-4 md:p-6">
+			<div className={`bg-white ${UI_CONSTANTS.BORDER_RADIUS.LARGE} shadow-md p-4 md:p-6`}>
 				<h2 className="text-xl font-semibold mb-2">
 					Edit Panels ({comic.panels?.length || 0} total - {templateName})
 				</h2>
-				<p className="text-gray-600 mb-6 text-sm">
+				<p className={`${SEMANTIC_COLORS.TEXT.SECONDARY} mb-6 text-sm`}>
 					Click empty panels to generate, click images to zoom, use ✏️ to
 					regenerate.
 				</p>
