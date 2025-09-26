@@ -45,6 +45,12 @@ interface ScriptPanel {
 	panelDescription: string;
 }
 
+// Image generation result - matches original working format
+interface GeneratedImageData {
+	imageData: string; // Base64 encoded image data
+	promptUsed: string;
+}
+
 export class ComicService {
 	constructor() {}
 
@@ -116,23 +122,22 @@ Guidelines:
 
 	/**
 	 * Generates an image for a comic panel using OpenAI DALL-E API.
+	 * RESTORED: Original working version that returns base64 data, no S3 upload
 	 * @param panelDescription - Description of the panel to generate image for.
-	 * @returns Object containing the image URL and metadata.
+	 * @returns Object containing base64 image data and prompt used.
 	 */
-	async generatePanelImage(panelDescription: string): Promise<{
-		imageUrl: string;
-		s3Key: string;
-		s3Url: string;
-	}> {
+	async generatePanelImage(panelDescription: string): Promise<GeneratedImageData> {
 		if (!OPENAI_API_KEY) {
 			throw new Error("OpenAI API key is not configured.");
 		}
+		
+		if (!panelDescription || panelDescription.trim() === "") {
+			throw new Error("Panel description cannot be empty.");
+		}
 
-		const imagePrompt = `
-Create a comic book panel illustration with the following description: ${panelDescription}
+		console.log(`🎨 Generating image for description: "${panelDescription}"`);
 
-Style: Clean comic book art style, vibrant colors, clear line work, professional comic illustration quality. Avoid any text or speech bubbles in the image.
-`;
+		const fullPrompt = `Comic book panel illustration: ${panelDescription}. Style: vibrant, detailed comic book art, clear line work, professional quality.`;
 
 		try {
 			// Generate image using DALL-E
@@ -140,10 +145,11 @@ Style: Clean comic book art style, vibrant colors, clear line work, professional
 				"https://api.openai.com/v1/images/generations",
 				{
 					model: OPENAI_IMAGE_MODEL,
-					prompt: imagePrompt,
+					prompt: fullPrompt,
 					n: 1,
 					size: "1024x1024",
 					quality: "standard",
+					response_format: "b64_json", // Request base64 format directly
 				},
 				{
 					headers: {
@@ -153,76 +159,100 @@ Style: Clean comic book art style, vibrant colors, clear line work, professional
 				}
 			);
 
-			const imageUrl = response.data.data[0]?.url;
-			if (!imageUrl) {
-				throw new Error("No image URL returned from OpenAI API.");
+			const responseData = response.data.data[0];
+			let imageDataBase64: string | null = null;
+
+			if (responseData?.b64_json) {
+				console.log("✅ Received b64_json from OpenAI.");
+				imageDataBase64 = responseData.b64_json;
+			} else if (responseData?.url) {
+				console.log("⚠️  Received URL from OpenAI, converting to base64...");
+				// Download and convert to base64
+				const imageResponse = await axios.get(responseData.url, {
+					responseType: "arraybuffer",
+				});
+				const imageBuffer = Buffer.from(imageResponse.data);
+				imageDataBase64 = imageBuffer.toString("base64");
+			} else {
+				throw new Error("No image data received from OpenAI API.");
 			}
 
-			// Download and upload to S3
-			const s3Data = await this.uploadImageToS3(imageUrl);
+			if (!imageDataBase64) {
+				throw new Error("Failed to get image data from OpenAI response.");
+			}
 
+			console.log(`✅ Image generated successfully (${imageDataBase64.length} chars base64)`);
+
+			// Return base64 data - NO S3 UPLOAD HERE (matches original working version)
 			return {
-				imageUrl,
-				s3Key: s3Data.s3Key,
-				s3Url: s3Data.s3Url,
+				imageData: imageDataBase64,
+				promptUsed: fullPrompt,
 			};
+
 		} catch (error: any) {
-			console.error("Error generating panel image:", error.message);
+			console.error("❌ Error generating panel image:", error.message);
 			throw error;
 		}
 	}
 
 	/**
-	 * Downloads an image from a URL and uploads it to S3.
-	 * @param imageUrl - URL of the image to download and upload.
-	 * @returns Object containing S3 key and URL.
+	 * Uploads image data (from base64 string) to S3.
+	 * RESTORED: Original working version with proper S3 key format
+	 * @param imageBase64 The base64 encoded image data.
+	 * @param userId The user's ID.
+	 * @param comicId The comic's ID.
+	 * @param panelId The panel's ID.
+	 * @returns The final public URL of the uploaded image in S3.
 	 */
-	private async uploadImageToS3(imageUrl: string): Promise<{
-		s3Key: string;
-		s3Url: string;
-	}> {
-		if (!S3_BUCKET_NAME) {
-			throw new Error("S3 bucket name is not configured.");
+	private async uploadImageToS3(
+		imageBase64: string,
+		userId: string,
+		comicId: string,
+		panelId: string
+	): Promise<string> {
+		if (!imageBase64) {
+			throw new Error("Image data (base64) is missing, cannot upload.");
 		}
 
 		if (!s3Client) {
-			throw new Error("S3 client is not initialized.");
+			throw new Error("S3 client is not configured. Please check AWS credentials.");
 		}
 
 		try {
-			// Download the image
-			const imageResponse = await axios.get(imageUrl, {
-				responseType: "arraybuffer",
-			});
-			const imageBuffer = Buffer.from(imageResponse.data);
+			const imageData: Buffer = Buffer.from(imageBase64, "base64");
+			const contentType = "image/png";
+			const fileExtension = "png";
 
-			// Generate a unique key for the image
-			const timestamp = Date.now();
-			const randomString = crypto.randomBytes(8).toString("hex");
-			const s3Key = `comic-panels/${timestamp}-${randomString}.png`;
+			// RESTORED: Original working S3 key format
+			const s3Key = `users/${userId}/comics/${comicId}/panels/${panelId}.${fileExtension}`;
+			console.log(`🔧 Uploading image to S3 bucket: ${S3_BUCKET_NAME}, Key: ${s3Key}`);
 
-			console.log(`🔧 S3 Upload: Uploading to bucket: ${S3_BUCKET_NAME}, key: ${s3Key}`);
-
-			// Upload to S3 - using original working format
-			const uploadCommand = new PutObjectCommand({
+			// RESTORED: Original working PutObjectCommand format
+			const putObjectParams = {
 				Bucket: S3_BUCKET_NAME,
 				Key: s3Key,
-				Body: imageBuffer,
-				ContentType: "image/png",
-				ACL: "public-read",  // Restored original working format
-			});
+				Body: imageData,
+				ContentType: contentType,
+				ACL: "public-read",
+			};
+			const command = new PutObjectCommand(putObjectParams);
+			await s3Client.send(command);
 
-			await s3Client.send(uploadCommand);
-
-			// Fixed S3 URL construction with AWS_REGION (was missing!)
+			// RESTORED: Original working S3 URL format
 			const s3Url = `https://${S3_BUCKET_NAME}.s3.${AWS_REGION}.amazonaws.com/${s3Key}`;
-			console.log(`✅ S3 Upload successful: ${s3Url}`);
-
-			return { s3Key, s3Url };
+			console.log(`✅ Successfully uploaded image to: ${s3Url}`);
+			return s3Url;
 		} catch (error: any) {
-			console.error("❌ S3 Upload failed:", error.message);
-			console.error("❌ Error details:", error);
-			throw error;
+			console.error("❌ Error in uploadImageToS3:", error);
+			if (error.message?.includes("base64")) {
+				throw new Error(`Invalid Base64 data provided: ${error.message}`);
+			} else if (
+				error.name?.includes("Credentials") ||
+				error.message?.includes("credentials")
+			) {
+				throw new Error(`AWS Credentials error: ${error.message}`);
+			}
+			throw new Error(`Failed to process image upload: ${error.message}`);
 		}
 	}
 
