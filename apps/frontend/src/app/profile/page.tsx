@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/tabs";
 import { Button } from "@repo/ui/button";
 import { apiRequest } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
-import { ComicListItemResponse, API_ENDPOINTS, SEMANTIC_COLORS, INTERACTIVE_STYLES, COMPONENT_STYLES } from "@repo/common-types";
+import { ComicListItemResponse, API_ENDPOINTS, SEMANTIC_COLORS, INTERACTIVE_STYLES, COMPONENT_STYLES, UI_CONSTANTS } from "@repo/common-types";
 import {
 	User,
 	Edit,
@@ -398,12 +398,12 @@ export default function ProfilePage() {
 							!isLoadingComics &&
 							!errorLoadingComics &&
 							!isAuthenticated && (
-								<div className="text-center py-12 bg-gray-50 border rounded-lg">
+								<div className={`text-center py-12 ${SEMANTIC_COLORS.BACKGROUND.SECONDARY} ${SEMANTIC_COLORS.BORDER.DEFAULT} ${UI_CONSTANTS.BORDER_RADIUS.LARGE}`}>
 									<User size={48} className="mx-auto text-gray-400 mb-4" />
 									<h3 className="text-lg font-medium text-gray-900 mb-2">
 										Please Log In
 									</h3>
-									<p className="text-gray-600 mb-4">
+									<p className={`${SEMANTIC_COLORS.TEXT.TERTIARY} mb-4`}>
 										Log in to see your comics and profile.
 									</p>
 									{/* Add Login Button if using Amplify UI or similar */}
@@ -421,7 +421,7 @@ export default function ProfilePage() {
 									<h3 className="text-lg font-medium text-gray-900 mb-2">
 										No comics yet
 									</h3>
-									<p className="text-gray-600 mb-4">
+									<p className={`${SEMANTIC_COLORS.TEXT.TERTIARY} mb-4`}>
 										Start creating your first comic!
 									</p>
 									<Button asChild>
@@ -444,7 +444,7 @@ export default function ProfilePage() {
 										>
 											<div className="bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
 												{/* Placeholder for Cover Image */}
-												<div className="aspect-[3/4] bg-gray-100 relative flex items-center justify-center text-gray-400">
+												<div className={`${UI_CONSTANTS.ASPECT_RATIOS.COMIC_COVER} ${SEMANTIC_COLORS.BACKGROUND.TERTIARY} relative flex items-center justify-center ${SEMANTIC_COLORS.TEXT.DISABLED}`}>
 													<ImageIcon size={48} />
 												</div>
 												<div className="p-4">
@@ -474,7 +474,7 @@ export default function ProfilePage() {
 										{" "}
 										{/* Link to external comics if needed */}
 										<div className="bg-white border rounded-lg overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-											<div className="aspect-[3/4] bg-gray-100 relative">
+											<div className={`${UI_CONSTANTS.ASPECT_RATIOS.COMIC_COVER} ${SEMANTIC_COLORS.BACKGROUND.TERTIARY} relative`}>
 												<Image
 													src={comic.coverImage}
 													alt={comic.title}
@@ -512,7 +512,7 @@ export default function ProfilePage() {
 								<h3 className="text-lg font-medium text-gray-900 mb-2">
 									No favorites yet
 								</h3>{" "}
-								<p className="text-gray-600 mb-4">
+								<p className={`${SEMANTIC_COLORS.TEXT.TERTIARY} mb-4`}>
 									Browse comics and add some!
 								</p>{" "}
 								<Button asChild>
@@ -535,7 +535,7 @@ export default function ProfilePage() {
 								<div className="bg-white shadow overflow-hidden rounded-lg">
 									{/* ... Settings form JSX (Personal Info, Contact, Preferences) ... */}
 									{/* Example Save Settings Button */}
-									<div className="px-4 py-5 border-t border-gray-200 sm:px-6">
+									<div className={`px-4 py-5 border-t ${SEMANTIC_COLORS.BORDER.DEFAULT} sm:px-6`}>
 										<div className="flex justify-end">
 											<Button
 												type="button"
@@ -589,12 +589,12 @@ export default function ProfilePage() {
 								</div>
 							</>
 						) : (
-							<div className="text-center py-12 bg-gray-50 border rounded-lg">
+							<div className={`text-center py-12 ${SEMANTIC_COLORS.BACKGROUND.SECONDARY} ${SEMANTIC_COLORS.BORDER.DEFAULT} ${UI_CONSTANTS.BORDER_RADIUS.LARGE}`}>
 								<Settings size={48} className="mx-auto text-gray-400 mb-4" />
 								<h3 className="text-lg font-medium text-gray-900 mb-2">
 									Please Log In
 								</h3>
-								<p className="text-gray-600 mb-4">
+								<p className={`${SEMANTIC_COLORS.TEXT.TERTIARY} mb-4`}>
 									Log in to manage your settings.
 								</p>
 							</div>

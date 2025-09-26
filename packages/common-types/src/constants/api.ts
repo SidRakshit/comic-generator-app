@@ -59,6 +59,10 @@ export const EXTERNAL_APIS = {
  */
 export const AI_CONFIG = {
 	OPENAI: {
+		MODELS: {
+			CHAT: 'gpt-4o-mini',
+			IMAGE: 'dall-e-3',
+		},
 		IMAGE: {
 			SIZE: '1024x1024',
 			QUALITY: 'standard',
@@ -106,4 +110,59 @@ export const HTTP_STATUS = {
 	INTERNAL_SERVER_ERROR: 500,
 	BAD_GATEWAY: 502,
 	SERVICE_UNAVAILABLE: 503,
+} as const;
+
+/**
+ * File format and content type constants
+ */
+export const FILE_FORMATS = {
+	PNG: '.png',
+	JPEG: '.jpg',
+	JPG: '.jpeg',
+	WEBP: '.webp',
+} as const;
+
+export const CONTENT_TYPES = {
+	PNG: 'image/png',
+	JPEG: 'image/jpeg',
+	JPG: 'image/jpeg',
+	WEBP: 'image/webp',
+	JSON: 'application/json',
+} as const;
+
+/**
+ * AWS S3 configuration constants
+ */
+export const S3_CONFIG = {
+	ACL: {
+		PUBLIC_READ: 'public-read',
+		PRIVATE: 'private',
+	},
+	STORAGE_CLASS: {
+		STANDARD: 'STANDARD',
+		REDUCED_REDUNDANCY: 'REDUCED_REDUNDANCY',
+	},
+} as const;
+
+/**
+ * UI layout and sizing constants
+ */
+export const UI_CONSTANTS = {
+	ASPECT_RATIOS: {
+		COMIC_COVER: 'aspect-[3/4]',
+		SQUARE: 'aspect-square',
+		WIDE: 'aspect-video',
+	},
+	Z_INDEX: {
+		NAVBAR: 'z-50',
+		MODAL: 'z-40',
+		DROPDOWN: 'z-30',
+		TOOLTIP: 'z-20',
+	},
+	BORDER_RADIUS: {
+		SMALL: 'rounded',
+		MEDIUM: 'rounded-md',
+		LARGE: 'rounded-lg',
+		FULL: 'rounded-full',
+	},
 } as const;

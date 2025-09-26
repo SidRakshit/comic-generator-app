@@ -1,6 +1,6 @@
 import 'dotenv/config';
 import { S3Client } from '@aws-sdk/client-s3';
-import { DEFAULT_PORTS, ENV_VARS } from '@repo/common-types';
+import { DEFAULT_PORTS, ENV_VARS, AI_CONFIG } from '@repo/common-types';
 
 // Use centralized environment variable names
 const requiredEnvVars = [
@@ -44,8 +44,8 @@ export const S3_BUCKET_NAME = process.env[ENV_VARS.S3_BUCKET_NAME]!;
 export const COGNITO_USER_POOL_ID = process.env[ENV_VARS.COGNITO_USER_POOL_ID]!;
 export const COGNITO_CLIENT_ID = process.env[ENV_VARS.COGNITO_CLIENT_ID]!;
 export const OPENAI_API_KEY = process.env[ENV_VARS.OPENAI_API_KEY]!;
-export const OPENAI_CHAT_MODEL = process.env.OPENAI_CHAT_MODEL || 'gpt-4o-mini';
-export const OPENAI_IMAGE_MODEL = process.env.OPENAI_IMAGE_MODEL || 'dall-e-3';
+export const OPENAI_CHAT_MODEL = process.env.OPENAI_CHAT_MODEL || AI_CONFIG.OPENAI.MODELS.CHAT;
+export const OPENAI_IMAGE_MODEL = process.env.OPENAI_IMAGE_MODEL || AI_CONFIG.OPENAI.MODELS.IMAGE;
 export const FRONTEND_URL = process.env[ENV_VARS.FRONTEND_URL]!;
 
 // Create S3 client with error handling

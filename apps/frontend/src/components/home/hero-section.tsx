@@ -28,7 +28,7 @@ export default function HeroSection() {
 							<Button
 								size="lg"
 								disabled
-								className="bg-white text-blue-700 opacity-75 cursor-wait"
+								className={`${SEMANTIC_COLORS.BACKGROUND.PRIMARY} ${SEMANTIC_COLORS.BRAND.PRIMARY} opacity-75 cursor-wait`}
 							>
 								<Loader2 className="mr-2 h-5 w-5 animate-spin" />
 								Loading...
@@ -38,7 +38,7 @@ export default function HeroSection() {
 							<Button
 								size="lg"
 								asChild
-								className="bg-white text-blue-700 hover:bg-gray-100"
+								className={`${SEMANTIC_COLORS.BACKGROUND.PRIMARY} ${SEMANTIC_COLORS.BRAND.PRIMARY} ${INTERACTIVE_STYLES.BUTTON.GHOST}`}
 							>
 								<Link href="/comics/create">Create Your First Comic</Link>
 							</Button>
@@ -47,7 +47,7 @@ export default function HeroSection() {
 							<Button
 								size="lg"
 								asChild // Use asChild to make the button a link wrapper
-								className="bg-white text-blue-700 hover:bg-gray-100" // Use normal active styles
+								className={`${SEMANTIC_COLORS.BACKGROUND.PRIMARY} ${SEMANTIC_COLORS.BRAND.PRIMARY} ${INTERACTIVE_STYLES.BUTTON.GHOST}`} // Use normal active styles
 								title="Login required to create comics" // Optional tooltip
 							>
 								<Link href="/signup">Create Your First Comic</Link>

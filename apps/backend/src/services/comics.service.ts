@@ -14,7 +14,7 @@ import {
 	AWS_REGION,
 } from "../config";
 import pool from "../database";
-import { Panel, CreateComicRequest, ComicPageRequest, ComicPanelRequest, ComicResponse, ComicPageResponse, ComicPanelResponse, ErrorFactory, EXTERNAL_APIS, AI_CONFIG } from "@repo/common-types";
+import { Panel, CreateComicRequest, ComicPageRequest, ComicPanelRequest, ComicResponse, ComicPageResponse, ComicPanelResponse, ErrorFactory, EXTERNAL_APIS, AI_CONFIG, FILE_FORMATS, CONTENT_TYPES, S3_CONFIG } from "@repo/common-types";
 
 // Use shared types from @repo/common-types
 // Map the shared API types to our internal naming for easier migration:
@@ -275,8 +275,8 @@ Guidelines:
 
 		try {
 			const imageData: Buffer = Buffer.from(imageBase64, "base64");
-			const contentType = "image/png";
-			const fileExtension = "png";
+			const contentType = CONTENT_TYPES.PNG;
+			const fileExtension = FILE_FORMATS.PNG.substring(1); // Remove the dot
 
 			// RESTORED: Original working S3 key format
 			const s3Key = `users/${userId}/comics/${comicId}/panels/${panelId}.${fileExtension}`;
@@ -288,7 +288,7 @@ Guidelines:
 				Key: s3Key,
 				Body: imageData,
 				ContentType: contentType,
-				ACL: "public-read" as ObjectCannedACL,
+				ACL: S3_CONFIG.ACL.PUBLIC_READ as ObjectCannedACL,
 			};
 			const command = new PutObjectCommand(putObjectParams);
 			await s3Client.send(command);
