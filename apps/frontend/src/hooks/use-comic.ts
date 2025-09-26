@@ -19,7 +19,7 @@ export function useComic(
 ) {
 	// --- State ---
 	const [comic, setComic] = useState<Comic>({
-		title: "Untitled Comic",
+		title: "",
 		description: "",
 		genre: "",
 		characters: [{ id: generateId("char"), name: "", description: "" }],
