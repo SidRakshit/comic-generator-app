@@ -15,7 +15,7 @@ import {
   STRIPE_CANCEL_URL,
 } from "../config";
 
-const STRIPE_API_VERSION: Stripe.LatestApiVersion = "2024-06-20";
+const STRIPE_API_VERSION: Stripe.LatestApiVersion = "2023-10-16";
 
 export interface CheckoutSessionResult {
   checkoutSessionId: string;
@@ -160,7 +160,7 @@ export class StripeService {
       [amount, userId]
     );
 
-    return result.rowCount > 0;
+    return result.rowCount ? result.rowCount > 0 : false;
   }
 
   async createRefund(
@@ -228,7 +228,7 @@ export class StripeService {
       [event.id, event.type, metadata]
     );
 
-    return result.rowCount > 0;
+    return result.rowCount ? result.rowCount > 0 : false;
   }
 
   private async recordCheckoutSession(

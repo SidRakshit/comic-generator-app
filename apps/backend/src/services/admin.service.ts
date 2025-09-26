@@ -1,3 +1,4 @@
+import { CreditPurchase } from "@repo/common-types";
 import pool from "../database";
 import { stripeService } from "./stripe.service";
 import { AdminAnalyticsOverview } from "@repo/common-types";

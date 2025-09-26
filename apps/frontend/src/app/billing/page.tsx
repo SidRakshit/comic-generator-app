@@ -7,7 +7,7 @@ import { Button } from "@repo/ui/button";
 import { Input } from "@repo/ui/input";
 import { Label } from "@repo/ui/label";
 import { apiRequest } from "@/lib/api";
-import { SEMANTIC_COLORS, UI_CONSTANTS } from "@repo/common-types";
+import { SEMANTIC_COLORS, UI_CONSTANTS, INTERACTIVE_STYLES } from "@repo/common-types";
 
 export default function BillingPage() {
   const [amount, setAmount] = useState(10);
