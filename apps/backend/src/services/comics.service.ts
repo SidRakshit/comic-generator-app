@@ -11,6 +11,7 @@ import {
 	OPENAI_API_KEY,
 	OPENAI_CHAT_MODEL,
 	OPENAI_IMAGE_MODEL,
+	AWS_REGION,
 } from "../config";
 import pool from "../database";
 import { Panel } from "@repo/common-types";
@@ -200,19 +201,21 @@ Style: Clean comic book art style, vibrant colors, clear line work, professional
 			const randomString = crypto.randomBytes(8).toString("hex");
 			const s3Key = `comic-panels/${timestamp}-${randomString}.png`;
 
-			console.log(`🔧 S3 Upload: Attempting upload without ACL to bucket: ${S3_BUCKET_NAME}, key: ${s3Key}`);
+			console.log(`🔧 S3 Upload: Uploading to bucket: ${S3_BUCKET_NAME}, key: ${s3Key}`);
 
-			// Upload to S3 - removed ACL to avoid permission issues (Goal 1 fix)
+			// Upload to S3 - using original working format
 			const uploadCommand = new PutObjectCommand({
 				Bucket: S3_BUCKET_NAME,
 				Key: s3Key,
 				Body: imageBuffer,
 				ContentType: "image/png",
+				ACL: "public-read",  // Restored original working format
 			});
 
 			await s3Client.send(uploadCommand);
 
-			const s3Url = `https://${S3_BUCKET_NAME}.s3.amazonaws.com/${s3Key}`;
+			// Fixed S3 URL construction with AWS_REGION (was missing!)
+			const s3Url = `https://${S3_BUCKET_NAME}.s3.${AWS_REGION}.amazonaws.com/${s3Key}`;
 			console.log(`✅ S3 Upload successful: ${s3Url}`);
 
 			return { s3Key, s3Url };
