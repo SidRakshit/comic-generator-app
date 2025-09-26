@@ -1,7 +1,7 @@
 // src/controllers/comics.controller.ts
 import { Request, Response } from "express";
 import { ComicService } from "../services/comics.service";
-import { AuthenticatedRequestFields } from "@repo/common-types";
+import { AuthenticatedRequestFields, CreateComicRequest } from "@repo/common-types";
 
 // Create the final AuthenticatedRequest type by intersecting Express Request with our fields
 type AuthenticatedRequest = Request & AuthenticatedRequestFields;
@@ -62,7 +62,7 @@ export class ComicController {
 				return;
 			}
 
-			const comicData = req.body;
+			const comicData: CreateComicRequest = req.body;
 			if (!comicData || !comicData.title || !comicData.pages) {
 				res
 					.status(400)
@@ -76,7 +76,7 @@ export class ComicController {
 				`Controller: saveComic called by user ${internalUserId}. Existing comicId: ${comicId}`
 			);
 
-			const result = await this.comicService.saveComicWithPanels(
+			const result = await this.comicService.saveComicWithPanelsFromApi(
 				internalUserId,
 				comicData,
 				comicId // Pass undefined if it's a new comic (POST)

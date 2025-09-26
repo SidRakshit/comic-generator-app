@@ -7,6 +7,7 @@ export interface ComicResponse {
   comic_id: string;
   title: string;
   description?: string;
+  genre?: string;
   characters?: Comic['characters'];
   setting?: Record<string, unknown>;
   template?: string;
@@ -79,31 +80,6 @@ export interface ApiResponse<T = unknown> {
   message?: string;
 }
 
-// Backend service response types (moved from comics.service.ts)
-export interface FullPageData {
-  page_id: string;
-  pageNumber: number;
-  panels: FullPanelData[];
-}
-
-export interface FullPanelData {
-  panel_id: string;
-  panelNumber: number;
-  prompt?: string;
-  dialogue?: string;
-  layoutPosition?: object;
-  image_url: string; // Final S3 URL
-}
-
-export interface FullComicData {
-  comic_id: string;
-  title: string;
-  description?: string;
-  characters?: object[];
-  setting?: object;
-  created_at: Date;
-  updated_at: Date;
-  pages: FullPageData[];
-}
+// Remove duplicate types - use the standard ComicResponse type above instead
 
 // ComicListItem is already defined in domain/user.ts

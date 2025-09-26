@@ -21,7 +21,7 @@ export type { GeneratedImageDataResponse };
 export async function apiRequest<T = unknown>(
 	endpoint: string,
 	method: "GET" | "POST" | "PUT" | "DELETE" = "GET",
-	body?: Record<string, unknown> | null
+	body?: unknown
 ): Promise<T> {
 	let token: string | undefined;
 

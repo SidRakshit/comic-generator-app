@@ -6,6 +6,7 @@ import type { Comic, ComicCharacter } from '../domain';
 export interface CreateComicRequest {
   title: string;
   description?: string;
+  genre?: string;
   characters?: ComicCharacter[];
   setting?: Record<string, unknown>;
   template: string;
@@ -30,6 +31,7 @@ export interface ComicPanelRequest {
   prompt?: string;
   dialogue?: string;
   layout_position?: Record<string, unknown>;
+  image_base64?: string; // For comic creation/update with generated images
 }
 
 // Image generation requests
@@ -57,24 +59,4 @@ export interface SignupRequest {
   confirmPassword: string;
 }
 
-// Backend service request types (moved from comics.service.ts)
-export interface PanelDataFromRequest {
-  panelNumber: number;
-  prompt: string;
-  dialogue?: string;
-  layoutPosition: object;
-  imageBase64: string; // Expect base64 data from frontend
-}
-
-export interface PageDataFromRequest {
-  pageNumber: number;
-  panels: PanelDataFromRequest[];
-}
-
-export interface ComicDataFromRequest {
-  title: string;
-  description?: string;
-  characters?: object[];
-  setting?: object;
-  pages: PageDataFromRequest[];
-}
+// Remove duplicate types - use the standard API types above instead

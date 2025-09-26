@@ -3,10 +3,10 @@
 import { useState, useEffect, useCallback } from "react";
 import { generateId } from "@repo/utils";
 import { apiRequest, GeneratedImageDataResponse } from "@/lib/api";
-import { PanelStatus, Panel, ComicCharacter, Comic, TemplateDefinition, BackendPanelData, BackendPageData, FullComicDataFromBackend } from "@repo/common-types";
+import { PanelStatus, Panel, ComicCharacter, Comic, TemplateDefinition, BackendPanelData, BackendPageData, FullComicDataFromBackend, CreateComicRequest, ComicResponse } from "@repo/common-types";
 
-// This now correctly inherits the proper 'pages' type
-type SaveComicResponseFromBackend = FullComicDataFromBackend;
+// Use shared response type for SSoT compliance
+type SaveComicResponseFromBackend = ComicResponse;
 
 // --- Templates Definition ---
 export const templates: Record<string, TemplateDefinition> = {
@@ -286,14 +286,15 @@ export function useComic(
 		setIsSaving(true);
 		setError(null);
 
+		// Create payload using shared API types for SSoT compliance
 		const finalPanelsPayload = comic.panels.map((panel, index) => ({
-			panelNumber: panel.panelNumber ?? index + 1,
+			panel_number: panel.panelNumber ?? index + 1,
 			prompt: panel.prompt || "",
-			layoutPosition: panel.layoutPosition || {},
-			imageBase64: panel.imageBase64 || "",
+			layout_position: panel.layoutPosition || {},
+			image_base64: panel.imageBase64 || "",
 		}));
-		const finalPagesData = [{ pageNumber: 1, panels: finalPanelsPayload }];
-		const comicPayload = {
+		const finalPagesData = [{ page_number: 1, panels: finalPanelsPayload }];
+		const comicPayload: CreateComicRequest = {
 			title: comic.title,
 			description: comic.description,
 			genre: comic.genre,

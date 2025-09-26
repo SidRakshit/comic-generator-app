@@ -14,46 +14,61 @@ import {
 	AWS_REGION,
 } from "../config";
 import pool from "../database";
-import { Panel } from "@repo/common-types";
+import { Panel, CreateComicRequest, ComicPageRequest, ComicPanelRequest, ComicResponse, BackendPageData, BackendPanelData } from "@repo/common-types";
 
-// RESTORED: Original working data types
-interface PanelDataFromRequest {
-	panelNumber: number;
-	prompt: string;
-	dialogue?: string;
-	layoutPosition: object;
-	imageBase64: string; // Expect base64 data from frontend
-}
+// Use shared types from @repo/common-types
+// Map the shared API types to our internal naming for easier migration:
+type PanelDataFromRequest = {
+	panelNumber: ComicPanelRequest['panel_number'];
+	prompt: NonNullable<ComicPanelRequest['prompt']>;
+	dialogue?: ComicPanelRequest['dialogue'];
+	layoutPosition: ComicPanelRequest['layout_position'];
+	imageBase64: NonNullable<ComicPanelRequest['image_base64']>;
+};
 
-interface PageDataFromRequest {
-	pageNumber: number;
+type PageDataFromRequest = {
+	pageNumber: ComicPageRequest['page_number'];
 	panels: PanelDataFromRequest[];
-}
+};
 
-interface ComicDataFromRequest {
-	title: string;
-	description?: string;
-	characters?: object[];
-	setting?: object;
+type ComicDataFromRequest = Omit<CreateComicRequest, 'pages'> & {
 	pages: PageDataFromRequest[];
-}
+};
 
-// RESTORED: Original working response types
-interface FullPanelData extends Omit<PanelDataFromRequest, "imageBase64"> {
-	panel_id: string;
-	image_url: string; // Final S3 URL
-}
+// Use shared ComicResponse type - this ensures SSoT compliance
+// Make pages required for internal operations
+type FullComicData = ComicResponse & {
+	pages: NonNullable<ComicResponse['pages']>;
+};
 
-interface FullPageData extends Omit<PageDataFromRequest, "panels"> {
-	page_id: string;
-	panels: FullPanelData[];
-}
+// Use the shared types from common-types for consistency
 
-interface FullComicData extends Omit<ComicDataFromRequest, "pages"> {
-	comic_id: string;
-	created_at: Date;
-	updated_at: Date;
-	pages: FullPageData[];
+// Helper types for internal operations (use shared types)
+type FullPanelData = BackendPanelData & {
+	image_url: string; // Make image_url required for internal operations
+};
+
+type FullPageData = BackendPageData;
+
+// Helper function to convert from shared API types to internal format
+function convertApiRequestToInternal(apiRequest: CreateComicRequest): ComicDataFromRequest {
+	return {
+		title: apiRequest.title,
+		description: apiRequest.description,
+		characters: apiRequest.characters,
+		setting: apiRequest.setting,
+		template: apiRequest.template,
+		pages: apiRequest.pages.map(page => ({
+			pageNumber: page.page_number,
+			panels: page.panels.map(panel => ({
+				panelNumber: panel.panel_number,
+				prompt: panel.prompt || "",
+				dialogue: panel.dialogue,
+				layoutPosition: panel.layout_position || {},
+				imageBase64: panel.image_base64 || "",
+			}))
+		}))
+	};
 }
 
 // Local types for database operations (for other methods)
@@ -297,6 +312,20 @@ Guidelines:
 	}
 
 	/**
+	 * Save or update a comic from API request (uses shared types)
+	 */
+	async saveComicWithPanelsFromApi(
+		internalUserId: string,
+		apiRequest: CreateComicRequest,
+		existingComicId?: string
+	): Promise<FullComicData | null> {
+		// Convert API request to internal format
+		const comicData = convertApiRequestToInternal(apiRequest);
+		// Use existing internal method
+		return this.saveComicWithPanels(internalUserId, comicData, existingComicId);
+	}
+
+	/**
 	 * RESTORED: Original working saveComicWithPanels function
 	 * Saves or updates a comic, handling panel image uploads (from base64) to S3 and DB operations.
 	 * @param internalUserId - The ID (UUID) of the user creating/updating the comic.
@@ -506,6 +535,7 @@ Guidelines:
 				description: result.rows[0].description || undefined,
 				characters: result.rows[0].characters || undefined,
 				setting: result.rows[0].setting || undefined,
+				template: result.rows[0].template || undefined,
 				created_at: result.rows[0].created_at,
 				updated_at: result.rows[0].updated_at,
 				pages: [],
