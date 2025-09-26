@@ -200,7 +200,9 @@ Style: Clean comic book art style, vibrant colors, clear line work, professional
 			const randomString = crypto.randomBytes(8).toString("hex");
 			const s3Key = `comic-panels/${timestamp}-${randomString}.png`;
 
-			// Upload to S3 - removed ACL to avoid permission issues
+			console.log(`🔧 S3 Upload: Attempting upload without ACL to bucket: ${S3_BUCKET_NAME}, key: ${s3Key}`);
+
+			// Upload to S3 - removed ACL to avoid permission issues (Goal 1 fix)
 			const uploadCommand = new PutObjectCommand({
 				Bucket: S3_BUCKET_NAME,
 				Key: s3Key,
@@ -211,10 +213,12 @@ Style: Clean comic book art style, vibrant colors, clear line work, professional
 			await s3Client.send(uploadCommand);
 
 			const s3Url = `https://${S3_BUCKET_NAME}.s3.amazonaws.com/${s3Key}`;
+			console.log(`✅ S3 Upload successful: ${s3Url}`);
 
 			return { s3Key, s3Url };
 		} catch (error: any) {
-			console.error("Error uploading image to S3:", error.message);
+			console.error("❌ S3 Upload failed:", error.message);
+			console.error("❌ Error details:", error);
 			throw error;
 		}
 	}
