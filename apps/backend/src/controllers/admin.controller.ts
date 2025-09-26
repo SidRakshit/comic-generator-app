@@ -3,6 +3,7 @@
 import { Request, Response } from "express";
 import type { AuthenticatedRequestFields } from "@repo/common-types";
 import { stripeService } from "../services/stripe.service";
+import { recordAdminAuditLog } from "../utils/audit";
 
 export type AdminRequest = Request & AuthenticatedRequestFields;
 
@@ -10,6 +11,7 @@ export class AdminController {
   async getDashboard(req: AdminRequest, res: Response): Promise<void> {
     try {
       const metrics = await stripeService.loadDashboardMetrics();
+      await recordAdminAuditLog(req.internalUserId, "view_dashboard", "admin_dashboard");
       res.status(200).json(metrics);
     } catch (error) {
       console.error("Failed to load admin dashboard metrics:", error);
@@ -17,35 +19,51 @@ export class AdminController {
     }
   }
 
-  async getUsers(_req: AdminRequest, res: Response): Promise<void> {
+  async getUsers(req: AdminRequest, res: Response): Promise<void> {
+    await recordAdminAuditLog(req.internalUserId, "list_users", "user");
     res.status(501).json({ error: "Not implemented" });
   }
 
-  async getUserById(_req: AdminRequest, res: Response): Promise<void> {
+  async getUserById(req: AdminRequest, res: Response): Promise<void> {
+    await recordAdminAuditLog(req.internalUserId, "view_user", "user", {
+      resourceId: req.params?.id,
+    });
     res.status(501).json({ error: "Not implemented" });
   }
 
-  async impersonateUser(_req: AdminRequest, res: Response): Promise<void> {
+  async impersonateUser(req: AdminRequest, res: Response): Promise<void> {
+    await recordAdminAuditLog(req.internalUserId, "attempt_impersonation", "user", {
+      resourceId: req.params?.id,
+    });
     res.status(501).json({ error: "Not implemented" });
   }
 
-  async getUserCredits(_req: AdminRequest, res: Response): Promise<void> {
+  async getUserCredits(req: AdminRequest, res: Response): Promise<void> {
+    await recordAdminAuditLog(req.internalUserId, "view_user_credits", "user", {
+      resourceId: req.params?.id,
+    });
     res.status(501).json({ error: "Not implemented" });
   }
 
-  async grantUserCredits(_req: AdminRequest, res: Response): Promise<void> {
+  async grantUserCredits(req: AdminRequest, res: Response): Promise<void> {
+    await recordAdminAuditLog(req.internalUserId, "grant_user_credits", "user", {
+      resourceId: req.params?.id,
+    });
     res.status(501).json({ error: "Not implemented" });
   }
 
-  async getPurchaseHistory(_req: AdminRequest, res: Response): Promise<void> {
+  async getPurchaseHistory(req: AdminRequest, res: Response): Promise<void> {
+    await recordAdminAuditLog(req.internalUserId, "list_purchases", "billing");
     res.status(501).json({ error: "Not implemented" });
   }
 
-  async processRefund(_req: AdminRequest, res: Response): Promise<void> {
+  async processRefund(req: AdminRequest, res: Response): Promise<void> {
+    await recordAdminAuditLog(req.internalUserId, "process_refund", "billing");
     res.status(501).json({ error: "Not implemented" });
   }
 
-  async getAuditLogs(_req: AdminRequest, res: Response): Promise<void> {
+  async getAuditLogs(req: AdminRequest, res: Response): Promise<void> {
+    await recordAdminAuditLog(req.internalUserId, "view_audit_logs", "audit_log");
     res.status(501).json({ error: "Not implemented" });
   }
 }
