@@ -5,11 +5,16 @@ import { CognitoJwtVerifier } from "aws-jwt-verify"; // Import the verifier
 import { CognitoAccessTokenPayload } from "aws-jwt-verify/jwt-model"; // Type for payload
 import { AWS_REGION, COGNITO_USER_POOL_ID, COGNITO_CLIENT_ID } from "../config"; // Import Cognito config
 import pool from "../database"; // <<< Import the database pool
+import { authenticator } from "otplib";
+import { decryptSecret } from "../utils/encryption";
 import {
 	AuthenticatedRequestFields,
 	AdminRole,
 	AdminPermission,
 } from "@repo/common-types"; // Import shared type
+import { ADMIN_SERVICE_USER_ID } from "../config";
+import { verifyServiceToken } from "../utils/service-token";
+import { verifyImpersonationToken } from "../utils/impersonation";
 
 // Create the final AuthenticatedRequest type by intersecting Express Request with our fields
 type AuthenticatedRequest = Request & AuthenticatedRequestFields;
@@ -24,6 +29,11 @@ interface UserCreditsRow {
 	panel_balance: number;
 }
 
+interface AdminMfaRow {
+	secret_encrypted: string;
+	verified_at: Date | null;
+}
+
 const DEFAULT_ADMIN_CONTEXT = {
 	isAdmin: false,
 	roles: [] as AdminRole[],
@@ -35,10 +45,14 @@ async function attachAdminContext(req: AuthenticatedRequest): Promise<void> {
 		req.isAdmin = false;
 		req.adminRoles = [];
 		req.adminPermissions = [];
+		req.adminMfaRequired = false;
+		req.adminMfaSecret = undefined;
 		return;
 	}
 
 	try {
+		req.adminMfaRequired = false;
+		req.adminMfaSecret = undefined;
 		const adminResult = await pool.query<AdminContextRow>(
 			`SELECT roles, permissions, can_impersonate
 			 FROM admin_users
@@ -70,12 +84,35 @@ async function attachAdminContext(req: AuthenticatedRequest): Promise<void> {
 				new Set([...(req.adminPermissions ?? []), "impersonate" as AdminPermission])
 			);
 		}
+
+		const mfaResult = await pool.query<AdminMfaRow>(
+			`SELECT secret_encrypted, verified_at
+			 FROM admin_mfa_enrollments
+			 WHERE admin_user_id = $1`,
+			[req.internalUserId]
+		);
+		const mfaRecord = mfaResult.rows[0];
+		if (mfaRecord?.verified_at) {
+			try {
+				req.adminMfaRequired = true;
+				req.adminMfaSecret = decryptSecret(mfaRecord.secret_encrypted);
+			} catch (error) {
+				console.warn("Failed to decrypt admin MFA secret", error);
+				req.adminMfaRequired = false;
+				req.adminMfaSecret = undefined;
+			}
+		} else {
+			req.adminMfaRequired = false;
+			req.adminMfaSecret = undefined;
+		}
 	} catch (error: any) {
 		// Table may not exist yet during initial migrations; default to non-admin.
 		console.warn("Failed to load admin context:", error?.message || error);
 		req.isAdmin = DEFAULT_ADMIN_CONTEXT.isAdmin;
 		req.adminRoles = DEFAULT_ADMIN_CONTEXT.roles;
 		req.adminPermissions = DEFAULT_ADMIN_CONTEXT.permissions;
+		req.adminMfaRequired = false;
+		req.adminMfaSecret = undefined;
 	}
 }
 
@@ -104,6 +141,66 @@ export const authenticateToken = async (
 	next: NextFunction
 ): Promise<void> => {
 	console.log("Cognito Auth Middleware: Checking for token...");
+	req.authenticatedUsingServiceToken = false;
+
+	const impersonationHeader = req.headers["x-admin-impersonation-token"] as string | undefined;
+	if (impersonationHeader) {
+		const verification = await verifyImpersonationToken(impersonationHeader, {
+			ipAddress: req.ip,
+			userAgent: req.headers["user-agent"] as string | undefined,
+		});
+
+		if (!verification.valid || !verification.targetUserId) {
+			res.status(401).json({ error: "Unauthorized: Invalid impersonation token." });
+			return;
+		}
+
+		req.internalUserId = verification.targetUserId;
+		req.impersonatedUserId = verification.targetUserId;
+		req.impersonatedByAdminId = verification.adminUserId;
+		req.isAdmin = false;
+		req.authenticatedUsingServiceToken = false;
+		req.user = {
+			sub: verification.targetUserId,
+		};
+		next();
+		return;
+	}
+
+	const serviceToken = req.headers["x-admin-service-token"] as string | undefined;
+	const serviceTokenVerification = verifyServiceToken(serviceToken);
+	if (serviceTokenVerification.valid) {
+		console.log("Service token authentication accepted.");
+		req.isAdmin = true;
+		req.adminRoles = ["super_admin"] as AdminRole[];
+		req.adminPermissions = [
+			"manage_admins",
+			"manage_users",
+			"manage_content",
+			"manage_billing",
+			"impersonate",
+			"view_audit_logs",
+		] as AdminPermission[];
+		req.adminMfaRequired = false;
+		req.adminMfaSecret = undefined;
+		req.authenticatedUsingServiceToken = true;
+		const explicitAdminUserId =
+			(req.headers["x-admin-service-user"] as string | undefined) ||
+			ADMIN_SERVICE_USER_ID ||
+			undefined;
+		const impersonatedUserId = req.headers["x-admin-impersonate-user"] as string | undefined;
+		req.internalUserId = impersonatedUserId ?? explicitAdminUserId;
+		if (impersonatedUserId) {
+			req.impersonatedUserId = impersonatedUserId;
+			req.impersonatedByAdminId = explicitAdminUserId;
+		}
+		req.user = {
+			sub: "service-token",
+			email: undefined,
+		};
+		next();
+		return;
+	}
 
 	const authHeader = req.headers["authorization"];
 	const token = authHeader && authHeader.split(" ")[1]; // Expect "Bearer <token>"
@@ -210,6 +307,27 @@ export const authenticateToken = async (
 		}
 
 		await attachAdminContext(req);
+
+		if (req.adminMfaRequired && !req.authenticatedUsingServiceToken) {
+			const providedMfa = req.headers["x-admin-mfa-code"] as string | undefined;
+			if (!providedMfa) {
+				res.status(401).json({ error: "MFA code required for admin access." });
+				return;
+			}
+
+			if (!req.adminMfaSecret) {
+				res.status(500).json({ error: "MFA configuration missing for admin account." });
+				return;
+			}
+
+			const isValidMfa = authenticator.check(providedMfa, req.adminMfaSecret);
+			if (!isValidMfa) {
+				res.status(401).json({ error: "Invalid MFA code." });
+				return;
+			}
+		}
+
+		req.adminMfaSecret = undefined;
 
 		next();
 	} catch (dbError: any) {

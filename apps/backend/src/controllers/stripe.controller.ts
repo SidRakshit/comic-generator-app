@@ -3,8 +3,9 @@ import { stripeService } from "../services/stripe.service";
 
 export class StripeController {
   async handleWebhook(req: Request, res: Response): Promise<void> {
+    const signature = req.headers["stripe-signature"] as string | undefined;
     try {
-      const processed = await stripeService.handleWebhookEvent(req.body);
+      const processed = await stripeService.handleWebhookEvent(req.body, signature);
       if (!processed) {
         res.status(202).json({ status: "ignored" });
         return;

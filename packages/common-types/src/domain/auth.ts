@@ -27,6 +27,11 @@ export interface AuthenticatedRequestFields {
   isAdmin?: boolean;
   adminRoles?: AdminRole[];
   adminPermissions?: AdminPermission[];
+  impersonatedUserId?: string;
+  impersonatedByAdminId?: string;
+  adminMfaRequired?: boolean;
+  adminMfaSecret?: string;
+  authenticatedUsingServiceToken?: boolean;
 }
 
 // Type alias for backend - to be used with Express Request

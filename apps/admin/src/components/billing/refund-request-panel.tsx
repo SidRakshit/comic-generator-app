@@ -6,11 +6,15 @@ import { Input } from "@repo/ui/input";
 import { Textarea } from "@repo/ui/textarea";
 import { SEMANTIC_COLORS } from "@repo/common-types";
 
+type RefundStatus = "idle" | "success" | "error";
+
 interface RefundRequestPanelProps {
   onSubmit?: (chargeId: string, reason: string) => Promise<void> | void;
+  status?: RefundStatus;
+  message?: string | null;
 }
 
-export function RefundRequestPanel({ onSubmit }: RefundRequestPanelProps) {
+export function RefundRequestPanel({ onSubmit, status = "idle", message }: RefundRequestPanelProps) {
   const [chargeId, setChargeId] = useState("");
   const [reason, setReason] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -26,6 +30,11 @@ export function RefundRequestPanel({ onSubmit }: RefundRequestPanelProps) {
       setIsSubmitting(false);
     }
   };
+
+  const statusColors = {
+    success: `${SEMANTIC_COLORS.SUCCESS.TEXT} ${SEMANTIC_COLORS.SUCCESS.BACKGROUND} ${SEMANTIC_COLORS.SUCCESS.BORDER}`,
+    error: `${SEMANTIC_COLORS.ERROR.TEXT} ${SEMANTIC_COLORS.ERROR.BACKGROUND} ${SEMANTIC_COLORS.ERROR.BORDER}`,
+  } as const;
 
   return (
     <div className={`space-y-3 rounded-lg border p-4 ${SEMANTIC_COLORS.BACKGROUND.PRIMARY} ${SEMANTIC_COLORS.BORDER.DEFAULT}`}>
@@ -44,6 +53,11 @@ export function RefundRequestPanel({ onSubmit }: RefundRequestPanelProps) {
         onChange={(event) => setReason(event.target.value)}
         rows={3}
       />
+      {status !== "idle" && message ? (
+        <div className={`rounded-md border px-3 py-2 text-xs ${statusColors[status]}`}>
+          {message}
+        </div>
+      ) : null}
       <div className="flex justify-end">
         <Button onClick={handleSubmit} disabled={isSubmitting || !chargeId}>
           {isSubmitting ? "Submitting..." : "Submit Refund"}

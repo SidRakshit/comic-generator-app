@@ -6,7 +6,7 @@ import { SEMANTIC_COLORS } from "@repo/common-types";
 
 export interface PurchaseHistoryRow {
   purchase_id: string;
-  user_email: string;
+  user_email?: string | null;
   amount_dollars: number;
   panels_purchased: number;
   created_at: string;
@@ -74,7 +74,7 @@ export function PurchaseHistoryTable({ rows, loading, onSelect }: PurchaseHistor
             ) : (
               sortedRows.map((row) => (
                 <tr key={row.purchase_id} className="border-t">
-                  <td className="px-4 py-2">{row.user_email}</td>
+                  <td className="px-4 py-2">{row.user_email ?? "Unknown"}</td>
                   <td className="px-4 py-2">${row.amount_dollars.toFixed(2)}</td>
                   <td className="px-4 py-2">{row.panels_purchased.toLocaleString()}</td>
                   <td className="px-4 py-2">{new Date(row.created_at).toLocaleString()}</td>

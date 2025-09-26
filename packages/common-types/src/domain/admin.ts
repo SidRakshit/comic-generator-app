@@ -52,3 +52,22 @@ export interface AdminAuditLogEntry {
   metadata?: Record<string, unknown>;
   created_at: string;
 }
+
+export interface AdminImpersonationLink {
+	impersonationToken: string;
+	expiresAt: string;
+	redirectUrl: string;
+	frontendUrl: string;
+}
+
+export interface AdminRefundRequest {
+	stripeChargeId: string;
+	reason?: string | null;
+}
+
+export interface AdminAnalyticsOverview {
+	revenueByMonth: Array<{ month: string; total: number }>;
+	conversionFunnel: Array<{ stage: string; count: number }>;
+	topPurchasers: Array<{ user_id: string; email: string | null; total_spent: number }>;
+	panelUsageByDay: Array<{ day: string; panels: number }>;
+}

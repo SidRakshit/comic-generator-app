@@ -11,7 +11,8 @@
     "lint": "eslint src --ext .ts --config ../../packages/eslint-config/node.js --ignore-pattern 'src/generated/**/*'",
     "migrate:dev": "prisma migrate dev",
     "migrate:create": "prisma migrate dev --create-only",
-    "migrate:resolve": "prisma migrate resolve"
+    "migrate:resolve": "prisma migrate resolve",
+    "admin:token": "ts-node src/scripts/generate-service-token.ts"
   },
   "keywords": [],
   "author": "",
@@ -27,8 +28,13 @@
     "cors": "^2.8.5",
     "dotenv": "^16.4.7",
     "express": "^5.1.0",
+    "express-rate-limit": "^7.4.0",
     "jsonwebtoken": "^9.0.2",
+    "otplib": "^12.0.1",
     "pg": "^8.14.1",
+    "prom-client": "^15.1.1",
+    "on-finished": "^2.4.1",
+    "stripe": "^14.23.0",
     "update": "^0.7.4"
   },
   "devDependencies": {
@@ -37,6 +43,7 @@
     "@types/express": "^5.0.1",
     "@types/jsonwebtoken": "^9.0.9",
     "@types/node": "^22.14.0",
+    "@types/on-finished": "^2.3.2",
     "@types/pg": "^8.11.12",
     "eslint": "^9",
     "globals": "^16.4.0",

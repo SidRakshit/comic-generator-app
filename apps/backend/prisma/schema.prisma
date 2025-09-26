@@ -83,6 +83,10 @@ model users {
   credit_purchases credit_purchases[]
   panel_usage_log  panel_usage_log[]
   admin_audit_logs admin_audit_logs[]
+  admin_user       admin_users?
+  impersonation_tokens_issued   admin_impersonation_tokens[] @relation("admin_token_admin_user")
+  impersonation_tokens_received admin_impersonation_tokens[] @relation("admin_token_target_user")
+  admin_mfa         admin_mfa_enrollments?
 
   @@index([auth_provider_id], map: "idx_users_auth_provider_id")
   @@index([email], map: "idx_users_email")
@@ -152,4 +156,50 @@ model admin_audit_logs {
 
   @@index([admin_user_id], map: "idx_admin_audit_admin_user")
   @@index([created_at], map: "idx_admin_audit_created_at")
+}
+
+model admin_users {
+  admin_user_id  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id        String    @unique @db.Uuid
+  roles          String[]  @default([])
+  permissions    String[]  @default([])
+  can_impersonate Boolean  @default(false)
+  created_at     DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime? @default(now()) @db.Timestamptz(6)
+  users          users     @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([created_at], map: "idx_admin_users_created_at")
+}
+
+model admin_impersonation_tokens {
+  token_id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  admin_user_id       String    @db.Uuid
+  target_user_id      String    @db.Uuid
+  token_hash          String
+  expires_at          DateTime  @db.Timestamptz(6)
+  redeemed_at         DateTime? @db.Timestamptz(6)
+  redeemed_ip         String?   @db.Inet
+  redeemed_user_agent String?
+  last_used_at        DateTime? @db.Timestamptz(6)
+  metadata            Json?
+  created_at          DateTime? @default(now()) @db.Timestamptz(6)
+  admin_user          users     @relation("admin_token_admin_user", fields: [admin_user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+  target_user         users     @relation("admin_token_target_user", fields: [target_user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([admin_user_id], map: "idx_admin_impersonation_admin")
+  @@index([target_user_id], map: "idx_admin_impersonation_target")
+  @@index([expires_at], map: "idx_admin_impersonation_expires")
+}
+
+model admin_mfa_enrollments {
+  admin_user_id    String    @id @db.Uuid
+  secret_encrypted String
+  otpauth_url      String
+  backup_codes     String[]  @default([])
+  verified_at      DateTime? @db.Timestamptz(6)
+  created_at       DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime? @default(now()) @db.Timestamptz(6)
+  admin_user       users     @relation(fields: [admin_user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([verified_at], map: "idx_admin_mfa_verified")
 }

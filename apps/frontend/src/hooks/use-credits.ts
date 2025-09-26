@@ -1,8 +1,9 @@
 "use client";
 
 import { useEffect, useState, useCallback } from "react";
-import { UserCredits } from "@repo/common-types";
+import { UserCredits, API_ENDPOINTS } from "@repo/common-types";
 import { apiRequest } from "@/lib/api";
+import { isImpersonationActive } from "@/lib/impersonation";
 import { useAuth } from "@/hooks/use-auth";
 
 interface UseCreditsResult {
@@ -13,7 +14,7 @@ interface UseCreditsResult {
   canCreatePanel: boolean;
 }
 
-const ENDPOINT = "/users/me/credits";
+const ENDPOINT = API_ENDPOINTS.USER_CREDITS_ME;
 
 export function useCredits(): UseCreditsResult {
   const { user } = useAuth();
@@ -22,7 +23,7 @@ export function useCredits(): UseCreditsResult {
   const [error, setError] = useState<string | null>(null);
 
   const refreshCredits = useCallback(async () => {
-    if (!user) {
+    if (!user && !isImpersonationActive()) {
       setCredits(null);
       return;
     }

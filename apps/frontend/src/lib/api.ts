@@ -1,5 +1,6 @@
 import { fetchAuthSession } from "aws-amplify/auth";
 import { GeneratedImageDataResponse, API_CONFIG } from "@repo/common-types";
+import { getImpersonationToken } from "@/lib/impersonation";
 
 const API_BASE_URL =
 	process.env.NEXT_PUBLIC_API_BASE_URL || API_CONFIG.DEFAULT_BACKEND_URL;
@@ -40,6 +41,11 @@ export async function apiRequest<T = unknown>(
 		console.warn(
 			`Making API request to ${endpoint} without authentication token.`
 		);
+	}
+
+	const impersonation = getImpersonationToken();
+	if (impersonation?.token) {
+		headers["x-admin-impersonation-token"] = impersonation.token;
 	}
 
 	const config: RequestInit = { method: method, headers: headers };

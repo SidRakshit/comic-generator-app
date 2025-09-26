@@ -1,24 +1,21 @@
 // apps/backend/src/services/stripe.service.ts
 
-import { AdminDashboardMetrics, CreditPurchase } from "@repo/common-types";
+import Stripe from "stripe";
+import { PoolClient } from "pg";
+import {
+  AdminDashboardMetrics,
+  CreditPurchase,
+} from "@repo/common-types";
 import { calculatePanelsFromDollars } from "@repo/utils";
 import pool from "../database";
-import { PoolClient } from "pg";
+import {
+  STRIPE_SECRET_KEY,
+  STRIPE_WEBHOOK_SECRET,
+  STRIPE_SUCCESS_URL,
+  STRIPE_CANCEL_URL,
+} from "../config";
 
-export interface StripeWebhookEvent<T = unknown> {
-  id: string;
-  type: string;
-  data?: {
-    object?: T;
-  };
-}
-
-interface CheckoutSessionLike {
-  id: string;
-  metadata?: Record<string, string | undefined>;
-  amount_total?: number | null;
-  payment_intent?: string | null;
-}
+const STRIPE_API_VERSION: Stripe.LatestApiVersion = "2024-06-20";
 
 export interface CheckoutSessionResult {
   checkoutSessionId: string;
@@ -26,27 +23,83 @@ export interface CheckoutSessionResult {
 }
 
 export class StripeService {
-  constructor(private readonly stripeClient: unknown = null) {}
+  private readonly stripe: Stripe;
 
-  async createCreditPurchaseCheckout(
-    _userId: string,
-    _dollars: number
-  ): Promise<CheckoutSessionResult> {
-    if (!this.stripeClient) {
-      throw new Error("Stripe client is not configured");
+  constructor(stripeClient?: Stripe) {
+    if (!STRIPE_SECRET_KEY) {
+      throw new Error("Stripe secret key is not configured");
     }
 
-    // Actual Checkout creation will be implemented once Stripe SDK is wired in
+    this.stripe =
+      stripeClient ?? new Stripe(STRIPE_SECRET_KEY, { apiVersion: STRIPE_API_VERSION });
+  }
+
+  async createCreditPurchaseCheckout(
+    userId: string,
+    dollars: number
+  ): Promise<CheckoutSessionResult> {
+    const normalizedAmount = Math.round(dollars);
+    const panels = calculatePanelsFromDollars(normalizedAmount);
+
+    if (!userId) {
+      throw new Error("User id is required to create checkout session");
+    }
+
+    if (panels <= 0) {
+      throw new Error("Amount must be at least the minimum panel bundle");
+    }
+
+    const amountCents = normalizedAmount * 100;
+
+    const session = await this.stripe.checkout.sessions.create({
+      mode: "payment",
+      payment_method_types: ["card"],
+      success_url: STRIPE_SUCCESS_URL,
+      cancel_url: STRIPE_CANCEL_URL,
+      line_items: [
+        {
+          price_data: {
+            currency: "usd",
+            unit_amount: amountCents,
+            product_data: {
+              name: `${panels} Panel Credits`,
+            },
+          },
+          quantity: 1,
+        },
+      ],
+      metadata: {
+        internalUserId: userId,
+        panels: String(panels),
+        amountDollars: String(normalizedAmount),
+      },
+    });
+
+    if (!session.url) {
+      throw new Error("Stripe session did not return a redirect URL");
+    }
+
     return {
-      checkoutSessionId: "",
-      checkoutUrl: "",
+      checkoutSessionId: session.id,
+      checkoutUrl: session.url,
     };
   }
 
-  async handleWebhookEvent(event: StripeWebhookEvent): Promise<boolean> {
-    if (!event?.id || !event?.type) {
-      console.warn("Stripe webhook missing required fields", event);
-      return false;
+  async handleWebhookEvent(payload: Buffer | string, signature?: string): Promise<boolean> {
+    if (!signature) {
+      throw new Error("Missing Stripe signature header");
+    }
+
+    let event: Stripe.Event;
+    try {
+      event = this.stripe.webhooks.constructEvent(
+        payload,
+        signature,
+        STRIPE_WEBHOOK_SECRET
+      );
+    } catch (error) {
+      console.error("Stripe signature verification failed", error);
+      throw error;
     }
 
     const client = await pool.connect();
@@ -55,14 +108,12 @@ export class StripeService {
       const inserted = await this.insertStripeEvent(client, event);
       if (!inserted) {
         await client.query("COMMIT");
-        return false; // already processed
+        return false;
       }
 
       if (event.type === "checkout.session.completed") {
-        const session = event.data?.object as CheckoutSessionLike | undefined;
-        if (session) {
-          await this.recordCheckoutSession(client, session, event.id);
-        }
+        const session = event.data.object as Stripe.Checkout.Session;
+        await this.recordCheckoutSession(client, session, event.id);
       }
 
       await client.query("COMMIT");
@@ -105,12 +156,25 @@ export class StripeService {
       `UPDATE user_credits
        SET panel_balance = panel_balance - $1,
            updated_at = NOW()
-       WHERE user_id = $2 AND panel_balance >= $1
-       RETURNING panel_balance` ,
+       WHERE user_id = $2 AND panel_balance >= $1` ,
       [amount, userId]
     );
 
     return result.rowCount > 0;
+  }
+
+  async createRefund(
+    stripeChargeId: string,
+    reason?: string | null
+  ): Promise<Stripe.Response<Stripe.Refund>> {
+    if (!stripeChargeId) {
+      throw new Error("Stripe charge id is required for refunds");
+    }
+
+    return this.stripe.refunds.create({
+      charge: stripeChargeId,
+      metadata: reason ? { reason } : undefined,
+    });
   }
 
   async loadDashboardMetrics(): Promise<AdminDashboardMetrics> {
@@ -154,12 +218,14 @@ export class StripeService {
     };
   }
 
-  private async insertStripeEvent(client: PoolClient, event: StripeWebhookEvent): Promise<boolean> {
+  private async insertStripeEvent(client: PoolClient, event: Stripe.Event): Promise<boolean> {
+    const metadata = event.data?.object ?? null;
+
     const result = await client.query(
       `INSERT INTO stripe_events (stripe_event_id, event_type, metadata)
        VALUES ($1, $2, $3)
        ON CONFLICT (stripe_event_id) DO NOTHING`,
-      [event.id, event.type, event.data ?? null]
+      [event.id, event.type, metadata]
     );
 
     return result.rowCount > 0;
@@ -167,33 +233,38 @@ export class StripeService {
 
   private async recordCheckoutSession(
     client: PoolClient,
-    session: CheckoutSessionLike,
+    session: Stripe.Checkout.Session,
     eventId: string
   ): Promise<void> {
-    const internalUserId = session.metadata?.internalUserId || session.metadata?.userId;
+    const internalUserId =
+      session.metadata?.internalUserId || session.metadata?.userId || undefined;
+
     if (!internalUserId) {
-      console.warn("Checkout session missing internal user id", session);
+      console.warn("Checkout session missing internal userId", session.id);
       return;
     }
 
     const amountCents = session.amount_total ?? 0;
     const amountDollars = Math.round(amountCents) / 100;
-    const amountDollarsInt = Math.round(amountDollars);
-    const panels = calculatePanelsFromDollars(amountDollarsInt);
+    const amountWhole = Math.round(amountDollars);
+    const panels = calculatePanelsFromDollars(amountWhole);
 
     if (panels <= 0) {
-      console.warn("Checkout session amount too low to grant panels", session);
+      console.warn("Checkout session amount did not map to a panel bundle", session.id);
       return;
     }
 
-    const stripeChargeId = session.payment_intent ?? session.id;
+    const stripeChargeId =
+      (typeof session.payment_intent === "string"
+        ? session.payment_intent
+        : session.payment_intent?.id) || session.id;
 
     await this.addCreditsWithClient(
       client,
       internalUserId,
       panels,
       stripeChargeId,
-      amountDollarsInt
+      amountWhole
     );
 
     await client.query(
@@ -202,8 +273,6 @@ export class StripeService {
        WHERE stripe_event_id = $2`,
       [stripeChargeId, eventId]
     );
-
-    return;
   }
 
   private async addCreditsWithClient(

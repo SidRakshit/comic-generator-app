@@ -18,9 +18,11 @@ interface UserTableProps {
   loading?: boolean;
   onBulkGrantPanels?: (userIds: string[]) => void;
   onBulkEmail?: (userIds: string[]) => void;
+  onImpersonate?: (userId: string) => void;
+  onView?: (userId: string) => void;
 }
 
-export function UserTable({ rows, loading, onBulkGrantPanels, onBulkEmail }: UserTableProps) {
+export function UserTable({ rows, loading, onBulkGrantPanels, onBulkEmail, onImpersonate, onView }: UserTableProps) {
   const [selected, setSelected] = useState<Set<string>>(new Set());
 
   const allSelected = useMemo(() => rows.length > 0 && selected.size === rows.length, [rows, selected]);
@@ -113,10 +115,10 @@ export function UserTable({ rows, loading, onBulkGrantPanels, onBulkEmail }: Use
                     <td className="px-4 py-2">${row.totalSpent.toFixed(2)}</td>
                     <td className="px-4 py-2">{row.lastPurchase ?? "No purchases"}</td>
                     <td className="px-4 py-2 text-right space-x-2">
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" onClick={() => onImpersonate?.(row.user_id)}>
                         Impersonate
                       </Button>
-                      <Button variant="ghost" size="sm">
+                      <Button variant="ghost" size="sm" onClick={() => onView?.(row.user_id)}>
                         View
                       </Button>
                     </td>

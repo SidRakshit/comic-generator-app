@@ -1,7 +1,8 @@
-import { API_CONFIG, SEMANTIC_COLORS } from "@repo/common-types";
+import { SEMANTIC_COLORS } from "@repo/common-types";
 import { AdminShell } from "@/components/layout/admin-shell";
 import { MetricCard } from "@/components/dashboard/metric-card";
 import { DashboardCharts } from "@/components/dashboard/dashboard-charts";
+import { fetchAdminJson } from "@/lib/api-client";
 
 interface DashboardData {
   userMetrics: {
@@ -36,24 +37,8 @@ const FALLBACK_DASHBOARD: DashboardData = {
 };
 
 async function fetchDashboardData(): Promise<DashboardData | null> {
-  const baseUrl =
-    process.env.ADMIN_API_BASE_URL || process.env.NEXT_PUBLIC_API_BASE_URL || API_CONFIG.DEFAULT_BACKEND_URL;
-
   try {
-    const response = await fetch(`${baseUrl.replace(/\/$/, "")}/admin/dashboard`, {
-      cache: "no-store",
-      headers: {
-        "Content-Type": "application/json",
-      },
-    });
-
-    if (!response.ok) {
-      console.warn(`Admin dashboard API responded with ${response.status}`);
-      return null;
-    }
-
-    const data = (await response.json()) as DashboardData;
-    return data;
+    return await fetchAdminJson<DashboardData>("/admin/dashboard");
   } catch (error) {
     console.warn("Failed to fetch admin dashboard data:", error);
     return null;
@@ -102,14 +87,12 @@ export default async function AdminDashboardPage() {
           totalPanelsCreated={dashboard.usageMetrics.totalPanelsCreated}
         />
 
-        <div
-          className={`rounded-lg border p-6 ${SEMANTIC_COLORS.BACKGROUND.PRIMARY} ${SEMANTIC_COLORS.BORDER.DEFAULT}`}
-        >
+        <div className={`rounded-lg border p-6 ${SEMANTIC_COLORS.BACKGROUND.PRIMARY} ${SEMANTIC_COLORS.BORDER.DEFAULT}`}>
           <h2 className="text-lg font-semibold">Next Actions</h2>
           <ul className="mt-3 list-disc space-y-2 pl-5 text-sm">
-            <li>Wire Stripe SDK into the admin API to replace placeholder responses.</li>
-            <li>Hook up authentication so the admin console fetches live data.</li>
-            <li>Replace this callout with charts once analytics endpoints are ready.</li>
+            <li>Monitor low balance users ({dashboard.usageMetrics.usersWithLowBalance}) and trigger outreach.</li>
+            <li>Use the billing export to reconcile revenue with Stripe payouts.</li>
+            <li>Review the analytics tab for cohort and usage trends.</li>
           </ul>
         </div>
       </section>

@@ -4,7 +4,8 @@ import { useState } from "react";
 import { useCredits } from "@/hooks/use-credits";
 import { PurchaseCreditsModal } from "@/components/billing/purchase-credits-modal";
 import { Button } from "@repo/ui/button";
-import { SEMANTIC_COLORS } from "@repo/common-types";
+import { SEMANTIC_COLORS, API_ENDPOINTS } from "@repo/common-types";
+import { apiRequest } from "@/lib/api";
 
 export function CreditBalanceBanner() {
   const { credits, isLoading, canCreatePanel, refreshCredits } = useCredits();
@@ -45,8 +46,18 @@ export function CreditBalanceBanner() {
         isOpen={modalOpen}
         onClose={() => setModalOpen(false)}
         onCheckout={async (amount) => {
-          console.log("Checkout amount", amount);
-          await refreshCredits();
+          try {
+            const session = await apiRequest<{ checkoutUrl: string }>(
+              API_ENDPOINTS.BILLING_CHECKOUT,
+              "POST",
+              { amount }
+            );
+            if (session.checkoutUrl) {
+              window.location.assign(session.checkoutUrl);
+            }
+          } catch (error) {
+            console.error("Failed to start checkout", error);
+          }
         }}
       />
     </div>

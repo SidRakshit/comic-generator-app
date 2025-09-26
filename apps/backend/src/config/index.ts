@@ -13,6 +13,9 @@ const requiredEnvVars = [
   ENV_VARS.COGNITO_CLIENT_ID,
   ENV_VARS.OPENAI_API_KEY,
   ENV_VARS.FRONTEND_URL,
+  ENV_VARS.STRIPE_SECRET_KEY,
+  ENV_VARS.STRIPE_WEBHOOK_SECRET,
+  ENV_VARS.ADMIN_IMPERSONATION_SECRET,
 ];
 
 const missingEnvVars = requiredEnvVars.filter((varName) => !process.env[varName]);
@@ -47,6 +50,18 @@ export const OPENAI_API_KEY = process.env[ENV_VARS.OPENAI_API_KEY]!;
 export const OPENAI_CHAT_MODEL = process.env.OPENAI_CHAT_MODEL || AI_CONFIG.OPENAI.MODELS.CHAT;
 export const OPENAI_IMAGE_MODEL = process.env.OPENAI_IMAGE_MODEL || AI_CONFIG.OPENAI.MODELS.IMAGE;
 export const FRONTEND_URL = process.env[ENV_VARS.FRONTEND_URL]!;
+export const STRIPE_SECRET_KEY = process.env[ENV_VARS.STRIPE_SECRET_KEY]!;
+export const STRIPE_WEBHOOK_SECRET = process.env[ENV_VARS.STRIPE_WEBHOOK_SECRET]!;
+export const STRIPE_SUCCESS_URL = process.env.STRIPE_SUCCESS_URL || `${FRONTEND_URL.replace(/\/$/, "")}/billing/success`;
+export const STRIPE_CANCEL_URL = process.env.STRIPE_CANCEL_URL || `${FRONTEND_URL.replace(/\/$/, "")}/billing/cancel`;
+export const ADMIN_SERVICE_TOKEN = process.env.ADMIN_SERVICE_TOKEN || "";
+export const ADMIN_SERVICE_USER_ID = process.env.ADMIN_SERVICE_USER_ID || null;
+export const ADMIN_SERVICE_TOKEN_HASH = process.env.ADMIN_SERVICE_TOKEN_HASH || "";
+export const ADMIN_IMPERSONATION_SECRET = process.env.ADMIN_IMPERSONATION_SECRET!;
+
+if (!ADMIN_SERVICE_TOKEN && !ADMIN_SERVICE_TOKEN_HASH) {
+  console.warn('[WARN] ADMIN_SERVICE_TOKEN or ADMIN_SERVICE_TOKEN_HASH is not configured. Admin service calls will be rejected.');
+}
 
 // Create S3 client with error handling
 let s3Client: S3Client | null = null;

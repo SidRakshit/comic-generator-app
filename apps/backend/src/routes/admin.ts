@@ -3,8 +3,12 @@
 import express from "express";
 import { authenticateToken, requireAdminRole } from "../middleware/auth.middleware";
 import { adminController } from "../controllers/admin.controller";
+import { adminRateLimiter } from "../middleware/rate-limit.middleware";
 
 const router = express.Router();
+
+router.use(express.json());
+router.use(adminRateLimiter);
 
 router.get(
   "/dashboard",
@@ -55,6 +59,13 @@ router.get(
   adminController.getPurchaseHistory.bind(adminController)
 );
 
+router.get(
+  "/billing/purchases/export",
+  authenticateToken,
+  requireAdminRole("manage_billing"),
+  adminController.exportPurchaseHistory.bind(adminController)
+);
+
 router.post(
   "/billing/refund",
   authenticateToken,
@@ -67,6 +78,34 @@ router.get(
   authenticateToken,
   requireAdminRole("view_audit_logs"),
   adminController.getAuditLogs.bind(adminController)
+);
+
+router.get(
+  "/analytics/overview",
+  authenticateToken,
+  requireAdminRole("manage_billing"),
+  adminController.getAnalyticsOverview.bind(adminController)
+);
+
+router.post(
+  "/security/mfa/setup",
+  authenticateToken,
+  requireAdminRole(),
+  adminController.setupMfa.bind(adminController)
+);
+
+router.post(
+  "/security/mfa/verify",
+  authenticateToken,
+  requireAdminRole(),
+  adminController.verifyMfa.bind(adminController)
+);
+
+router.delete(
+  "/security/mfa",
+  authenticateToken,
+  requireAdminRole(),
+  adminController.disableMfa.bind(adminController)
 );
 
 export default router;
