@@ -1,7 +1,7 @@
 // src/services/comics.service.ts
 
 // --- Core Dependencies ---
-import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { PutObjectCommand, ObjectCannedACL } from "@aws-sdk/client-s3";
 import axios from "axios";
 import * as crypto from "crypto";
 import { PoolClient } from "pg";
@@ -227,13 +227,13 @@ Guidelines:
 			const s3Key = `users/${userId}/comics/${comicId}/panels/${panelId}.${fileExtension}`;
 			console.log(`🔧 Uploading image to S3 bucket: ${S3_BUCKET_NAME}, Key: ${s3Key}`);
 
-			// RESTORED: Original working PutObjectCommand format
+			// RESTORED: Original working PutObjectCommand format with proper ACL type
 			const putObjectParams = {
 				Bucket: S3_BUCKET_NAME,
 				Key: s3Key,
 				Body: imageData,
 				ContentType: contentType,
-				ACL: "public-read",
+				ACL: "public-read" as ObjectCannedACL,
 			};
 			const command = new PutObjectCommand(putObjectParams);
 			await s3Client.send(command);
