@@ -1,7 +1,7 @@
 // src/services/comics.service.ts
 
 // --- Core Dependencies ---
-import { PutObjectCommand, ObjectCannedACL } from "@aws-sdk/client-s3";
+import { PutObjectCommand } from "@aws-sdk/client-s3";
 import axios from "axios";
 import * as crypto from "crypto";
 import { PoolClient } from "pg";
@@ -200,13 +200,12 @@ Style: Clean comic book art style, vibrant colors, clear line work, professional
 			const randomString = crypto.randomBytes(8).toString("hex");
 			const s3Key = `comic-panels/${timestamp}-${randomString}.png`;
 
-			// Upload to S3
+			// Upload to S3 - removed ACL to avoid permission issues
 			const uploadCommand = new PutObjectCommand({
 				Bucket: S3_BUCKET_NAME,
 				Key: s3Key,
 				Body: imageBuffer,
 				ContentType: "image/png",
-				ACL: ObjectCannedACL.public_read,
 			});
 
 			await s3Client.send(uploadCommand);
