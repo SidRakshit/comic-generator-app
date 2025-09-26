@@ -9,3 +9,4 @@ export * from './file';
 export * from './debounce';
 export * from './delay';
 export * from './validation';
+export * from './credits';
