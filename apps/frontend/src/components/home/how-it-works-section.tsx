@@ -1,5 +1,6 @@
 // src/components/home/how-it-works-section.tsx
 import { Book, Wand2, Users, Brush } from "lucide-react";
+import { SEMANTIC_COLORS } from "@repo/common-types";
 import HowItWorksCard from "./how-it-works-card";
 
 const steps = [
@@ -33,7 +34,7 @@ export default function HowItWorksSection() {
 	return (
 		<section className="py-16">
 			<div className="container mx-auto px-4">
-				<h2 className="text-3xl font-bold text-center mb-12">How It Works</h2>
+				<h2 className={`text-3xl font-bold text-center mb-12 ${SEMANTIC_COLORS.TEXT.PRIMARY}`}>How It Works</h2>
 				<div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
 					{steps.map((step, index) => (
 						<HowItWorksCard

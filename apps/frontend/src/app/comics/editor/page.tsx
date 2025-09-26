@@ -216,8 +216,8 @@ function NewComicEditorContent() {
 				</Link>{" "}
 			</div>
 			<div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
-				<h1 className="text-3xl font-bold break-words">
-					{comic.title || `New ${templateName} Comic`}
+				<h1 className={`text-3xl font-bold break-words ${SEMANTIC_COLORS.TEXT.PRIMARY}`}>
+				Comic Title: {comic.title || `New ${templateName} Comic`}
 				</h1>
 				<div className="flex gap-3 flex-shrink-0">
 					<Button
@@ -233,8 +233,8 @@ function NewComicEditorContent() {
 				</div>
 			</div>
 			<div className={`${SEMANTIC_COLORS.BACKGROUND.PRIMARY} ${UI_CONSTANTS.BORDER_RADIUS.LARGE} shadow-md p-4 md:p-6`}>
-				<h2 className="text-xl font-semibold mb-2">
-					Edit Panels ({comic.panels?.length || 0} total - {templateName})
+				<h2 className={`text-xl font-semibold mb-2 ${SEMANTIC_COLORS.TEXT.PRIMARY}`}>
+					Edit Panels ({comic.panels?.length || 0} total)
 				</h2>
 				<p className={`${SEMANTIC_COLORS.TEXT.SECONDARY} mb-6 text-sm`}>
 					Click empty panels to generate, click images to zoom, use ✏️ to

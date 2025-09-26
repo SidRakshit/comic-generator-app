@@ -29,7 +29,7 @@ const TemplateSelector: React.FC<TemplateSelectorProps> = ({ onSelect, disabled 
           <div className={`${UI_CONSTANTS.ASPECT_RATIOS.SQUARE} ${SEMANTIC_COLORS.BACKGROUND.TERTIARY} mb-2 flex items-center justify-center`}>         
             <span className={`${SEMANTIC_COLORS.TEXT.MUTED} text-sm`}>Preview</span>
           </div>
-          <h3 className="font-semibold">{template.name}</h3>
+              <h3 className={`font-semibold ${SEMANTIC_COLORS.TEXT.PRIMARY}`}>{template.name}</h3>
           <p className={`text-sm ${SEMANTIC_COLORS.TEXT.TERTIARY}`}>{template.panelCount} panels</p>
         </div>
       ))}

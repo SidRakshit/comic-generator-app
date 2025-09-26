@@ -34,13 +34,13 @@ export default function ComicMetadataForm({
 	// Rest of the component code remains the same...
 	return (
 		<div>
-			<h2 className="text-xl font-semibold mb-4 ${SEMANTIC_COLORS.TEXT.PRIMARY}">
+			<h2 className={`text-xl font-semibold mb-4 ${SEMANTIC_COLORS.TEXT.PRIMARY}`}>
 				1. Enter Comic Details
 			</h2>
 			<div className="space-y-4">
 				{/* Title */}
 				<div>
-					<Label htmlFor="title" className="${SEMANTIC_COLORS.TEXT.PRIMARY}">
+					<Label htmlFor="title" className={`${SEMANTIC_COLORS.TEXT.PRIMARY}`}>
 						Title
 					</Label>
 					<Input
@@ -54,7 +54,7 @@ export default function ComicMetadataForm({
 				</div>
 				{/* Genre */}
 				<div>
-					<Label htmlFor="genre" className="${SEMANTIC_COLORS.TEXT.PRIMARY}">
+					<Label htmlFor="genre" className={`${SEMANTIC_COLORS.TEXT.PRIMARY}`}>
 						Genre (Optional)
 					</Label>
 					<Input
@@ -67,7 +67,7 @@ export default function ComicMetadataForm({
 				</div>
 				{/* Description */}
 				<div>
-					<Label htmlFor="description" className="${SEMANTIC_COLORS.TEXT.PRIMARY}">
+					<Label htmlFor="description" className={`${SEMANTIC_COLORS.TEXT.PRIMARY}`}>
 						Description (Optional)
 					</Label>
 					<Textarea
@@ -81,7 +81,7 @@ export default function ComicMetadataForm({
 
 				{/* Characters */}
 				<div>
-					<h3 className="text-lg font-semibold mb-2 border-t pt-4 ${SEMANTIC_COLORS.TEXT.PRIMARY}">
+					<h3 className={`text-lg font-semibold mb-2 border-t pt-4 ${SEMANTIC_COLORS.TEXT.PRIMARY}`}>
 						Characters
 					</h3>
 					{comic.characters?.map((char, index) => (
@@ -99,15 +99,16 @@ export default function ComicMetadataForm({
 						variant="outline"
 						size="sm"
 						onClick={onAddCharacter}
-						className="${SEMANTIC_COLORS.TEXT.PRIMARY}"
+						className={`${SEMANTIC_COLORS.TEXT.PRIMARY}`}
 					>
-						<Plus className="h-4 w-4 mr-1" /> Add Character
+						<Plus className={`h-4 w-4 mr-1 ${SEMANTIC_COLORS.TEXT.INVERTED}`} /> 
+						<span className={`${SEMANTIC_COLORS.TEXT.INVERTED}`}>Add Character</span>
 					</Button>
 				</div>
 			</div>
 			{/* Navigation Button */}
 			<div className="mt-6 text-right">
-				<Button onClick={onNextStep} className="${SEMANTIC_COLORS.TEXT.PRIMARY}">
+				<Button onClick={onNextStep} className={`${SEMANTIC_COLORS.TEXT.PRIMARY}`}>
 					Next: Choose Template
 				</Button>
 			</div>
