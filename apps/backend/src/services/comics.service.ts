@@ -16,7 +16,47 @@ import {
 import pool from "../database";
 import { Panel } from "@repo/common-types";
 
-// Local types for database operations
+// RESTORED: Original working data types
+interface PanelDataFromRequest {
+	panelNumber: number;
+	prompt: string;
+	dialogue?: string;
+	layoutPosition: object;
+	imageBase64: string; // Expect base64 data from frontend
+}
+
+interface PageDataFromRequest {
+	pageNumber: number;
+	panels: PanelDataFromRequest[];
+}
+
+interface ComicDataFromRequest {
+	title: string;
+	description?: string;
+	characters?: object[];
+	setting?: object;
+	pages: PageDataFromRequest[];
+}
+
+// RESTORED: Original working response types
+interface FullPanelData extends Omit<PanelDataFromRequest, "imageBase64"> {
+	panel_id: string;
+	image_url: string; // Final S3 URL
+}
+
+interface FullPageData extends Omit<PageDataFromRequest, "panels"> {
+	page_id: string;
+	panels: FullPanelData[];
+}
+
+interface FullComicData extends Omit<ComicDataFromRequest, "pages"> {
+	comic_id: string;
+	created_at: Date;
+	updated_at: Date;
+	pages: FullPageData[];
+}
+
+// Local types for database operations (for other methods)
 interface Comic {
 	comic_id: string;
 	user_id: string;
@@ -257,134 +297,259 @@ Guidelines:
 	}
 
 	/**
-	 * Saves a comic with its pages and panels to the database.
-	 * Handles both creating new comics and updating existing ones.
+	 * RESTORED: Original working saveComicWithPanels function
+	 * Saves or updates a comic, handling panel image uploads (from base64) to S3 and DB operations.
+	 * @param internalUserId - The ID (UUID) of the user creating/updating the comic.
+	 * @param comicData - The comic data received from the request (expects imageBase64 per panel).
+	 * @param existingComicId - Optional ID (UUID) if updating an existing comic.
+	 * @returns The saved/updated comic object.
 	 */
 	async saveComicWithPanels(
 		internalUserId: string,
-		comicData: ComicWithPanels,
-		comicId?: string
-	): Promise<ComicWithPanels> {
+		comicData: ComicDataFromRequest,
+		existingComicId?: string
+	): Promise<FullComicData | null> {
 		const client: PoolClient = await pool.connect();
+		console.log(
+			`Starting saveComicWithPanels for user: ${internalUserId}, comicId: ${
+				existingComicId || "NEW"
+			}`
+		);
 
 		try {
 			await client.query("BEGIN");
 
-			let savedComic: Comic;
+			// Verify user exists
+			const userCheckResult = await client.query(
+				"SELECT user_id FROM users WHERE user_id = $1",
+				[internalUserId]
+			);
+			if (userCheckResult.rows.length === 0) {
+				console.error(`User not found for internal ID: ${internalUserId}`);
+				throw new Error("User not found");
+			}
+			console.log(`User ${internalUserId} verified.`);
 
-			if (comicId) {
+			let comicId: string;
+
+			if (existingComicId) {
 				// Update existing comic
-				console.log(
-					`Service: Updating existing comic ${comicId} for user ${internalUserId}`
-				);
-
-				// Verify the comic belongs to the user
-				const existingComicResult = await client.query(
-					"SELECT * FROM comics WHERE comic_id = $1 AND user_id = $2",
+				comicId = existingComicId;
+				console.log(`Updating existing comic: ${comicId}`);
+				
+				const comicCheckResult = await client.query(
+					"SELECT comic_id FROM comics WHERE comic_id = $1 AND user_id = $2 FOR UPDATE",
 					[comicId, internalUserId]
 				);
-
-				if (existingComicResult.rows.length === 0) {
+				if (comicCheckResult.rows.length === 0) {
 					throw new Error("Comic not found or user mismatch");
 				}
-
-				// Update the comic
-				const updateComicResult = await client.query(
-					`UPDATE comics 
-           SET title = $1, description = $2, updated_at = NOW()
-           WHERE comic_id = $3 AND user_id = $4
-           RETURNING *`,
-					[comicData.title, comicData.description, comicId, internalUserId]
+				
+				await client.query(
+					"UPDATE comics SET title = $1, description = $2, characters = $3, setting = $4, updated_at = NOW() WHERE comic_id = $5",
+					[
+						comicData.title,
+						comicData.description,
+						JSON.stringify(comicData.characters ?? null),
+						JSON.stringify(comicData.setting ?? null),
+						comicId,
+					]
 				);
-
-				savedComic = updateComicResult.rows[0];
-
-				// Delete existing pages and panels for this comic
-				await client.query("DELETE FROM panels WHERE comic_id = $1", [comicId]);
+				console.log(`Comic ${comicId} metadata updated.`);
+				
+				// Clear old pages/panels
+				console.log(`Clearing old pages/panels for comic ${comicId}`);
+				await client.query(
+					"DELETE FROM panels WHERE page_id IN (SELECT page_id FROM pages WHERE comic_id = $1)",
+					[comicId]
+				);
 				await client.query("DELETE FROM pages WHERE comic_id = $1", [comicId]);
+				console.log(`Old pages/panels cleared for comic ${comicId}.`);
 			} else {
 				// Create new comic
-				console.log(
-					`Service: Creating new comic for user ${internalUserId}: ${comicData.title}`
+				console.log(`Creating new comic for user: ${internalUserId}`);
+				comicId = crypto.randomUUID();
+				
+				await client.query(
+					"INSERT INTO comics (comic_id, user_id, title, description, characters, setting, created_at, updated_at) VALUES ($1, $2, $3, $4, $5, $6, NOW(), NOW())",
+					[
+						comicId,
+						internalUserId,
+						comicData.title,
+						comicData.description,
+						JSON.stringify(comicData.characters ?? null),
+						JSON.stringify(comicData.setting ?? null),
+					]
 				);
-
-				const insertComicResult = await client.query(
-					`INSERT INTO comics (user_id, title, description, created_at, updated_at) 
-           VALUES ($1, $2, $3, NOW(), NOW()) 
-           RETURNING *`,
-					[internalUserId, comicData.title, comicData.description]
-				);
-
-				savedComic = insertComicResult.rows[0];
+				console.log(`Created new comic with ID: ${comicId}`);
 			}
 
-			// Save pages and panels
-			const savedPages: ComicPage[] = [];
-
-			for (const page of comicData.pages) {
+			// Insert pages and panels
+			for (const pageData of comicData.pages) {
+				const pageId = crypto.randomUUID();
+				await client.query(
+					"INSERT INTO pages (page_id, comic_id, page_number) VALUES ($1, $2, $3)",
+					[pageId, comicId, pageData.pageNumber]
+				);
 				console.log(
-					`Service: Saving page ${page.page_number} for comic ${savedComic.comic_id}`
+					`Created page number: ${pageData.pageNumber}, DB ID: ${pageId}`
 				);
 
-				// Insert the page
-				const insertPageResult = await client.query(
-					`INSERT INTO pages (comic_id, page_number, created_at) 
-           VALUES ($1, $2, NOW()) 
-           RETURNING *`,
-					[savedComic.comic_id, page.page_number]
-				);
-
-				const savedPage = insertPageResult.rows[0];
-
-				// Save panels for this page
-				const savedPanels: Panel[] = [];
-
-				for (const panel of page.panels) {
-					console.log(
-						`Service: Saving panel ${panel.panelNumber || 'unknown'} for page ${savedPage.page_id}`
-					);
-
-					const insertPanelResult = await client.query(
-						`INSERT INTO panels (comic_id, page_id, panel_number, dialogue_text, panel_description, image_url, s3_key, s3_url, created_at) 
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, NOW()) 
-             RETURNING *`,
+				for (const panelData of pageData.panels) {
+					const panelId = crypto.randomUUID();
+					await client.query(
+						"INSERT INTO panels (panel_id, page_id, panel_number, prompt, dialogue, layout_position) VALUES ($1, $2, $3, $4, $5, $6)",
 						[
-							savedComic.comic_id,
-							savedPage.page_id,
-							panel.panelNumber || 1,
-							panel.prompt || '',
-							panel.prompt || '',
-							panel.imageUrl || null,
-							null, // s3_key
-							panel.imageUrl || null,
+							panelId,
+							pageId,
+							panelData.panelNumber,
+							panelData.prompt,
+							panelData.dialogue,
+							JSON.stringify(panelData.layoutPosition ?? null),
 						]
 					);
+					console.log(
+						`Created panel number: ${panelData.panelNumber}, DB ID: ${panelId}`
+					);
 
-					savedPanels.push(insertPanelResult.rows[0]);
+					// Upload image to S3 if base64 data is provided
+					console.log(
+						`Uploading image for panel ${panelId} using provided base64 data.`
+					);
+					if (!panelData.imageBase64) {
+						console.warn(
+							`Panel ${panelId} is missing image data. Skipping upload.`
+						);
+						await client.query(
+							"UPDATE panels SET image_url = NULL, updated_at = NOW() WHERE panel_id = $1",
+							[panelId]
+						);
+						continue;
+					}
+
+					const s3ImageUrl = await this.uploadImageToS3(
+						panelData.imageBase64,
+						internalUserId,
+						comicId,
+						panelId
+					);
+
+					await client.query(
+						"UPDATE panels SET image_url = $1, updated_at = NOW() WHERE panel_id = $2",
+						[s3ImageUrl, panelId]
+					);
+					console.log(`Updated panel ${panelId} with S3 URL: ${s3ImageUrl}`);
 				}
-
-				savedPages.push({
-					...savedPage,
-					panels: savedPanels,
-				});
 			}
 
 			await client.query("COMMIT");
-
-			console.log(
-				`Service: Successfully saved comic ${savedComic.comic_id} with ${savedPages.length} pages`
-			);
-
-			return {
-				...savedComic,
-				pages: savedPages,
-			};
+			console.log(`Successfully saved comic ${comicId}. Transaction committed.`);
+			return this.getComicById(comicId, internalUserId);
 		} catch (error: any) {
 			await client.query("ROLLBACK");
-			console.error("Error in saveComicWithPanels:", error.message);
-			throw error;
+			console.error(
+				`Error during saveComicWithPanels for comic ${
+					existingComicId || "NEW"
+				}. Rolling back transaction.`,
+				error
+			);
+			if (error instanceof Error) {
+				throw error;
+			} else {
+				throw new Error(`Failed to save comic: ${error.message || error}`);
+			}
 		} finally {
 			client.release();
+			console.log(
+				`Finished saveComicWithPanels attempt for comic ${
+					existingComicId || "NEW"
+				}. Client released.`
+			);
+		}
+	}
+
+	/**
+	 * RESTORED: Original working getComicById function
+	 */
+	async getComicById(
+		comicId: string,
+		internalUserId: string
+	): Promise<FullComicData | null> {
+		console.log(
+			`Fetching comic details for comic: ${comicId}, user: ${internalUserId}`
+		);
+		const query = `
+            SELECT
+                c.comic_id, c.title, c.description, c.characters, c.setting, c.created_at, c.updated_at,
+                p.page_id, p.page_number,
+                pn.panel_id, pn.panel_number, pn.prompt, pn.dialogue, pn.layout_position, pn.image_url
+            FROM comics c
+            LEFT JOIN pages p ON c.comic_id = p.comic_id
+            LEFT JOIN panels pn ON p.page_id = pn.page_id
+            WHERE c.comic_id = $1 AND c.user_id = $2
+            ORDER BY p.page_number ASC, pn.panel_number ASC;
+        `;
+
+		try {
+			const result = await pool.query(query, [comicId, internalUserId]);
+
+			if (result.rows.length === 0) {
+				console.log(
+					`Comic ${comicId} not found or user ${internalUserId} not authorized.`
+				);
+				return null;
+			}
+
+			const comic: FullComicData = {
+				comic_id: result.rows[0].comic_id,
+				title: result.rows[0].title,
+				description: result.rows[0].description || undefined,
+				characters: result.rows[0].characters || undefined,
+				setting: result.rows[0].setting || undefined,
+				created_at: result.rows[0].created_at,
+				updated_at: result.rows[0].updated_at,
+				pages: [],
+			};
+
+			const pagesMap = new Map<string, FullPageData>();
+
+			for (const row of result.rows) {
+				if (!row.page_id) continue;
+
+				let page = pagesMap.get(row.page_id);
+				if (!page) {
+					page = {
+						page_id: row.page_id,
+						pageNumber: row.page_number,
+						panels: [],
+					};
+					pagesMap.set(row.page_id, page);
+					comic.pages.push(page);
+				}
+
+				if (row.panel_id) {
+					page.panels.push({
+						panel_id: row.panel_id,
+						panelNumber: row.panel_number,
+						prompt: row.prompt,
+						dialogue: row.dialogue || undefined,
+						layoutPosition: row.layout_position || {},
+						image_url: row.image_url,
+					});
+				}
+			}
+
+			// Sort pages and panels after processing all rows
+			comic.pages.sort((a, b) => a.pageNumber - b.pageNumber);
+			comic.pages.forEach((page) => {
+				page.panels.sort((a, b) => a.panelNumber - b.panelNumber);
+			});
+
+			console.log(`Successfully fetched comic details for ${comicId}`);
+			return comic;
+		} catch (error: any) {
+			console.error(`Error fetching comic ${comicId} details:`, error);
+			throw new Error("Failed to retrieve comic details.");
 		}
 	}
 
@@ -407,77 +572,6 @@ Guidelines:
 			return result.rows;
 		} catch (error: any) {
 			console.error("Error in listComicsByUser:", error.message);
-			throw error;
-		}
-	}
-
-	/**
-	 * Retrieves a specific comic with all its pages and panels.
-	 */
-	async getComicById(
-		comicId: string,
-		internalUserId: string
-	): Promise<ComicWithPanels | null> {
-		try {
-			console.log(
-				`Service: Fetching comic ${comicId} for user ${internalUserId}`
-			);
-
-			// Get the comic
-			const comicResult = await pool.query(
-				`SELECT * FROM comics 
-         WHERE comic_id = $1 AND user_id = $2`,
-				[comicId, internalUserId]
-			);
-
-			if (comicResult.rows.length === 0) {
-				console.log(`Service: Comic ${comicId} not found for user`);
-				return null;
-			}
-
-			const comic = comicResult.rows[0];
-
-			// Get pages with panels
-			const pagesResult = await pool.query(
-				`SELECT p.*, 
-            json_agg(
-              json_build_object(
-                'panel_id', pan.panel_id,
-                'panelNumber', pan.panel_number,
-                'dialogueText', pan.dialogue_text,
-                'panelDescription', pan.panel_description,
-                'imageUrl', pan.image_url,
-                's3Key', pan.s3_key,
-                's3Url', pan.s3_url,
-                'createdAt', pan.created_at
-              ) ORDER BY pan.panel_number
-            ) as panels
-         FROM pages p
-         LEFT JOIN panels pan ON p.page_id = pan.page_id
-         WHERE p.comic_id = $1
-         GROUP BY p.page_id, p.comic_id, p.page_number, p.created_at
-         ORDER BY p.page_number`,
-				[comicId]
-			);
-
-			const pages = pagesResult.rows.map((page) => ({
-				...page,
-				panels: page.panels.filter((panel: any) => panel.panel_id !== null),
-			}));
-
-			console.log(
-				`Service: Found comic with ${pages.length} pages and ${pages.reduce(
-					(total: number, page: any) => total + page.panels.length,
-					0
-				)} panels`
-			);
-
-			return {
-				...comic,
-				pages,
-			};
-		} catch (error: any) {
-			console.error("Error in getComicById:", error.message);
 			throw error;
 		}
 	}
