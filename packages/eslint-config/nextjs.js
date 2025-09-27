@@ -1,7 +1,7 @@
 module.exports = {
   extends: [
     "next/core-web-vitals",
-    "turbo"
+    "turbo/next"
   ],
   rules: {
     "@next/next/no-html-link-for-pages": "off",
