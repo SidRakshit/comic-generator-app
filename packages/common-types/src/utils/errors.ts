@@ -29,6 +29,7 @@ export enum ErrorCode {
 	INTERNAL_ERROR = 'INTERNAL_ERROR',
 	RATE_LIMITED = 'RATE_LIMITED',
 	SERVICE_UNAVAILABLE = 'SERVICE_UNAVAILABLE',
+	PAYMENT_REQUIRED = 'PAYMENT_REQUIRED',
 }
 
 /**
@@ -148,6 +149,10 @@ export const ErrorFactory = {
 	// General errors
 	internalError(message = 'Internal server error', details?: Record<string, unknown>): AppError {
 		return new AppError(message, ErrorCode.INTERNAL_ERROR, 500, details);
+	},
+
+	paymentRequired(message = 'Payment required'): AppError {
+		return new AppError(message, ErrorCode.PAYMENT_REQUIRED, 402);
 	},
 };
 

@@ -3,7 +3,7 @@
 import { Request, Response } from "express";
 import type { AuthenticatedRequestFields } from "@repo/common-types";
 import { stripeService } from "../services/stripe.service";
-import { adminService } from "../services/admin.service";
+import { adminService, PurchaseHistoryItem } from "../services/admin.service";
 import { recordAdminAuditLog } from "../utils/audit";
 import { FRONTEND_URL } from "../config";
 import { createImpersonationToken } from "../utils/impersonation";
@@ -80,7 +80,9 @@ export class AdminController {
       });
 
       const frontendBase = FRONTEND_URL.replace(/\/$/, "");
-      const redirectUrl = `${frontendBase}/impersonate?token=${encodeURIComponent(tokenResult.token)}`;
+      const redirectUrl = `${frontendBase}/impersonate?token=${encodeURIComponent(
+        tokenResult.token
+      )}`;
 
       res.status(201).json({
         impersonationToken: tokenResult.token,
@@ -158,7 +160,7 @@ export class AdminController {
         "status",
       ];
 
-      const lines = history.map((row) =>
+      const lines = history.map((row: PurchaseHistoryItem) =>
         [
           row.purchase_id,
           row.user_id,
@@ -171,8 +173,8 @@ export class AdminController {
         ]
           .map((value) => {
             const str = typeof value === "number" ? value.toString() : value;
-            if (str?.includes(",") || str?.includes("\"")) {
-              return `"${str.replace(/\"/g, '""')}"`;
+            if (str?.includes(",") || str?.includes('"')) {
+              return `"${str.replace(/"/g, '""')}"`;
             }
             return str ?? "";
           })

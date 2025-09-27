@@ -17,7 +17,7 @@ import { verifyServiceToken } from "../utils/service-token";
 import { verifyImpersonationToken } from "../utils/impersonation";
 
 // Create the final AuthenticatedRequest type by intersecting Express Request with our fields
-type AuthenticatedRequest = Request & AuthenticatedRequestFields;
+export type AuthenticatedRequest = Request & AuthenticatedRequestFields;
 
 interface AdminContextRow {
 	roles: AdminRole[] | null;

@@ -1,7 +1,6 @@
-import { CreditPurchase } from "@repo/common-types";
 import pool from "../database";
 import { stripeService } from "./stripe.service";
-import { AdminAnalyticsOverview } from "@repo/common-types";
+import { AdminAnalyticsOverview, CreditPurchase } from "@repo/common-types";
 
 export interface AdminUserListItem {
   user_id: string;
@@ -312,6 +311,14 @@ class AdminService {
       `DELETE FROM admin_mfa_enrollments WHERE admin_user_id = $1`,
       [adminUserId]
     );
+  }
+
+  async isAdmin(userId: string): Promise<boolean> {
+    const result = await pool.query(
+      "SELECT 1 FROM admin_users WHERE user_id = $1",
+      [userId]
+    );
+    return result.rows.length > 0;
   }
 }
 
