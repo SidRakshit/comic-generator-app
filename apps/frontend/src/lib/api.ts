@@ -53,9 +53,7 @@ export async function apiRequest<T = unknown>(
 		config.body = JSON.stringify(body);
 	}
 
-	const url = `${API_BASE_URL}${
-		endpoint.startsWith("/") ? "" : "/"
-	}${endpoint}`;
+	const url = `${API_BASE_URL.replace(/\/api$/, "")}${endpoint.startsWith("/") ? "" : "/"}${endpoint}`;
 	console.log(`API Request: ${method} ${url}`);
 
 	try {

@@ -326,10 +326,12 @@ export default function ProfilePage() {
 													{" "}
 													<Edit size={16} className="mr-1" /> Edit Profile{" "}
 												</Button>
-												<Link href="/billing">
-													<Button variant="outline" className="flex items-center">
-														<PlusCircle size={16} className="mr-1" /> Buy Credits
-													</Button>
+												<Link href="/billing" passHref>
+													<a className="flex items-center">
+														<Button variant="outline">
+															<PlusCircle size={16} className="mr-1" /> Buy Credits
+														</Button>
+													</a>
 												</Link>
 											</>
 										)}
