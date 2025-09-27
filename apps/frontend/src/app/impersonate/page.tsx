@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { API_CONFIG, API_ENDPOINTS, SEMANTIC_COLORS } from "@repo/common-types";
 import { Button } from "@repo/ui/button";
@@ -14,7 +14,7 @@ type StatusState = {
   message: string;
 };
 
-export default function ImpersonatePage() {
+function ImpersonatePageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const [state, setState] = useState<StatusState>({
@@ -119,5 +119,13 @@ export default function ImpersonatePage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function ImpersonatePage() {
+  return (
+    <Suspense fallback={<div>Loading...</div>}>
+      <ImpersonatePageContent />
+    </Suspense>
   );
 }
