@@ -35,11 +35,7 @@
     "pg": "^8.14.1",
     "prom-client": "^15.1.1",
     "on-finished": "^2.4.1",
-    "stripe": "^14.23.0",
-    "update": "^0.7.4"
-    "next": "15.5.4",
-    "pg": "^8.14.1",
-    "update": "^0.4.2"
+    "stripe": "^14.23.0"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
