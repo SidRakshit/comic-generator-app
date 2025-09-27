@@ -1,5 +1,3 @@
-// apps/backend/src/services/stripe.service.ts
-
 import Stripe from "stripe";
 import { PoolClient } from "pg";
 import {
@@ -301,6 +299,23 @@ export class StripeService {
     );
 
     return result.rows[0] ?? null;
+  }
+
+  async hasSufficientCredits(userId: string, amount: number = 1): Promise<boolean> {
+    if (!userId) {
+      return false;
+    }
+
+    const result = await pool.query(
+      `SELECT panel_balance FROM user_credits WHERE user_id = $1`,
+      [userId]
+    );
+
+    if (result.rows.length === 0) {
+      return false;
+    }
+
+    return result.rows[0].panel_balance >= amount;
   }
 }
 

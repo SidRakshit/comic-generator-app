@@ -33,6 +33,7 @@ export default function SignupPage() {
 				password,
 				options: { userAttributes: { email } },
 			});
+			console.log("New user ID:", userId);
 			if (isSignUpComplete) {
 				router.push("/profile");
 			} else if (nextStep.signUpStep === "CONFIRM_SIGN_UP") {

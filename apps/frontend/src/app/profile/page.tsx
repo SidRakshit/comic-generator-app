@@ -52,6 +52,7 @@ export default function ProfilePage() {
 
 	const [userFavoriteComics, setUserFavoriteComics] = useState<any[]>([]);
 	const [isLoadingFavorites, setIsLoadingFavorites] = useState(true);
+	const [creditBalance, setCreditBalance] = useState(0);
 
 	// Get auth state from context
 	const {
@@ -143,6 +144,20 @@ export default function ProfilePage() {
 				}
 			};
 			fetchFavorites();
+		}
+	}, [isAuthenticated]);
+
+	useEffect(() => {
+		if (isAuthenticated) {
+			const fetchCredits = async () => {
+				try {
+					const data = await apiRequest<{ panel_balance: number }>("/api/users/me/credits", "GET");
+					setCreditBalance(data?.panel_balance || 0);
+				} catch (err: unknown) {
+					console.error("Failed to fetch user credits:", err);
+				}
+			};
+			fetchCredits();
 		}
 	}, [isAuthenticated]);
 
@@ -325,6 +340,12 @@ export default function ProfilePage() {
 							{/* Stats */}
 							<div className="mt-6 md:mt-0 flex flex-col items-center md:items-end space-y-2 w-full md:w-auto">
 								<div className="grid grid-cols-2 gap-4 text-center">
+									<div className={`${SEMANTIC_COLORS.BACKGROUND.SECONDARY} px-4 py-2 ${UI_CONSTANTS.BORDER_RADIUS.LARGE}`}>
+										<div className="text-2xl font-bold text-gray-900">
+											{creditBalance}
+										</div>
+										<div className="text-sm text-gray-500">Credits</div>
+									</div>
 									<div className={`${SEMANTIC_COLORS.BACKGROUND.SECONDARY} px-4 py-2 ${UI_CONSTANTS.BORDER_RADIUS.LARGE}`}>
 										{" "}
 										<div className="text-2xl font-bold text-gray-900">
@@ -552,7 +573,6 @@ export default function ProfilePage() {
 							</div>
 						)}
 					</TabsContent>
-
 					{/* Settings Tab */}
 					<TabsContent value="settings" className="space-y-6">
 						{/* Keep mock settings form or implement saving */}

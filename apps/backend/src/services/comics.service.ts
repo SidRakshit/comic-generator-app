@@ -14,6 +14,7 @@ import {
 	AWS_REGION,
 } from "../config";
 import pool from "../database";
+import { stripeService } from "./stripe.service";
 import { Panel, CreateComicRequest, ComicPageRequest, ComicPanelRequest, ComicResponse, ComicPageResponse, ComicPanelResponse, ErrorFactory, EXTERNAL_APIS, AI_CONFIG, FILE_FORMATS, CONTENT_TYPES, S3_CONFIG } from "@repo/common-types";
 
 // Use shared types from @repo/common-types
@@ -181,7 +182,7 @@ Guidelines:
 	 * @param panelDescription - Description of the panel to generate image for.
 	 * @returns Object containing base64 image data and prompt used.
 	 */
-	async generatePanelImage(panelDescription: string): Promise<GeneratedImageData> {
+	async generatePanelImage(userId: string, panelDescription: string): Promise<GeneratedImageData> {
 		if (!OPENAI_API_KEY) {
 			throw new Error("OpenAI API key is not configured.");
 		}
@@ -237,6 +238,8 @@ Guidelines:
 			}
 
 			console.log(`✅ Image generated successfully (${imageDataBase64.length} chars base64)`);
+
+			await stripeService.decrementPanelBalance(userId);
 
 			// Return base64 data - NO S3 UPLOAD HERE (matches original working version)
 			return {

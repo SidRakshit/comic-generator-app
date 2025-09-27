@@ -33,11 +33,15 @@ export class ComicController {
 		res.status(200).json(scriptPanel);
 	});
 
-	generateImage = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+	generateImage = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
 		// Request body is already validated by middleware
 		const { panelDescription } = req.body;
+		const internalUserId = req.internalUserId;
+		if (!internalUserId) {
+			throw ErrorFactory.unauthorized("User ID not found in request");
+		}
 		
-		const panelImage = await this.comicService.generatePanelImage(panelDescription);
+		const panelImage = await this.comicService.generatePanelImage(internalUserId, panelDescription);
 		res.status(200).json(panelImage);
 	});
 
