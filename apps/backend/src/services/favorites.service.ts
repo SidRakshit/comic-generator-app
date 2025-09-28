@@ -1,6 +1,4 @@
-import { PrismaClient } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import prisma from "../database/prisma";
 
 export class FavoritesService {
   async getFavoriteComics(userId: string) {
