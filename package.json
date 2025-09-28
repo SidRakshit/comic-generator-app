@@ -2,7 +2,7 @@
   "name": "comic-creator-monorepo",
   "private": true,
   "scripts": {
-    "build": "npm run build:packages && npm run build:backend",
+    "build": "npm run build:packages && npm run build:backend && npx prisma generate --schema=prisma/schema.prisma && npx prisma migrate deploy --schema=prisma/schema.prisma",
     "build:packages": "cd packages/utils && npm run build && cd ../common-types && npm run build",
     "build:backend": "cd apps/backend && npm run build",
     "dev": "turbo dev",
@@ -17,7 +17,8 @@
   "devDependencies": {
     "turbo": "latest",
     "typescript": "^5.0.0",
-    "@types/node": "^20.0.0"
+    "@types/node": "^20.0.0",
+    "prisma": "^6.16.2"
   },
   "packageManager": "npm@10.8.3"
 }
