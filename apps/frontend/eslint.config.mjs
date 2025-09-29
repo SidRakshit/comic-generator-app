@@ -11,6 +11,7 @@ const compat = new FlatCompat({
 
 const eslintConfig = [
   ...compat.extends("@repo/eslint-config/nextjs"),
+  ...compat.extends("turbo"),
   {
     files: ["**/*.ts", "**/*.tsx"],
     rules: {

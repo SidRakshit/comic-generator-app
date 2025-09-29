@@ -1,11 +1,10 @@
-// apps/frontend/src/app/api/placeholder/[width]/[height]/route.ts
 import { NextRequest, NextResponse } from "next/server";
 
 export async function GET(
   req: NextRequest,
-  { params }: { params: { width: string; height: string } }
+  context: { params: { width: string; height: string } }
 ) {
-  const { width, height } = params;
+  const { width, height } = context.params;
   const w = parseInt(width, 10) || 150;
   const h = parseInt(height, 10) || 150;
 
