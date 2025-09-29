@@ -470,7 +470,7 @@ export default function ProfilePage() {
 										Start creating your first comic!
 									</p>
 									<Button asChild>
-										{" "}
+										{/* {" "} */}
 										<Link href="/comics/create"> Get Started </Link>{" "}
 									</Button>
 								</div>
