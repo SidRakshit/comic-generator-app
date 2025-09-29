@@ -254,21 +254,21 @@ function NewComicEditorContent() {
 			</div>
 			<PanelPromptModal
 				isOpen={isPromptModalOpen}
-				onClose={() => setIsPromptModalOpen(false)}
-				submit={handlePromptSubmit}
-				panelNumber={activePanel !== null ? activePanel + 1 : 0}
-				initialPrompt={
-					(activePanel !== null && comic.panels?.[activePanel]?.prompt) || ""
-				}
-				isRegenerating={
-					activePanel !== null &&
-					comic.panels?.[activePanel]?.status === "complete"
-				}
+			onClose={() => setIsPromptModalOpen(false)}
+			onSubmit={handlePromptSubmit}
+			panelNumber={activePanel !== null ? activePanel + 1 : 0}
+			initialPrompt={
+				(activePanel !== null && comic.panels?.[activePanel]?.prompt) || ""
+			}
+			isRegenerating={
+				activePanel !== null &&
+				comic.panels?.[activePanel]?.status === "complete"
+			}
 			/>
 			<ImageZoomModal
 				isOpen={isZoomModalOpen}
-				onClose={() => setIsZoomModalOpen(false)}
-				imageUrl={zoomedImageUrl}
+			onClose={() => setIsZoomModalOpen(false)}
+			imageUrl={zoomedImageUrl}
 			/>
 		</div>
 	);
