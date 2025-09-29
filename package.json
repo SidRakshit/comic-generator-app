@@ -8,8 +8,7 @@
     "dev": "turbo dev",
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
-    "start": "cd apps/backend && node dist/index.js",
-    "postinstall": "npx prisma generate --schema=prisma/schema.prisma"
+    "start": "cd apps/backend && node dist/index.js"
   },
   "workspaces": [
     "apps/*",
@@ -18,8 +17,7 @@
   "devDependencies": {
     "turbo": "latest",
     "typescript": "^5.0.0",
-    "@types/node": "^20.0.0",
-    "prisma": "^6.16.2"
+    "@types/node": "^20.0.0"
   },
   "packageManager": "npm@10.8.3"
 }
