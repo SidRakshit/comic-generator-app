@@ -30,7 +30,7 @@ const initialUserData = {
 	username: "User",
 	name: "Comic Creator",
 	bio: "Loading profile...",
-	avatarUrl: "/api/placeholder/150/150",
+	avatarUrl: "/api/placeholder?width=150&height=150",
 	joinDate: "",
 	email: "",
 	website: "",
