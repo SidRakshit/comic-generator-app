@@ -181,7 +181,7 @@ function NewComicEditorContent() {
 		} catch (error) {
 			console.error("Unexpected error during handleSaveComic:", error);
 			alert(
-				`Failed to save comic: ${
+				`Failed to save comic: ${ 
 					error instanceof Error ? error.message : "Unknown error"
 				}`
 			);
@@ -208,14 +208,13 @@ function NewComicEditorContent() {
 	return (
 		<div className="container mx-auto py-8 px-4">
 			<CreditBalanceBanner />
-			<div className="mb-6">
-				{" "}
+			<div className="mb-6"> 
 				<Link
 					href="/comics/create"
 					className={`inline-flex items-center ${SEMANTIC_COLORS.TEXT.ACCENT} ${INTERACTIVE_STYLES.TEXT.HOVER_ACCENT}`}
 				>
-					<ArrowLeft className="h-4 w-4 mr-1" /> Back{" "}
-				</Link>{" "}
+					<ArrowLeft className="h-4 w-4 mr-1" /> Back 
+				</Link> 
 			</div>
 			<div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
 				<h1 className={`text-3xl font-bold break-words ${SEMANTIC_COLORS.TEXT.PRIMARY}`}>
@@ -256,7 +255,7 @@ function NewComicEditorContent() {
 			<PanelPromptModal
 				isOpen={isPromptModalOpen}
 				onClose={() => setIsPromptModalOpen(false)}
-				onSubmit={handlePromptSubmit}
+				submit={handlePromptSubmit}
 				panelNumber={activePanel !== null ? activePanel + 1 : 0}
 				initialPrompt={
 					(activePanel !== null && comic.panels?.[activePanel]?.prompt) || ""
@@ -285,8 +284,7 @@ export default function NewComicEditorPage() {
 				</div>
 			}
 		>
-			{" "}
-			<NewComicEditorContent />{" "}
+			<NewComicEditorContent />
 		</Suspense>
 	);
 }
