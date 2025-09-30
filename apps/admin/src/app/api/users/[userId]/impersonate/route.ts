@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from "next/server";
 import { API_ENDPOINTS } from "@repo/common-types";
 import { fetchAdminJson } from "@/lib/api-client";
 
+type RouteContext = { params: { userId?: string } };
+
 export async function POST(
   _request: NextRequest,
-  context: { params?: Promise<{ userId: string }> }
+  { params }: RouteContext
 ) {
-  const resolvedParams = (await context.params) ?? ({} as { userId?: string });
-  const userId = resolvedParams.userId;
+  const userId = params?.userId;
   if (!userId) {
     return NextResponse.json({ error: "User id is required" }, { status: 400 });
   }
