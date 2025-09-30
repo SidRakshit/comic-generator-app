@@ -39,13 +39,14 @@ async function loadCredits(userId: string): Promise<UserCreditsSummary | null> {
   }
 }
 
-export default async function AdminUserDetailPage({ params }: { params: { userId: string } }) {
-  const user = await loadUser(params.userId);
+export default async function AdminUserDetailPage({ params }: { params: Promise<{ userId: string }> }) {
+  const { userId } = await params;
+  const user = await loadUser(userId);
   if (!user) {
     notFound();
   }
 
-  const credits = await loadCredits(params.userId);
+  const credits = await loadCredits(userId);
 
   return (
     <AdminShell title="User Details">

@@ -14,12 +14,18 @@ async function fetchUsers(search?: string): Promise<UserTableRow[]> {
   }
 }
 
+type RouteSearchParams = {
+  [key: string]: string | string[] | undefined;
+};
+
 export default async function UsersPage({
   searchParams,
 }: {
-  searchParams: { [key: string]: string | string[] | undefined };
+  searchParams: Promise<RouteSearchParams>;
 }) {
-  const search = typeof searchParams?.search === "string" ? searchParams.search : undefined;
+  const resolvedSearchParams = await searchParams;
+  const searchParam = resolvedSearchParams?.search;
+  const search = Array.isArray(searchParam) ? searchParam[0] : searchParam;
   const users = await fetchUsers(search);
 
   return (
