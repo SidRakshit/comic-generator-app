@@ -4,9 +4,10 @@ import { fetchAdminJson } from "@/lib/api-client";
 
 export async function POST(
   _request: NextRequest,
-  { params }: { params: { userId: string } }
+  context: { params?: Promise<{ userId: string }> }
 ) {
-  const userId = params.userId;
+  const resolvedParams = (await context.params) ?? ({} as { userId?: string });
+  const userId = resolvedParams.userId;
   if (!userId) {
     return NextResponse.json({ error: "User id is required" }, { status: 400 });
   }
