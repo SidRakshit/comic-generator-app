@@ -3,13 +3,19 @@ import express from "express";
 import pool from "../database";
 import { authenticateToken } from "../middleware/auth.middleware";
 import { userController } from "../controllers/user.controller";
+import { API_ROUTES } from "@repo/common-types";
 
 const router = express.Router();
+const { USERS } = API_ROUTES;
 
-router.get("/users/me/credits", authenticateToken, userController.getUserCredits.bind(userController));
+router.get(
+	USERS.ME_CREDITS,
+	authenticateToken,
+	userController.getUserCredits.bind(userController)
+);
 
 // Get user by ID
-router.get("/users/:id", authenticateToken, (req, res) => {
+router.get(USERS.BY_ID(':id'), authenticateToken, (req, res) => {
 	const id = parseInt(req.params.id);
 
 	pool
@@ -27,7 +33,7 @@ router.get("/users/:id", authenticateToken, (req, res) => {
 });
 
 // Get all users
-router.get("/users", authenticateToken, (req, res) => {
+router.get(USERS.BASE, authenticateToken, (req, res) => {
 	pool
 		.query("SELECT * FROM users")
 		.then((result: { rows: any }) => {

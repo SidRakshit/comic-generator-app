@@ -25,7 +25,7 @@ process.on('SIGINT', () => {
 import express from 'express';
 import cors from 'cors';
 import { PORT, FRONTEND_URL } from './config';
-import { API_CONFIG, SERVER_TIMEOUTS, REQUEST_LIMITS } from '@repo/common-types';
+import { API_CONFIG, SERVER_TIMEOUTS, REQUEST_LIMITS, API_ROUTES, API_BASE_PATH } from '@repo/common-types';
 import mainApiRouter from './routes/index';
 import { errorHandler, notFoundHandler } from './middleware/error.middleware';
 import { metricsMiddleware } from './middleware/metrics.middleware';
@@ -50,7 +50,7 @@ try {
   app.use(metricsMiddleware);
 
   app.use((req: express.Request, res: express.Response, next: express.NextFunction) => {
-    if (req.originalUrl.startsWith('/api/webhooks')) {
+    if (req.originalUrl.startsWith(`${API_BASE_PATH}${API_ROUTES.WEBHOOKS.BASE}`)) {
       return next();
     }
     return express.json({ limit: REQUEST_LIMITS.JSON_BODY_LIMIT })(req, res, next);
@@ -144,7 +144,7 @@ try {
 }
 
 // Immediate response endpoint - no dependencies
-app.get('/ping', (req: any, res: any) => {
+app.get(API_ROUTES.PING, (req: any, res: any) => {
   res.status(200).json({ 
     status: 'ok', 
     timestamp: new Date().toISOString(),
@@ -153,7 +153,7 @@ app.get('/ping', (req: any, res: any) => {
 });
 
 // Health check endpoint (should come before main routes) - optimized for speed
-app.get('/', (req: any, res: any) => {
+app.get(API_ROUTES.ROOT, (req: any, res: any) => {
   res.status(200).json({
     message: 'Server is running and reachable',
     timestamp: new Date().toISOString(),
@@ -164,7 +164,7 @@ app.get('/', (req: any, res: any) => {
   });
 });
 
-app.get('/metrics', async (req: express.Request, res: express.Response) => {
+app.get(API_ROUTES.METRICS, async (req: express.Request, res: express.Response) => {
   try {
     const registry = getMetricsRegistry();
     res.set('Content-Type', registry.contentType);
@@ -176,7 +176,7 @@ app.get('/metrics', async (req: express.Request, res: express.Response) => {
 });
 
 // Detailed health check endpoint for debugging
-app.get('/health', async (req: any, res: any) => {
+app.get(API_ROUTES.HEALTH, async (req: any, res: any) => {
   const health = {
     status: 'ok',
     timestamp: new Date().toISOString(),
@@ -239,7 +239,7 @@ app.get('/health', async (req: any, res: any) => {
 
 // Test CORS endpoint for development
 if (!isProd) {
-  app.get('/test-cors', (req: any, res: any) => {
+  app.get(API_ROUTES.TEST_CORS, (req: any, res: any) => {
     res.json({ 
       message: 'CORS test successful', 
       origin: req.headers.origin,
@@ -250,7 +250,7 @@ if (!isProd) {
 
 try {
   // Routes
-  app.use('/api', mainApiRouter);
+  app.use(API_BASE_PATH, mainApiRouter);
   
   // 404 handler for unknown routes
   app.use(notFoundHandler);
@@ -269,7 +269,7 @@ try {
     if (!isProd) {
       console.log(`🌐 Server URL: http://0.0.0.0:${PORT}`);
       console.log(`❤️ Health check: http://0.0.0.0:${PORT}/ping`);
-      console.log(`🚀 API endpoint: http://0.0.0.0:${PORT}/api`);
+      console.log(`🚀 API endpoint: http://0.0.0.0:${PORT}${API_BASE_PATH}`);
     }
   });
 

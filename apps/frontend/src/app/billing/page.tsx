@@ -7,7 +7,7 @@ import { Button } from "@repo/ui/button";
 import { Input } from "@repo/ui/input";
 import { Label } from "@repo/ui/label";
 import { apiRequest } from "@/lib/api";
-import { SEMANTIC_COLORS, UI_CONSTANTS, INTERACTIVE_STYLES } from "@repo/common-types";
+import { SEMANTIC_COLORS, UI_CONSTANTS, INTERACTIVE_STYLES, API_ENDPOINTS } from "@repo/common-types";
 
 export default function BillingPage() {
   const [amount, setAmount] = useState(10);
@@ -21,7 +21,7 @@ export default function BillingPage() {
     setError(null);
 
     try {
-      const session = await apiRequest<any>("/api/billing/checkout", "POST", { amount });
+      const session = await apiRequest<any>(API_ENDPOINTS.BILLING_CHECKOUT, "POST", { amount });
       if (session.checkoutUrl) {
         router.push(session.checkoutUrl);
       } else {

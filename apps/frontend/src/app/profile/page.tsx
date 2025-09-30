@@ -30,7 +30,7 @@ const initialUserData = {
 	username: "User",
 	name: "Comic Creator",
 	bio: "Loading profile...",
-	avatarUrl: "/api/placeholder?width=150&height=150",
+	avatarUrl: `${API_ENDPOINTS.PLACEHOLDER_IMAGE}?width=150&height=150`,
 	joinDate: "",
 	email: "",
 	website: "",
@@ -135,7 +135,7 @@ export default function ProfilePage() {
 			const fetchFavorites = async () => {
 				setIsLoadingFavorites(true);
 				try {
-					const data = await apiRequest<any[]>("/api/favorites", "GET");
+					const data = await apiRequest<any[]>(API_ENDPOINTS.FAVORITES, "GET");
 					setUserFavoriteComics(data || []);
 				} catch (err: unknown) {
 					console.error("Failed to fetch user favorites:", err);
@@ -151,7 +151,7 @@ export default function ProfilePage() {
 		if (isAuthenticated) {
 			const fetchCredits = async () => {
 				try {
-					const data = await apiRequest<{ panel_balance: number }>("/api/users/me/credits", "GET");
+					const data = await apiRequest<{ panel_balance: number }>(API_ENDPOINTS.USER_CREDITS_ME, "GET");
 					setCreditBalance(data?.panel_balance || 0);
 				} catch (err: unknown) {
 					console.error("Failed to fetch user credits:", err);
@@ -164,13 +164,13 @@ export default function ProfilePage() {
 	const toggleFavorite = async (comicId: string) => {
 		const isFavorite = userFavoriteComics.some((comic) => comic.comic_id === comicId);
 		if (isFavorite) {
-			await apiRequest(`/api/favorites/${comicId}`, "DELETE");
+		await apiRequest(API_ENDPOINTS.FAVORITE_BY_ID(comicId), "DELETE");
 			setUserFavoriteComics(userFavoriteComics.filter((comic) => comic.comic_id !== comicId));
 		} else {
-			await apiRequest("/api/favorites", "POST", { comicId });
+			await apiRequest(API_ENDPOINTS.FAVORITES, "POST", { comicId });
 			// Ideally, the API would return the newly favorited comic
 			// For now, we just refetch the list
-			const data = await apiRequest<any[]>("/api/favorites", "GET");
+			const data = await apiRequest<any[]>(API_ENDPOINTS.FAVORITES, "GET");
 			setUserFavoriteComics(data || []);
 		}
 	};
@@ -531,7 +531,10 @@ export default function ProfilePage() {
 										<div className="${SEMANTIC_COLORS.BACKGROUND.PRIMARY} border ${UI_CONSTANTS.BORDER_RADIUS.LARGE} overflow-hidden shadow-sm hover:shadow-md transition-shadow">
 											<div className={`${UI_CONSTANTS.ASPECT_RATIOS.COMIC_COVER} ${SEMANTIC_COLORS.BACKGROUND.TERTIARY} relative`}>
 												<Image
-													src={fav.comic.coverImage || "/api/placeholder/300/400?text=Comic"}
+													src={
+														fav.comic.coverImage ||
+														API_ENDPOINTS.PLACEHOLDER_IMAGE_WITH_SIZE(300, 400, '?text=Comic')
+													}
 													alt={fav.comic.title}
 													fill
 													style={{ objectFit: "cover" }}

@@ -38,3 +38,5 @@ generated
 make-admin.ts
 list-users.ts
 backfill-users-from-cognito.ts
+backfill-cognito-users.ts
+promote-user.ts

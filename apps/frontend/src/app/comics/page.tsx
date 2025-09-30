@@ -6,7 +6,7 @@
 import { useRouter } from 'next/navigation';
 import TemplateSelector from '@/components/comic/template-selector'; // Ensure this path is correct
 import { useState } from 'react';
-import { SEMANTIC_COLORS, UI_CONSTANTS } from "@repo/common-types";
+import { SEMANTIC_COLORS, UI_CONSTANTS, API_ENDPOINTS } from "@repo/common-types";
 import { apiRequest } from '@/lib/api';
 
 export default function CreateComicPage() {
@@ -22,7 +22,7 @@ export default function CreateComicPage() {
     setError(null);
 
     try {
-      const newComic = await apiRequest<any>("/api/comics", "POST", { templateId });
+      const newComic = await apiRequest<any>(API_ENDPOINTS.COMICS, "POST", { templateId });
       const newComicId = newComic.comic_id;
 
       if (!newComicId) {

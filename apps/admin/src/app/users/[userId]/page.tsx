@@ -32,7 +32,7 @@ async function loadUser(userId: string): Promise<AdminUserDetail | null> {
 
 async function loadCredits(userId: string): Promise<UserCreditsSummary | null> {
   try {
-    return await fetchAdminJson<UserCreditsSummary>(`${API_ENDPOINTS.ADMIN_USER_BY_ID(userId)}/credits`);
+    return await fetchAdminJson<UserCreditsSummary>(API_ENDPOINTS.ADMIN_USER_CREDITS(userId));
   } catch (error) {
     console.warn("Failed to load user credits", error);
     return null;

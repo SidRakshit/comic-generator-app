@@ -4,47 +4,52 @@ import { comicController } from '../controllers/comics.controller';
 import { authenticateToken } from '../middleware/auth.middleware';
 import { validateRequestBody } from '../middleware/validation.middleware';
 import { checkPanelBalance } from '../middleware/billing.middleware';
-import { CreateComicRequestSchema, GeneratePanelImageRequestSchema } from '@repo/common-types';
+import { CreateComicRequestSchema, GeneratePanelImageRequestSchema, API_ROUTES } from '@repo/common-types';
 
 const router = express.Router();
+const { COMICS } = API_ROUTES;
 
-router.post('/generate-script',
+router.post(
+    COMICS.GENERATE_SCRIPT,
     authenticateToken,
-    comicController.generateScript);
-router.post('/generate-panel-image',
+    comicController.generateScript
+);
+router.post(
+    COMICS.GENERATE_PANEL_IMAGE,
     authenticateToken,
     checkPanelBalance,
     validateRequestBody(GeneratePanelImageRequestSchema),
-    comicController.generateImage);
+    comicController.generateImage
+);
 
 router.post(
-    '/comics',
+    COMICS.BASE,
     authenticateToken,
     validateRequestBody(CreateComicRequestSchema),
     comicController.saveComic
 );
 
 router.put(
-    '/comics/:comicId',
+    COMICS.BY_ID(':comicId'),
     authenticateToken,
     validateRequestBody(CreateComicRequestSchema),
     comicController.saveComic
 );
 
 router.get(
-    '/comics',
+    COMICS.BASE,
     authenticateToken,
     comicController.listComics
 );
 
 router.get(
-    '/comics/:comicId',
+    COMICS.BY_ID(':comicId'),
     authenticateToken,
     comicController.getComic
 );
 
 // DELETE /api/comics/:comicId - Delete a comic (Add controller method + service logic)
-// router.delete('/comics/:comicId', authenticateToken, comicController.deleteComic);
+// router.delete(COMICS.BY_ID(':comicId'), authenticateToken, comicController.deleteComic);
 
 
 export default router; // Ensure this is exported correctly

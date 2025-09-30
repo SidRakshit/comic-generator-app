@@ -1,12 +1,15 @@
 import express from "express";
+import { API_ROUTES } from "@repo/common-types";
 import { verifyImpersonationToken } from "../utils/impersonation";
 import { impersonationExchangeLimiter } from "../middleware/rate-limit.middleware";
 
 const router = express.Router();
+const { IMPERSONATION } = API_ROUTES;
+const impersonationPath = (path: string): string => path.replace(IMPERSONATION.BASE, "") || "/";
 
 router.use(express.json());
 
-router.post("/exchange", impersonationExchangeLimiter, async (req, res) => {
+router.post(impersonationPath(IMPERSONATION.EXCHANGE), impersonationExchangeLimiter, async (req, res) => {
   try {
     const rawToken = req.body?.token as string | undefined;
     const verification = await verifyImpersonationToken(rawToken, {

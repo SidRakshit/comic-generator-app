@@ -4,7 +4,7 @@ import { useMemo, useState } from "react";
 import { PurchaseHistoryTable, PurchaseHistoryRow } from "./purchase-history-table";
 import { RefundRequestPanel } from "./refund-request-panel";
 import { Button } from "@repo/ui/button";
-import { SEMANTIC_COLORS } from "@repo/common-types";
+import { SEMANTIC_COLORS, API_ENDPOINTS } from "@repo/common-types";
 
 interface BillingClientProps {
   purchases: PurchaseHistoryRow[];
@@ -23,13 +23,13 @@ export function BillingClient({ purchases }: BillingClientProps) {
   );
 
   const handleExport = () => {
-    window.open("/api/billing/purchases/export", "_blank", "noopener");
+    window.open(API_ENDPOINTS.ADMIN_BILLING_EXPORT, "_blank", "noopener");
   };
 
   const handleRefund = async (chargeId: string, reason: string) => {
     setRefundState({ status: "idle", message: null });
     try {
-      const response = await fetch("/api/billing/refund", {
+      const response = await fetch(API_ENDPOINTS.BILLING_REFUND, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ stripeChargeId: chargeId, reason }),
