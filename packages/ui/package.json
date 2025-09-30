@@ -21,6 +21,10 @@
       "types": "./dist/dropdown.d.ts",
       "default": "./dist/dropdown.js"
     },
+    "./card": {
+      "types": "./dist/card.d.ts",
+      "default": "./dist/card.js"
+    },
     "./input": {
       "types": "./dist/input.d.ts",
       "default": "./dist/input.js"
