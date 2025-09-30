@@ -12,7 +12,7 @@ import { COMIC_TEMPLATES as templates } from "@repo/common-types";
 import { Button } from "@repo/ui/button";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { apiRequest, GeneratedImageDataResponse } from "@/lib/api";
-import { ComicCharacter, Panel, SEMANTIC_COLORS, INTERACTIVE_STYLES, UI_CONSTANTS } from "@repo/common-types";
+import { ComicCharacter, Panel, SEMANTIC_COLORS, INTERACTIVE_STYLES, UI_CONSTANTS, API_ENDPOINTS } from "@repo/common-types";
 
 async function generateImageAPI(
 	prompt: string
@@ -22,7 +22,7 @@ async function generateImageAPI(
 
 	try {
 		const data = await apiRequest<GeneratedImageDataResponse>(
-			"/generate-panel-image",
+			API_ENDPOINTS.GENERATE_PANEL_IMAGE,
 			"POST",
 			requestBody
 		);
