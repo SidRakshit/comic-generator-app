@@ -2,11 +2,9 @@ import { NextRequest, NextResponse } from "next/server";
 import { API_ENDPOINTS } from "@repo/common-types";
 import { fetchAdminJson } from "@/lib/api-client";
 
-type RouteContext = { params: { userId?: string } };
-
 export async function POST(
   _request: NextRequest,
-  { params }: RouteContext
+  { params }: { params: { userId: string } }
 ) {
   const userId = params?.userId;
   if (!userId) {
