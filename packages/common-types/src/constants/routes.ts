@@ -82,6 +82,8 @@ export const EXTERNAL_LINKS = {
 /**
  * Route helpers and utilities
  */
+type PublicRoute = (typeof PUBLIC_ROUTES)[keyof typeof PUBLIC_ROUTES];
+
 export const ROUTE_HELPERS = {
 	/**
 	 * Check if a route requires authentication
@@ -96,7 +98,7 @@ export const ROUTE_HELPERS = {
 	 * Check if a route is public
 	 */
 	isPublicRoute: (path: string): boolean => {
-		return Object.values(PUBLIC_ROUTES).includes(path as any);
+		return Object.values(PUBLIC_ROUTES).includes(path as PublicRoute);
 	},
 	
 	/**

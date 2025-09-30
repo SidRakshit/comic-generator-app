@@ -130,10 +130,8 @@ function ConfirmSignupContent() {
 				</h2>
 				{/* Make descriptive text darker */}
 				<p className="text-center text-sm ${SEMANTIC_COLORS.TEXT.SECONDARY}">
-					{" "}
 					{/* Changed from text-gray-600 */}
-					We sent a confirmation code to your email:{" "}
-					<strong>{email || "your email"}</strong>.
+					We sent a confirmation code to your email: <strong>{email || "your email"}</strong>.
 				</p>
 				{error && <p className="text-red-500 text-sm text-center">{error}</p>}
 				{successMessage && (
@@ -194,10 +192,8 @@ function ConfirmSignupContent() {
 				</div>
 				{/* Make descriptive text darker */}
 				<p className="text-center text-sm ${SEMANTIC_COLORS.TEXT.SECONDARY}">
-					{" "}
 					{/* Changed from text-gray-600 */}
-					Already confirmed?{" "}
-					<Link href="/login" legacyBehavior>
+					Already confirmed? <Link href="/login" legacyBehavior>
 						<a className="font-medium ${SEMANTIC_COLORS.TEXT.ACCENT} ${INTERACTIVE_STYLES.TEXT.HOVER_ACCENT}">
 							Login
 						</a>

@@ -1,6 +1,6 @@
 // API Response DTOs
 
-import type { Comic, User, UserProfile, GeneratedImageData } from '../domain';
+import type { Comic, GeneratedImageData } from '../domain';
 
 // Comic responses
 export interface ComicResponse {

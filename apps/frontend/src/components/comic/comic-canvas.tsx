@@ -131,8 +131,8 @@ function ComicPanel({
 			) : (
 				<div className="flex flex-col items-center justify-center h-full">
 					<div className="mb-1 md:mb-2">
-						{" "}
-						<Plus className="h-6 w-6 md:h-8 md:w-8 text-gray-400" />{" "}
+						
+						<Plus className="h-6 w-6 md:h-8 md:w-8 text-gray-400" />
 					</div>
 					<p className="text-xs md:text-sm text-gray-500">
 						Panel {panelNumber}

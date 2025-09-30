@@ -36,7 +36,8 @@ export interface AuthenticatedRequestFields {
 
 // Type alias for backend - to be used with Express Request
 // Usage: AuthenticatedRequest = Request & AuthenticatedRequestFields
-export type AuthenticatedRequest<T = any> = T & AuthenticatedRequestFields;
+export type AuthenticatedRequest<T extends Record<string, unknown> = Record<string, unknown>> =
+  T & AuthenticatedRequestFields;
 
 // Cognito JWT payload type (simplified)
 export interface CognitoAccessTokenPayload {

@@ -82,7 +82,7 @@ function ImpersonatePageContent() {
         clearTimeout(redirectTimeout);
       }
     };
-  }, [searchParams]);
+  }, [searchParams, router]);
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-gray-50 px-4">

@@ -7,7 +7,7 @@
     "build": "npm run build:deps && next build",
     "build:deps": "cd ../../packages/utils && npm run build && cd ../../packages/common-types && npm run build && cd ../../packages/ui && npm run build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint . --max-warnings 0"
   },
   "dependencies": {
     "@aws-amplify/ui-react": "^6.11.1",

@@ -238,10 +238,10 @@ export default function ProfilePage() {
 									<div className="space-y-3">
 										{/* Edit fields */}
 										<div>
-											{" "}
+											
 											<label className="block text-sm font-medium text-gray-700">
 												Display Name
-											</label>{" "}
+											</label>
 											<input
 												type="text"
 												value={profileData.name}
@@ -252,26 +252,26 @@ export default function ProfilePage() {
 													})
 												}
 												className={COMPONENT_STYLES.FORM.INPUT}
-											/>{" "}
+											/>
 										</div>
 										<div>
-											{" "}
+											
 											<label className="block text-sm font-medium text-gray-700">
 												Username
-											</label>{" "}
+											</label>
 											<input
 												type="text"
 												value={profileData.username}
 												disabled
 												className={`${COMPONENT_STYLES.FORM.INPUT} ${SEMANTIC_COLORS.BACKGROUND.TERTIARY} cursor-not-allowed`}
-											/>{" "}
-										</div>{" "}
+											/>
+										</div>
 										{/* Usually username is not editable */}
 										<div>
-											{" "}
+											
 											<label className="block text-sm font-medium text-gray-700">
 												Bio
-											</label>{" "}
+											</label>
 											<textarea
 												value={profileData.bio}
 												onChange={(e) =>
@@ -282,7 +282,7 @@ export default function ProfilePage() {
 												}
 												rows={3}
 												className={COMPONENT_STYLES.FORM.INPUT}
-											/>{" "}
+											/>
 										</div>
 									</div>
 								) : (
@@ -305,15 +305,15 @@ export default function ProfilePage() {
 													onClick={handleSaveProfile}
 													className="flex items-center"
 												>
-													{" "}
-													<Save size={16} className="mr-1" /> Save Changes{" "}
+													
+													<Save size={16} className="mr-1" /> Save Changes
 												</Button>
 												<Button
 													variant="outline"
 													onClick={handleCancelEditProfile}
 												>
-													{" "}
-													Cancel{" "}
+													
+													Cancel
 												</Button>
 											</>
 										) : (
@@ -323,8 +323,8 @@ export default function ProfilePage() {
 													className="flex items-center"
 													onClick={() => setIsEditingProfile(true)}
 												>
-													{" "}
-													<Edit size={16} className="mr-1" /> Edit Profile{" "}
+													
+													<Edit size={16} className="mr-1" /> Edit Profile
 												</Button>
 												<Button asChild variant="outline">
 													<Link href="/billing" className="flex items-center">
@@ -347,39 +347,39 @@ export default function ProfilePage() {
 										<div className="text-sm text-gray-500">Credits</div>
 									</div>
 									<div className={`${SEMANTIC_COLORS.BACKGROUND.SECONDARY} px-4 py-2 ${UI_CONSTANTS.BORDER_RADIUS.LARGE}`}>
-										{" "}
+										
 										<div className="text-2xl font-bold text-gray-900">
 											{profileData.stats.created}
-										</div>{" "}
-										<div className="text-sm text-gray-500">Comics</div>{" "}
+										</div>
+										<div className="text-sm text-gray-500">Comics</div>
 									</div>
 									<div className={`${SEMANTIC_COLORS.BACKGROUND.SECONDARY} px-4 py-2 ${UI_CONSTANTS.BORDER_RADIUS.LARGE}`}>
-										{" "}
+										
 										<div className="text-2xl font-bold text-gray-900">
 											{userFavoriteComics.length}
-										</div>{" "}
-										<div className="text-sm text-gray-500">Favorites</div>{" "}
+										</div>
+										<div className="text-sm text-gray-500">Favorites</div>
 									</div>
 									<div className={`${SEMANTIC_COLORS.BACKGROUND.SECONDARY} px-4 py-2 ${UI_CONSTANTS.BORDER_RADIUS.LARGE}`}>
-										{" "}
+										
 										<div className="text-2xl font-bold text-gray-900">
 											{profileData.stats.followers}
-										</div>{" "}
-										<div className="text-sm text-gray-500">Followers</div>{" "}
+										</div>
+										<div className="text-sm text-gray-500">Followers</div>
 									</div>
 									<div className={`${SEMANTIC_COLORS.BACKGROUND.SECONDARY} px-4 py-2 ${UI_CONSTANTS.BORDER_RADIUS.LARGE}`}>
-										{" "}
+										
 										<div className="text-2xl font-bold text-gray-900">
 											{profileData.stats.following}
-										</div>{" "}
-										<div className="text-sm text-gray-500">Following</div>{" "}
+										</div>
+										<div className="text-sm text-gray-500">Following</div>
 									</div>
 								</div>
 								<div className="text-sm text-gray-500 pt-2">
-									{" "}
+									
 									{profileData.joinDate
 										? `Joined ${profileData.joinDate}`
-										: ""}{" "}
+										: ""}
 								</div>
 							</div>
 						</div>
@@ -392,16 +392,16 @@ export default function ProfilePage() {
 				<Tabs defaultValue="comics">
 					<TabsList className="mb-8">
 						<TabsTrigger value="comics" className="flex items-center">
-							{" "}
-							<BookOpen size={16} className="mr-1" /> My Comics{" "}
+							
+							<BookOpen size={16} className="mr-1" /> My Comics
 						</TabsTrigger>
 						<TabsTrigger value="favorites" className="flex items-center">
-							{" "}
-							<Heart size={16} className="mr-1" /> Favorites{" "}
+							
+							<Heart size={16} className="mr-1" /> Favorites
 						</TabsTrigger>
 						<TabsTrigger value="settings" className="flex items-center">
-							{" "}
-							<Settings size={16} className="mr-1" /> Settings{" "}
+							
+							<Settings size={16} className="mr-1" /> Settings
 						</TabsTrigger>
 					</TabsList>
 
@@ -470,8 +470,7 @@ export default function ProfilePage() {
 										Start creating your first comic!
 									</p>
 									<Button asChild>
-										{/* {" "} */}
-										<Link href="/comics/create"> Get Started </Link>{" "}
+										<Link href="/comics/create">Get Started</Link>
 									</Button>
 								</div>
 							)}
@@ -568,7 +567,7 @@ export default function ProfilePage() {
 									Browse comics and add some!
 								</p>
 								<Button asChild>
-									<Link href="/comics"> Browse Comics </Link>
+									<Link href="/comics">Browse Comics</Link>
 								</Button>
 							</div>
 						)}
@@ -593,8 +592,8 @@ export default function ProfilePage() {
 													/* TODO: Implement save settings API call */
 												}}
 											>
-												{" "}
-												Save Settings{" "}
+												
+												Save Settings
 											</Button>
 										</div>
 									</div>
@@ -602,10 +601,10 @@ export default function ProfilePage() {
 								{/* Security Settings */}
 								<div className="mt-4 ${SEMANTIC_COLORS.BACKGROUND.PRIMARY} shadow overflow-hidden ${UI_CONSTANTS.BORDER_RADIUS.LARGE}">
 									<div className="px-4 py-5 sm:px-6 border-b">
-										{" "}
+										
 										<h3 className="text-lg font-medium text-gray-900">
 											Security
-										</h3>{" "}
+										</h3>
 									</div>
 									<div className="px-4 py-5 sm:p-6">
 										{/* Add link/button for change password flow */}
@@ -615,10 +614,10 @@ export default function ProfilePage() {
 								{/* Danger Zone */}
 								<div className="mt-4 ${SEMANTIC_COLORS.BACKGROUND.PRIMARY} shadow overflow-hidden ${UI_CONSTANTS.BORDER_RADIUS.LARGE}">
 									<div className="px-4 py-5 sm:px-6 border-b">
-										{" "}
+										
 										<h3 className="text-lg font-medium text-red-600">
 											Danger Zone
-										</h3>{" "}
+										</h3>
 									</div>
 									<div className="px-4 py-5 sm:p-6">
 										<Button
@@ -627,13 +626,13 @@ export default function ProfilePage() {
 													/* TODO: Implement delete account flow */
 											}}
 										>
-											{" "}
-											Delete Account{" "}
+											
+											Delete Account
 										</Button>
 										<p className="mt-2 text-sm text-gray-500">
-											{" "}
+											
 											Once you delete your account, there is no going back.
-											Please be certain.{" "}
+											Please be certain.
 										</p>
 									</div>
 								</div>

@@ -124,5 +124,5 @@ export async function retryWithBackoff<T>(
     }
   }
   
-  throw lastError!;
+  throw lastError ?? new Error('Retry failed without capturing an error');
 }
