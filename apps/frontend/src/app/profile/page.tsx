@@ -206,7 +206,7 @@ export default function ProfilePage() {
 	return (
 		<div className={`min-h-screen ${SEMANTIC_COLORS.BACKGROUND.SECONDARY} pb-12`}>
 			{/* Profile header */}
-			<div className={`${SEMANTIC_COLORS.BACKGROUND.PRIMARY} shadow`}>
+			<div className={`${SEMANTIC_COLORS.BACKGROUND.SECONDARY} shadow`}>
 				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 					{/* Basic loading state for header */}
 					{isLoadingAuth ? (
@@ -272,7 +272,7 @@ export default function ProfilePage() {
 												type="text"
 												value={profileData.username}
 												disabled
-												className={`${COMPONENT_STYLES.FORM.INPUT} ${SEMANTIC_COLORS.BACKGROUND.TERTIARY} cursor-not-allowed`}
+												className={`${SEMANTIC_COLORS.TEXT.TERTIARY} ${SEMANTIC_COLORS.BACKGROUND.TERTIARY} cursor-not-allowed w-96`}
 											/>
 										</div>
 										{/* Usually username is not editable */}
