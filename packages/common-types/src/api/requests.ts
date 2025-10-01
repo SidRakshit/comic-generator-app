@@ -47,6 +47,10 @@ export interface UpdateUserProfileRequest {
   preferences?: Record<string, unknown>;
 }
 
+export interface DeleteAccountRequest {
+  confirmation: string; // User must type "DELETE" to confirm
+}
+
 // Authentication requests
 export interface LoginRequest {
   email: string;

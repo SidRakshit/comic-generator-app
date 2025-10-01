@@ -42,6 +42,7 @@ export const API_ROUTES = {
 		BY_ID: (id: string | number) => `/users/${id}`,
 		PROFILE: '/users/profile',
 		ME_CREDITS: '/users/me/credits',
+		DELETE_ACCOUNT: '/users/me/delete',
 	},
 
 	// Favorites
