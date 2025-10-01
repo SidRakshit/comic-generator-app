@@ -27,7 +27,6 @@ import {
 
 // Initial user data structure (consider fetching this too if needed)
 const initialUserData = {
-	username: "User",
 	name: "Click here to edit your name",
 	bio: "Click here to edit your bio",
 	avatarUrl: `${API_ENDPOINTS.PLACEHOLDER_IMAGE}?width=150&height=150`,
@@ -68,8 +67,6 @@ export default function ProfilePage() {
 		if (!isLoadingAuth && isAuthenticated && user) {
 			setProfileData((prev) => ({
 				...prev,
-				// Basic info from user object
-				username: user.username || prev.username,
 				// Details from attributes object (use optional chaining)
 				email: attributes?.email || prev.email, // <-- Access directly
 				name: attributes?.name || prev.name, // <-- Access directly
@@ -269,19 +266,6 @@ export default function ProfilePage() {
 										</div>
 										<div>
 
-											<label className="block text-sm font-medium text-gray-700">
-												Username
-											</label>
-											<input
-												type="text"
-												value={profileData.username}
-												disabled
-												className={`${SEMANTIC_COLORS.TEXT.TERTIARY} ${SEMANTIC_COLORS.BACKGROUND.TERTIARY} cursor-not-allowed w-96`}
-											/>
-										</div>
-										{/* Usually username is not editable */}
-										<div>
-
 											<label className="block text-sm font-medium text-gray-700 ">
 												Bio
 											</label>
@@ -316,7 +300,6 @@ export default function ProfilePage() {
 										<h1 className="text-2xl font-bold text-gray-900">
 											{profileData.name}
 										</h1>
-										<p className={SEMANTIC_COLORS.TEXT.TERTIARY}>@{profileData.username}</p>
 										<p className="mt-2 text-gray-700 max-w-2xl">
 											{profileData.bio}
 										</p>
