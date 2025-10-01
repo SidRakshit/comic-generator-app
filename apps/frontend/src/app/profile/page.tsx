@@ -346,15 +346,15 @@ export default function ProfilePage() {
 			<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
 				<Tabs defaultValue="comics">
 					<TabsList className="mb-8">
-						<TabsTrigger value="comics" className="flex items-center">
+						<TabsTrigger value="comics" className="flex items-center data-[state=active]:bg-gray-800 data-[state=active]:text-white data-[state=inactive]:border data-[state=inactive]:border-gray-300 data-[state=inactive]:bg-white data-[state=inactive]:text-gray-600">
 							{" "}
 							<BookOpen size={16} className="mr-1" /> My Comics{" "}
 						</TabsTrigger>
-						<TabsTrigger value="favorites" className="flex items-center">
+						<TabsTrigger value="favorites" className="flex items-center data-[state=active]:bg-gray-800 data-[state=active]:text-white data-[state=inactive]:border data-[state=inactive]:border-gray-300 data-[state=inactive]:bg-white data-[state=inactive]:text-gray-600">
 							{" "}
 							<Heart size={16} className="mr-1" /> Favorites{" "}
 						</TabsTrigger>
-						<TabsTrigger value="settings" className="flex items-center">
+						<TabsTrigger value="settings" className="flex items-center data-[state=active]:bg-gray-800 data-[state=active]:text-white data-[state=inactive]:border data-[state=inactive]:border-gray-300 data-[state=inactive]:bg-white data-[state=inactive]:text-gray-600">
 							{" "}
 							<Settings size={16} className="mr-1" /> Settings{" "}
 						</TabsTrigger>
@@ -384,7 +384,7 @@ export default function ProfilePage() {
 						)}
 
 						{!isLoadingAuth && !isLoadingComics && errorLoadingComics && (
-							<div className="text-center py-12 bg-red-50 border border-red-200 ${UI_CONSTANTS.BORDER_RADIUS.LARGE}">
+							<div className={`text-center py-12 bg-red-50 border border-red-200 ${UI_CONSTANTS.BORDER_RADIUS.LARGE}`}>
 								<BookOpen size={48} className="mx-auto text-red-400 mb-4" />
 								<h3 className="text-lg font-medium text-red-700 mb-2">
 									Error Loading Comics
@@ -416,7 +416,7 @@ export default function ProfilePage() {
 							!errorLoadingComics &&
 							isAuthenticated &&
 							myComics.length === 0 && (
-								<div className="text-center py-12 ${SEMANTIC_COLORS.BACKGROUND.PRIMARY} ${UI_CONSTANTS.BORDER_RADIUS.LARGE} border">
+								<div className={`text-center py-12 ${SEMANTIC_COLORS.BACKGROUND.PRIMARY} ${UI_CONSTANTS.BORDER_RADIUS.LARGE} border`}>
 									<BookOpen size={48} className="mx-auto text-gray-400 mb-4" />
 									<h3 className="text-lg font-medium text-gray-900 mb-2">
 										No comics yet
