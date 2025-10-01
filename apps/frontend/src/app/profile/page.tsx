@@ -29,7 +29,7 @@ import {
 const initialUserData = {
 	username: "User",
 	name: "Comic Creator",
-	bio: "Loading profile...",
+	bio: "Click here to edit your bio",
 	avatarUrl: `${API_ENDPOINTS.PLACEHOLDER_IMAGE}?width=150&height=150`,
 	joinDate: "",
 	email: "",
@@ -251,6 +251,15 @@ export default function ProfilePage() {
 														name: e.target.value,
 													})
 												}
+												// only when it is Comic Creator set the value to empty
+												onFocus={(e) => {
+													if (e.target.value === "Comic Creator") {
+														setProfileData({
+															...profileData,
+															name: "",
+														});
+													}
+												}}
 												className={COMPONENT_STYLES.FORM.INPUT}
 											/>
 										</div>
@@ -269,7 +278,7 @@ export default function ProfilePage() {
 										{/* Usually username is not editable */}
 										<div>
 
-											<label className="block text-sm font-medium text-gray-700">
+											<label className="block text-sm font-medium text-gray-700 ">
 												Bio
 											</label>
 											<textarea
@@ -280,6 +289,15 @@ export default function ProfilePage() {
 														bio: e.target.value,
 													})
 												}
+												// only when it is "Click here to edit your bio set the value to empty
+												onFocus={(e) => {
+													if (e.target.value === "Click here to edit your bio") {
+														setProfileData({
+															...profileData,
+															bio: "",
+														});
+													}
+												}}
 												rows={3}
 												className={COMPONENT_STYLES.FORM.INPUT}
 											/>
@@ -303,7 +321,7 @@ export default function ProfilePage() {
 											<>
 												<Button
 													onClick={handleSaveProfile}
-													className="flex items-center"
+													className="flex items-center bg-black text-white border border-gray-300 hover:bg-gray-800"
 												>
 
 													<Save size={16} className="mr-1" /> Save Changes
