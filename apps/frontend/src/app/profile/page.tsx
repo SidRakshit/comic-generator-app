@@ -594,23 +594,6 @@ export default function ProfilePage() {
 						{/* Only show settings if authenticated */}
 						{isAuthenticated ? (
 							<>
-								<div className="${SEMANTIC_COLORS.BACKGROUND.PRIMARY} shadow overflow-hidden ${UI_CONSTANTS.BORDER_RADIUS.LARGE}">
-									{/* ... Settings form JSX (Personal Info, Contact, Preferences) ... */}
-									{/* Example Save Settings Button */}
-									<div className={`px-4 py-5 border-t ${SEMANTIC_COLORS.BORDER.DEFAULT} sm:px-6`}>
-										<div className="flex justify-end">
-											<Button
-												type="button"
-												onClick={() => {
-													/* TODO: Implement save settings API call */
-												}}
-											>
-
-												Save Settings
-											</Button>
-										</div>
-									</div>
-								</div>
 								{/* Security Settings */}
 								<div className="mt-4 ${SEMANTIC_COLORS.BACKGROUND.PRIMARY} shadow overflow-hidden ${UI_CONSTANTS.BORDER_RADIUS.LARGE}">
 									<div className="px-4 py-5 sm:px-6 border-b">
