@@ -15,6 +15,7 @@ import {
 	Save,
 	Image as ImageIcon,
 	BookOpen,
+	Heart,
 	Settings,
 	ChevronRight,
 	PlusCircle,
@@ -26,7 +27,6 @@ import {
 
 // Initial user data structure (consider fetching this too if needed)
 const initialUserData = {
-	username: "User",
 	name: "Click here to edit your name",
 	bio: "Click here to edit your bio",
 	avatarUrl: `${API_ENDPOINTS.PLACEHOLDER_IMAGE}?width=150&height=150`,
@@ -34,7 +34,7 @@ const initialUserData = {
 	email: "",
 	website: "",
 	twitter: "",
-	stats: { created: 0 },
+	stats: { created: 0, favorites: 0, followers: 0, following: 0 },
 };
 
 export default function ProfilePage() {
@@ -49,6 +49,8 @@ export default function ProfilePage() {
 		null
 	);
 
+	const [userFavoriteComics, setUserFavoriteComics] = useState<any[]>([]);
+	const [isLoadingFavorites, setIsLoadingFavorites] = useState(true);
 	const [creditBalance, setCreditBalance] = useState(0);
 
 	// Get auth state from context
@@ -65,8 +67,6 @@ export default function ProfilePage() {
 		if (!isLoadingAuth && isAuthenticated && user) {
 			setProfileData((prev) => ({
 				...prev,
-				// Basic info from user object
-				username: user.username || prev.username,
 				// Details from attributes object (use optional chaining)
 				email: attributes?.email || prev.email, // <-- Access directly
 				name: attributes?.name || prev.name, // <-- Access directly
@@ -127,6 +127,22 @@ export default function ProfilePage() {
 		}
 	}, [isLoadingAuth, isAuthenticated]); // Re-run when auth state changes
 
+	useEffect(() => {
+		if (isAuthenticated) {
+			const fetchFavorites = async () => {
+				setIsLoadingFavorites(true);
+				try {
+					const data = await apiRequest<any[]>(API_ENDPOINTS.FAVORITES, "GET");
+					setUserFavoriteComics(data || []);
+				} catch (err: unknown) {
+					console.error("Failed to fetch user favorites:", err);
+				} finally {
+					setIsLoadingFavorites(false);
+				}
+			};
+			fetchFavorites();
+		}
+	}, [isAuthenticated]);
 
 	useEffect(() => {
 		if (isAuthenticated) {
@@ -142,6 +158,19 @@ export default function ProfilePage() {
 		}
 	}, [isAuthenticated]);
 
+	const toggleFavorite = async (comicId: string) => {
+		const isFavorite = userFavoriteComics.some((comic) => comic.comic_id === comicId);
+		if (isFavorite) {
+			await apiRequest(API_ENDPOINTS.FAVORITE_BY_ID(comicId), "DELETE");
+			setUserFavoriteComics(userFavoriteComics.filter((comic) => comic.comic_id !== comicId));
+		} else {
+			await apiRequest(API_ENDPOINTS.FAVORITES, "POST", { comicId });
+			// Ideally, the API would return the newly favorited comic
+			// For now, we just refetch the list
+			const data = await apiRequest<any[]>(API_ENDPOINTS.FAVORITES, "GET");
+			setUserFavoriteComics(data || []);
+		}
+	};
 
 	// --- Profile Edit Handlers (Keep or modify as needed) ---
 	const handleSaveProfile = () => {
@@ -237,19 +266,6 @@ export default function ProfilePage() {
 										</div>
 										<div>
 
-											<label className="block text-sm font-medium text-gray-700">
-												Username
-											</label>
-											<input
-												type="text"
-												value={profileData.username}
-												disabled
-												className={`${SEMANTIC_COLORS.TEXT.TERTIARY} ${SEMANTIC_COLORS.BACKGROUND.TERTIARY} cursor-not-allowed w-96`}
-											/>
-										</div>
-										{/* Usually username is not editable */}
-										<div>
-
 											<label className="block text-sm font-medium text-gray-700 ">
 												Bio
 											</label>
@@ -284,7 +300,6 @@ export default function ProfilePage() {
 										<h1 className="text-2xl font-bold text-gray-900">
 											{profileData.name}
 										</h1>
-										<p className={SEMANTIC_COLORS.TEXT.TERTIARY}>@{profileData.username}</p>
 										<p className="mt-2 text-gray-700 max-w-2xl">
 											{profileData.bio}
 										</p>
@@ -347,6 +362,27 @@ export default function ProfilePage() {
 										</div>
 										<div className="text-sm text-gray-500">Comics</div>
 									</div>
+									<div className={`${SEMANTIC_COLORS.BACKGROUND.SECONDARY} px-4 py-2 ${UI_CONSTANTS.BORDER_RADIUS.LARGE}`}>
+
+										<div className="text-2xl font-bold text-gray-900">
+											{userFavoriteComics.length}
+										</div>
+										<div className="text-sm text-gray-500">Favorites</div>
+									</div>
+									<div className={`${SEMANTIC_COLORS.BACKGROUND.SECONDARY} px-4 py-2 ${UI_CONSTANTS.BORDER_RADIUS.LARGE}`}>
+
+										<div className="text-2xl font-bold text-gray-900">
+											{profileData.stats.followers}
+										</div>
+										<div className="text-sm text-gray-500">Followers</div>
+									</div>
+									<div className={`${SEMANTIC_COLORS.BACKGROUND.SECONDARY} px-4 py-2 ${UI_CONSTANTS.BORDER_RADIUS.LARGE}`}>
+
+										<div className="text-2xl font-bold text-gray-900">
+											{profileData.stats.following}
+										</div>
+										<div className="text-sm text-gray-500">Following</div>
+									</div>
 								</div>
 								<div className="text-sm text-gray-500 pt-2">
 
@@ -367,6 +403,10 @@ export default function ProfilePage() {
 						<TabsTrigger value="comics" className="flex items-center data-[state=active]:bg-black data-[state=active]:text-white data-[state=inactive]:border data-[state=inactive]:border-gray-300 data-[state=inactive]:bg-white data-[state=inactive]:text-gray-600">
 							{" "}
 							<BookOpen size={16} className="mr-1" /> My Comics{" "}
+						</TabsTrigger>
+						<TabsTrigger value="favorites" className="flex items-center data-[state=active]:bg-black data-[state=active]:text-white data-[state=inactive]:border data-[state=inactive]:border-gray-300 data-[state=inactive]:bg-white data-[state=inactive]:text-gray-600">
+							{" "}
+							<Heart size={16} className="mr-1" /> Favorites{" "}
 						</TabsTrigger>
 						<TabsTrigger value="settings" className="flex items-center data-[state=active]:bg-black data-[state=active]:text-white data-[state=inactive]:border data-[state=inactive]:border-gray-300 data-[state=inactive]:bg-white data-[state=inactive]:text-gray-600">
 							{" "}
@@ -472,12 +512,79 @@ export default function ProfilePage() {
 													</div>
 												</div>
 											</Link>
+											<Button
+												variant="outline"
+												className="absolute top-2 right-2"
+												onClick={() => toggleFavorite(comic.comic_id)}
+											>
+												<Heart size={16} className={`${userFavoriteComics.some((fav) => fav.comic_id === comic.comic_id) ? "fill-red-500" : ""}`} />
+											</Button>
 										</div>
 									))}
 								</div>
 							)}
 					</TabsContent>
 
+					{/* Favorites Tab */}
+					<TabsContent value="favorites" className="space-y-6">
+						{/* Keep mock data or implement fetching similar to 'My Comics' */}
+						<h2 className="text-xl font-bold text-gray-900">Favorite Comics</h2>
+						{isLoadingFavorites ? (
+							<div className="text-center py-12">
+								<Loader2 className="h-8 w-8 mx-auto animate-spin text-gray-500" />
+								<p className="mt-2 text-gray-600">Loading...</p>
+							</div>
+						) : userFavoriteComics.length > 0 ? (
+							<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+								{userFavoriteComics.map((fav) => (
+									<Link href={`/comics/${fav.comic.comic_id}`} key={fav.comic.comic_id}>
+										<div className="${SEMANTIC_COLORS.BACKGROUND.PRIMARY} border ${UI_CONSTANTS.BORDER_RADIUS.LARGE} overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+											<div className={`${UI_CONSTANTS.ASPECT_RATIOS.COMIC_COVER} ${SEMANTIC_COLORS.BACKGROUND.TERTIARY} relative`}>
+												<Image
+													src={
+														fav.comic.coverImage ||
+														API_ENDPOINTS.PLACEHOLDER_IMAGE_WITH_SIZE(300, 400, '?text=Comic')
+													}
+													alt={fav.comic.title}
+													fill
+													style={{ objectFit: "cover" }}
+													sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
+												/>
+											</div>
+											<div className="p-4">
+												<h3 className="font-medium text-lg text-gray-900 mb-1">
+													{fav.comic.title}
+												</h3>
+												<div className="flex justify-between text-sm text-gray-500">
+													<span>By: {fav.comic.author}</span>
+													<span className="flex items-center">
+														<Heart
+															size={14}
+															className="mr-1 text-red-500"
+														/>
+														{fav.comic.likes}
+													</span>
+												</div>
+											</div>
+										</div>
+									</Link>
+								))}
+							</div>
+						) : (
+							<div className="text-center py-12 ${SEMANTIC_COLORS.BACKGROUND.PRIMARY} ${UI_CONSTANTS.BORDER_RADIUS.LARGE} border">
+								<Heart size={48} className="mx-auto text-gray-400 mb-4" />
+								<h3 className="text-lg font-medium text-gray-900 mb-2">
+									No favorites yet
+								</h3>
+								<p className={`${SEMANTIC_COLORS.TEXT.TERTIARY} mb-4`}>
+									Browse comics and add some!
+								</p>
+								<Button asChild>
+									<Link href="/comics">Browse Comics</Link>
+								</Button>
+							</div>
+						)}
+					</TabsContent>
 					{/* Settings Tab */}
 					<TabsContent value="settings" className="space-y-6">
 						{/* Keep mock settings form or implement saving */}
@@ -487,7 +594,23 @@ export default function ProfilePage() {
 						{/* Only show settings if authenticated */}
 						{isAuthenticated ? (
 							<>
-								
+								<div className="${SEMANTIC_COLORS.BACKGROUND.PRIMARY} shadow overflow-hidden ${UI_CONSTANTS.BORDER_RADIUS.LARGE}">
+									{/* ... Settings form JSX (Personal Info, Contact, Preferences) ... */}
+									{/* Example Save Settings Button */}
+									<div className={`px-4 py-5 border-t ${SEMANTIC_COLORS.BORDER.DEFAULT} sm:px-6`}>
+										<div className="flex justify-end">
+											<Button
+												type="button"
+												onClick={() => {
+													/* TODO: Implement save settings API call */
+												}}
+											>
+
+												Save Settings
+											</Button>
+										</div>
+									</div>
+								</div>
 								{/* Security Settings */}
 								<div className="mt-4 ${SEMANTIC_COLORS.BACKGROUND.PRIMARY} shadow overflow-hidden ${UI_CONSTANTS.BORDER_RADIUS.LARGE}">
 									<div className="px-4 py-5 sm:px-6 border-b">
