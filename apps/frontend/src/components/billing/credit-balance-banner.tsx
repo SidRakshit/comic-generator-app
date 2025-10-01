@@ -19,7 +19,7 @@ export function CreditBalanceBanner() {
       className={`mb-4 flex items-center justify-between rounded-lg border px-4 py-3 ${SEMANTIC_COLORS.BACKGROUND.PRIMARY} ${SEMANTIC_COLORS.BORDER.DEFAULT}`}
     >
       <div>
-        <p className="text-sm font-medium">
+        <p className="text-sm font-medium text-black">
           {isLoading ? "Checking panel balance..." : `Panel balance: ${balance.toLocaleString()} panels`}
         </p>
         {!canCreatePanel && !isLoading ? (
@@ -37,7 +37,7 @@ export function CreditBalanceBanner() {
         <Button variant="outline" size="sm" onClick={() => void refreshCredits()} disabled={isLoading}>
           Refresh
         </Button>
-        <Button size="sm" onClick={() => setModalOpen(true)}>
+        <Button variant="outline" size="sm" onClick={() => setModalOpen(true)}>
           Buy Panels
         </Button>
       </div>
