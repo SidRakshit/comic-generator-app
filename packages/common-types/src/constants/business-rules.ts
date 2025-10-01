@@ -84,7 +84,7 @@ export const COMIC_RULES = {
 		},
 		DESCRIPTION: {
 			MIN_LENGTH: 0,
-			MAX_LENGTH: 200,
+			MAX_LENGTH: 500,
 		},
 		MAX_CHARACTERS_PER_COMIC: 10, // Reasonable limit
 	},
