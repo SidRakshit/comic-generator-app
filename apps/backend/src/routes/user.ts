@@ -14,6 +14,13 @@ router.get(
 	userController.getUserCredits.bind(userController)
 );
 
+// Delete user account
+router.delete(
+	USERS.DELETE_ACCOUNT,
+	authenticateToken,
+	userController.deleteAccount.bind(userController)
+);
+
 // Get user by ID
 router.get(USERS.BY_ID(':id'), authenticateToken, (req, res) => {
 	const id = parseInt(req.params.id);

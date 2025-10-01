@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/tabs";
 import { Button } from "@repo/ui/button";
 import { apiRequest } from "@/lib/api";
 import { useAuth } from "@/hooks/use-auth";
-import { ComicListItemResponse, API_ENDPOINTS, SEMANTIC_COLORS, INTERACTIVE_STYLES, COMPONENT_STYLES, UI_CONSTANTS } from "@repo/common-types";
+import { ComicListItemResponse, API_ENDPOINTS, SEMANTIC_COLORS, INTERACTIVE_STYLES, COMPONENT_STYLES, UI_CONSTANTS, DeleteAccountRequest } from "@repo/common-types";
 import {
 	User,
 	Edit,
@@ -53,12 +53,18 @@ export default function ProfilePage() {
 	const [isLoadingFavorites, setIsLoadingFavorites] = useState(true);
 	const [creditBalance, setCreditBalance] = useState(0);
 
+	// Delete account state
+	const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
+	const [deleteConfirmationText, setDeleteConfirmationText] = useState("");
+	const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+
 	// Get auth state from context
 	const {
 		user,
 		isLoading: isLoadingAuth,
 		attributes,
 		error: authError,
+		handleSignOut,
 	} = useAuth();
 	const isAuthenticated = !!user && !isLoadingAuth;
 
@@ -184,6 +190,38 @@ export default function ProfilePage() {
 		// TODO: Reset profileData state to originally loaded data (may require fetching original data)
 		// For now, just resets to initial state - may lose unsaved fetched data
 		// setProfileData(initialUserData); // Or reset to data fetched in the other useEffect
+	};
+
+	// Delete account handlers
+	const handleDeleteAccount = async () => {
+		if (deleteConfirmationText !== "DELETE") {
+			alert("Please type 'DELETE' to confirm account deletion.");
+			return;
+		}
+
+		setIsDeletingAccount(true);
+		try {
+			const deleteRequest: DeleteAccountRequest = {
+				confirmation: deleteConfirmationText,
+			};
+
+			await apiRequest(API_ENDPOINTS.USER_DELETE_ACCOUNT, "DELETE", deleteRequest);
+			
+			// Account successfully deleted, sign out and redirect
+			await handleSignOut();
+		} catch (error) {
+			console.error("Failed to delete account:", error);
+			alert("Failed to delete account. Please try again.");
+		} finally {
+			setIsDeletingAccount(false);
+			setShowDeleteConfirmation(false);
+			setDeleteConfirmationText("");
+		}
+	};
+
+	const handleCancelDelete = () => {
+		setShowDeleteConfirmation(false);
+		setDeleteConfirmationText("");
 	};
 
 	// Helper to format date
@@ -616,20 +654,63 @@ export default function ProfilePage() {
 										</h3>
 									</div>
 									<div className="px-4 py-5 sm:p-6">
-										<Button
-											variant="destructive"
-											onClick={() => {
-												/* TODO: Implement delete account flow */
-											}}
-										>
-
-											Delete Account
-										</Button>
-										<p className="mt-2 text-sm text-gray-500">
-
-											Once you delete your account, there is no going back.
-											Please be certain.
-										</p>
+										{!showDeleteConfirmation ? (
+											<>
+												<Button
+													variant="destructive"
+													onClick={() => setShowDeleteConfirmation(true)}
+													disabled={isDeletingAccount}
+													className="bg-gray-100 text-red-600 hover:bg-gray-200 border border-red-300"
+												>
+													{isDeletingAccount ? "Deleting..." : "Delete Account"}
+												</Button>
+												<p className="mt-2 text-sm text-gray-500">
+													Once you delete your account, there is no going back.
+													Please be certain.
+												</p>
+											</>
+										) : (
+											<div className="space-y-4">
+												<div className="p-4 bg-red-50 border border-red-200 rounded-lg">
+													<h4 className="text-lg font-medium text-red-800 mb-2">
+														⚠️ Delete Account Confirmation
+													</h4>
+													<p className="text-sm text-red-700 mb-4">
+														This action cannot be undone. This will permanently delete your account,
+														all your comics, favorites, and data. You will be logged out immediately.
+													</p>
+													<div className="space-y-3">
+														<label className="block text-sm font-medium text-red-800">
+															Type <strong>DELETE</strong> to confirm:
+														</label>
+														<input
+															type="text"
+															value={deleteConfirmationText}
+															onChange={(e) => setDeleteConfirmationText(e.target.value)}
+															placeholder="Type DELETE here"
+															className="w-full px-3 py-2 border border-red-300 rounded-md focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-red-500"
+														/>
+													</div>
+												</div>
+												<div className="flex space-x-3">
+													<Button
+														variant="destructive"
+														onClick={handleDeleteAccount}
+														disabled={isDeletingAccount || deleteConfirmationText !== "DELETE"}
+														className="bg-gray-100 text-red-600 hover:bg-gray-200 border border-red-300"
+													>
+														{isDeletingAccount ? "Deleting Account..." : "Yes, Delete My Account"}
+													</Button>
+													<Button
+														variant="outline"
+														onClick={handleCancelDelete}
+														disabled={isDeletingAccount}
+													>
+														Cancel
+													</Button>
+												</div>
+											</div>
+										)}
 									</div>
 								</div>
 							</>
