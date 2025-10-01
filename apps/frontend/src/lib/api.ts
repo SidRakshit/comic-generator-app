@@ -1,5 +1,6 @@
 import { fetchAuthSession } from "aws-amplify/auth";
 import { GeneratedImageDataResponse, API_CONFIG } from "@repo/common-types";
+import { getImpersonationToken } from "@/lib/impersonation";
 
 const API_BASE_URL =
 	process.env.NEXT_PUBLIC_API_BASE_URL || API_CONFIG.DEFAULT_BACKEND_URL;
@@ -42,14 +43,17 @@ export async function apiRequest<T = unknown>(
 		);
 	}
 
+	const impersonation = getImpersonationToken();
+	if (impersonation?.token) {
+		headers["x-admin-impersonation-token"] = impersonation.token;
+	}
+
 	const config: RequestInit = { method: method, headers: headers };
 	if (body && (method === "POST" || method === "PUT")) {
 		config.body = JSON.stringify(body);
 	}
 
-	const url = `${API_BASE_URL}${
-		endpoint.startsWith("/") ? "" : "/"
-	}${endpoint}`;
+	const url = `${API_BASE_URL.replace(/\/api$/, "")}${endpoint.startsWith("/") ? "" : "/"}${endpoint}`;
 	console.log(`API Request: ${method} ${url}`);
 
 	try {

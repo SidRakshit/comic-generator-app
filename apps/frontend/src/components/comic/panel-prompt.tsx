@@ -80,12 +80,16 @@ export default function PanelPromptModal({
         <Tabs defaultValue="text" className="w-full mt-4">
           <TabsList className="w-full mb-4">
             <TabsTrigger value="text" className="flex-1" onClick={() => setPromptType('text')}>
-              <Sparkles className="h-4 w-4 mr-2" />
-              Text Prompt
+              <span>
+                <Sparkles className="h-4 w-4 mr-2" />
+                Text Prompt
+              </span>
             </TabsTrigger>
             <TabsTrigger value="image" className="flex-1" onClick={() => setPromptType('image')}>
-              <Camera className="h-4 w-4 mr-2" />
-              Upload Image
+              <span>
+                <Camera className="h-4 w-4 mr-2" />
+                Upload Image
+              </span>
             </TabsTrigger>
           </TabsList>
           

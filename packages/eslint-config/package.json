@@ -13,7 +13,8 @@
     ".": "./index.js",
     "./nextjs": "./nextjs.js",
     "./node": "./node.js",
-    "./react-library": "./react-library.js"
+    "./react-library": "./react-library.js",
+    "./flat.mjs": "./flat.mjs"
   },
   "dependencies": {
     "@typescript-eslint/eslint-plugin": "^8.0.0",

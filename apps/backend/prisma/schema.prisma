@@ -21,6 +21,8 @@ model comics {
   updated_at  DateTime? @default(now()) @db.Timestamptz(6)
   users       users     @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
   pages       pages[]
+  usage_logs  panel_usage_log[]
+  favorited_by user_favorite_comics[]
 
   @@index([user_id], map: "idx_comics_user_id")
 }
@@ -49,6 +51,7 @@ model panels {
   created_at      DateTime? @default(now()) @db.Timestamptz(6)
   updated_at      DateTime? @default(now()) @db.Timestamptz(6)
   pages           pages     @relation(fields: [page_id], references: [page_id], onDelete: Cascade, onUpdate: NoAction)
+  usage_logs      panel_usage_log[]
 
   @@unique([page_id, panel_number])
   @@index([page_id], map: "idx_panels_page_id")
@@ -77,7 +80,137 @@ model users {
   auth_provider_id String         @unique @db.VarChar(255)
   comics           comics[]
   user_profiles    user_profiles?
+  user_credits     user_credits?
+  credit_purchases credit_purchases[]
+  panel_usage_log  panel_usage_log[]
+  admin_audit_logs admin_audit_logs[]
+  admin_user       admin_users?
+  impersonation_tokens_issued   admin_impersonation_tokens[] @relation("admin_token_admin_user")
+  impersonation_tokens_received admin_impersonation_tokens[] @relation("admin_token_target_user")
+  admin_mfa         admin_mfa_enrollments?
+  favorite_comics user_favorite_comics[]
 
   @@index([auth_provider_id], map: "idx_users_auth_provider_id")
   @@index([email], map: "idx_users_email")
+}
+
+model user_credits {
+  user_id           String    @id @db.Uuid
+  panel_balance     Int       @default(20)
+  last_purchased_at DateTime? @db.Timestamptz(6)
+  created_at        DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at        DateTime? @default(now()) @db.Timestamptz(6)
+  users             users     @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([last_purchased_at], map: "idx_user_credits_last_purchase")
+}
+
+model credit_purchases {
+  purchase_id      String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id          String    @db.Uuid
+  stripe_charge_id String    @unique @db.VarChar(255)
+  amount_dollars   Int
+  panels_purchased Int
+  created_at       DateTime? @default(now()) @db.Timestamptz(6)
+  users            users     @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([user_id], map: "idx_credit_purchases_user_id")
+  @@index([created_at], map: "idx_credit_purchases_created_at")
+}
+
+model panel_usage_log {
+  usage_id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id           String    @db.Uuid
+  comic_id          String?   @db.Uuid
+  panel_id          String?   @db.Uuid
+  credits_consumed  Int       @default(1)
+  created_at        DateTime? @default(now()) @db.Timestamptz(6)
+  users             users     @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+  comics            comics?   @relation(fields: [comic_id], references: [comic_id], onDelete: SetNull, onUpdate: NoAction)
+  panels            panels?   @relation(fields: [panel_id], references: [panel_id], onDelete: SetNull, onUpdate: NoAction)
+
+  @@index([user_id], map: "idx_panel_usage_user_id")
+  @@index([comic_id], map: "idx_panel_usage_comic_id")
+  @@index([created_at], map: "idx_panel_usage_created_at")
+}
+
+model stripe_events {
+  event_id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  stripe_event_id   String    @unique @db.VarChar(255)
+  event_type        String    @db.VarChar(100)
+  related_charge_id String?   @db.VarChar(255)
+  processed_at      DateTime? @default(now()) @db.Timestamptz(6)
+  metadata          Json?
+
+  @@index([event_type], map: "idx_stripe_events_event_type")
+  @@index([processed_at], map: "idx_stripe_events_processed_at")
+}
+
+model admin_audit_logs {
+  log_id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  admin_user_id  String    @db.Uuid
+  action         String
+  resource_type  String
+  resource_id    String?
+  metadata       Json?
+  created_at     DateTime? @default(now()) @db.Timestamptz(6)
+  users          users     @relation(fields: [admin_user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([admin_user_id], map: "idx_admin_audit_admin_user")
+  @@index([created_at], map: "idx_admin_audit_created_at")
+}
+
+model admin_users {
+  admin_user_id  String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  user_id        String    @unique @db.Uuid
+  roles          String[]  @default([])
+  permissions    String[]  @default([])
+  can_impersonate Boolean  @default(false)
+  created_at     DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at     DateTime? @default(now()) @db.Timestamptz(6)
+  users          users     @relation(fields: [user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([created_at], map: "idx_admin_users_created_at")
+}
+
+model admin_impersonation_tokens {
+  token_id            String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  admin_user_id       String    @db.Uuid
+  target_user_id      String    @db.Uuid
+  token_hash          String
+  expires_at          DateTime  @db.Timestamptz(6)
+  redeemed_at         DateTime? @db.Timestamptz(6)
+  redeemed_ip         String?   @db.Inet
+  redeemed_user_agent String?
+  last_used_at        DateTime? @db.Timestamptz(6)
+  metadata            Json?
+  created_at          DateTime? @default(now()) @db.Timestamptz(6)
+  admin_user          users     @relation("admin_token_admin_user", fields: [admin_user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+  target_user         users     @relation("admin_token_target_user", fields: [target_user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([admin_user_id], map: "idx_admin_impersonation_admin")
+  @@index([target_user_id], map: "idx_admin_impersonation_target")
+  @@index([expires_at], map: "idx_admin_impersonation_expires")
+}
+
+model admin_mfa_enrollments {
+  admin_user_id    String    @id @db.Uuid
+  secret_encrypted String
+  otpauth_url      String
+  backup_codes     String[]  @default([])
+  verified_at      DateTime? @db.Timestamptz(6)
+  created_at       DateTime? @default(now()) @db.Timestamptz(6)
+  updated_at       DateTime? @default(now()) @db.Timestamptz(6)
+  admin_user       users     @relation(fields: [admin_user_id], references: [user_id], onDelete: Cascade, onUpdate: NoAction)
+
+  @@index([verified_at], map: "idx_admin_mfa_verified")
+}
+
+model user_favorite_comics {
+  user_id  String @db.Uuid
+  comic_id String @db.Uuid
+  users    users  @relation(fields: [user_id], references: [user_id], onDelete: Cascade)
+  comics   comics @relation(fields: [comic_id], references: [comic_id], onDelete: Cascade)
+
+  @@id([user_id, comic_id])
 }

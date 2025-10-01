@@ -12,7 +12,7 @@ export function errorHandler(
 	error: unknown,
 	req: Request,
 	res: Response,
-	next: NextFunction
+	_next: NextFunction
 ): void {
 	// Log error for debugging (in production, use proper logging service)
 	const isProd = process.env.NODE_ENV === 'production';

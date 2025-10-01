@@ -3,46 +3,53 @@ import express from 'express';
 import { comicController } from '../controllers/comics.controller';
 import { authenticateToken } from '../middleware/auth.middleware';
 import { validateRequestBody } from '../middleware/validation.middleware';
-import { CreateComicRequestSchema, GeneratePanelImageRequestSchema } from '@repo/common-types';
+import { checkPanelBalance } from '../middleware/billing.middleware';
+import { CreateComicRequestSchema, GeneratePanelImageRequestSchema, API_ROUTES } from '@repo/common-types';
 
 const router = express.Router();
-
-router.post('/generate-script',
-    authenticateToken,
-    comicController.generateScript);
-router.post('/generate-panel-image',
-    authenticateToken,
-    validateRequestBody(GeneratePanelImageRequestSchema),
-    comicController.generateImage);
+const { COMICS } = API_ROUTES;
 
 router.post(
-    '/comics',
+    COMICS.GENERATE_SCRIPT,
+    authenticateToken,
+    comicController.generateScript
+);
+router.post(
+    COMICS.GENERATE_PANEL_IMAGE,
+    authenticateToken,
+    checkPanelBalance,
+    validateRequestBody(GeneratePanelImageRequestSchema),
+    comicController.generateImage
+);
+
+router.post(
+    COMICS.BASE,
     authenticateToken,
     validateRequestBody(CreateComicRequestSchema),
     comicController.saveComic
 );
 
 router.put(
-    '/comics/:comicId',
+    COMICS.BY_ID(':comicId'),
     authenticateToken,
     validateRequestBody(CreateComicRequestSchema),
     comicController.saveComic
 );
 
 router.get(
-    '/comics',
+    COMICS.BASE,
     authenticateToken,
     comicController.listComics
 );
 
 router.get(
-    '/comics/:comicId',
+    COMICS.BY_ID(':comicId'),
     authenticateToken,
     comicController.getComic
 );
 
 // DELETE /api/comics/:comicId - Delete a comic (Add controller method + service logic)
-// router.delete('/comics/:comicId', authenticateToken, comicController.deleteComic);
+// router.delete(COMICS.BY_ID(':comicId'), authenticateToken, comicController.deleteComic);
 
 
 export default router; // Ensure this is exported correctly

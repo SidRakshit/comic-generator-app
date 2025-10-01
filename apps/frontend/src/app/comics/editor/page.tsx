@@ -6,12 +6,13 @@ import Link from "next/link";
 import ComicCanvas from "@/components/comic/comic-canvas";
 import PanelPromptModal from "@/components/comic/panel-prompt";
 import ImageZoomModal from "@/components/comic/image-zoom-modal";
+import { CreditBalanceBanner } from "@/components/billing/credit-balance-banner";
 import { useComicContext } from "@/context/comic-context";
 import { COMIC_TEMPLATES as templates } from "@repo/common-types";
 import { Button } from "@repo/ui/button";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { apiRequest, GeneratedImageDataResponse } from "@/lib/api";
-import { ComicCharacter, Panel, SEMANTIC_COLORS, INTERACTIVE_STYLES, UI_CONSTANTS } from "@repo/common-types";
+import { ComicCharacter, Panel, SEMANTIC_COLORS, INTERACTIVE_STYLES, UI_CONSTANTS, API_ENDPOINTS } from "@repo/common-types";
 
 async function generateImageAPI(
 	prompt: string
@@ -21,7 +22,7 @@ async function generateImageAPI(
 
 	try {
 		const data = await apiRequest<GeneratedImageDataResponse>(
-			"/generate-panel-image",
+			API_ENDPOINTS.GENERATE_PANEL_IMAGE,
 			"POST",
 			requestBody
 		);
@@ -180,7 +181,7 @@ function NewComicEditorContent() {
 		} catch (error) {
 			console.error("Unexpected error during handleSaveComic:", error);
 			alert(
-				`Failed to save comic: ${
+				`Failed to save comic: ${ 
 					error instanceof Error ? error.message : "Unknown error"
 				}`
 			);
@@ -206,14 +207,14 @@ function NewComicEditorContent() {
 
 	return (
 		<div className="container mx-auto py-8 px-4">
-			<div className="mb-6">
-				{" "}
+			<CreditBalanceBanner />
+			<div className="mb-6"> 
 				<Link
 					href="/comics/create"
 					className={`inline-flex items-center ${SEMANTIC_COLORS.TEXT.ACCENT} ${INTERACTIVE_STYLES.TEXT.HOVER_ACCENT}`}
 				>
-					<ArrowLeft className="h-4 w-4 mr-1" /> Back{" "}
-				</Link>{" "}
+					<ArrowLeft className="h-4 w-4 mr-1" /> Back 
+				</Link> 
 			</div>
 			<div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-6 gap-4">
 				<h1 className={`text-3xl font-bold break-words ${SEMANTIC_COLORS.TEXT.PRIMARY}`}>
@@ -253,21 +254,21 @@ function NewComicEditorContent() {
 			</div>
 			<PanelPromptModal
 				isOpen={isPromptModalOpen}
-				onClose={() => setIsPromptModalOpen(false)}
-				onSubmit={handlePromptSubmit}
-				panelNumber={activePanel !== null ? activePanel + 1 : 0}
-				initialPrompt={
-					(activePanel !== null && comic.panels?.[activePanel]?.prompt) || ""
-				}
-				isRegenerating={
-					activePanel !== null &&
-					comic.panels?.[activePanel]?.status === "complete"
-				}
+			onClose={() => setIsPromptModalOpen(false)}
+			onSubmit={handlePromptSubmit}
+			panelNumber={activePanel !== null ? activePanel + 1 : 0}
+			initialPrompt={
+				(activePanel !== null && comic.panels?.[activePanel]?.prompt) || ""
+			}
+			isRegenerating={
+				activePanel !== null &&
+				comic.panels?.[activePanel]?.status === "complete"
+			}
 			/>
 			<ImageZoomModal
 				isOpen={isZoomModalOpen}
-				onClose={() => setIsZoomModalOpen(false)}
-				imageUrl={zoomedImageUrl}
+			onClose={() => setIsZoomModalOpen(false)}
+			imageUrl={zoomedImageUrl}
 			/>
 		</div>
 	);
@@ -283,8 +284,7 @@ export default function NewComicEditorPage() {
 				</div>
 			}
 		>
-			{" "}
-			<NewComicEditorContent />{" "}
+			<NewComicEditorContent />
 		</Suspense>
 	);
 }

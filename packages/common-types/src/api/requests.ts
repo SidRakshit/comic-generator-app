@@ -1,6 +1,6 @@
 // API Request DTOs
 
-import type { Comic, ComicCharacter } from '../domain';
+import type { ComicCharacter } from '../domain';
 
 // Comic creation/update requests
 export interface CreateComicRequest {

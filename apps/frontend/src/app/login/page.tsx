@@ -102,10 +102,8 @@ export default function LoginPage() {
 				</form>
 				{/* Make descriptive text darker */}
 				<p className={`text-center text-sm ${SEMANTIC_COLORS.TEXT.SECONDARY}`}>
-					{" "}
 					{/* Changed from text-gray-600 */}
-					Don&apos;t have an account?{" "}
-					<Link href="/signup" legacyBehavior>
+					Don&apos;t have an account? <Link href="/signup" legacyBehavior>
 						<a className={`font-medium ${SEMANTIC_COLORS.TEXT.ACCENT} ${INTERACTIVE_STYLES.TEXT.HOVER_ACCENT}`}>
 							Sign up
 						</a>

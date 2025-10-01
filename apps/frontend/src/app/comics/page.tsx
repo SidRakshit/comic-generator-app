@@ -6,20 +6,8 @@
 import { useRouter } from 'next/navigation';
 import TemplateSelector from '@/components/comic/template-selector'; // Ensure this path is correct
 import { useState } from 'react';
-import { SEMANTIC_COLORS, UI_CONSTANTS } from "@repo/common-types";
-
-// Mock function to simulate creating a new comic entry in the backend
-// Replace this with your actual API call logic.
-// It should take a templateId and return the unique ID of the created comic.
-async function createNewComicAPI(templateId: string): Promise<{ id: string }> {
-  console.log(`API CALL (MOCK): Creating comic with template: ${templateId}`);
-  // Simulate network delay
-  await new Promise(resolve => setTimeout(resolve, 700));
-  // In a real app, you'd get the ID from the backend response
-  const newId = `comic_${templateId}_${Date.now()}`;
-  console.log(`API CALL (MOCK): Received new comic ID: ${newId}`);
-  return { id: newId };
-}
+import { SEMANTIC_COLORS, UI_CONSTANTS, API_ENDPOINTS } from "@repo/common-types";
+import { apiRequest } from '@/lib/api';
 
 export default function CreateComicPage() {
   const router = useRouter();
@@ -34,8 +22,8 @@ export default function CreateComicPage() {
     setError(null);
 
     try {
-      const newComic = await createNewComicAPI(templateId);
-      const newComicId = newComic.id;
+      const newComic = await apiRequest<any>(API_ENDPOINTS.COMICS, "POST", { templateId });
+      const newComicId = newComic.comic_id;
 
       if (!newComicId) {
           throw new Error("Failed to get a valid ID from the backend.");

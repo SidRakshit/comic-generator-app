@@ -33,6 +33,7 @@ export default function SignupPage() {
 				password,
 				options: { userAttributes: { email } },
 			});
+			console.log("New user ID:", userId);
 			if (isSignUpComplete) {
 				router.push("/profile");
 			} else if (nextStep.signUpStep === "CONFIRM_SIGN_UP") {
@@ -102,7 +103,7 @@ export default function SignupPage() {
 						/>
 						{/* Make descriptive text darker */}
 						<p className={`text-xs ${SEMANTIC_COLORS.TEXT.TERTIARY} mt-1`}>
-							{" "}
+							
 							{/* Changed from text-gray-500 */}
 							Min. 8 characters. Consider adding complexity requirements.
 						</p>
@@ -118,10 +119,8 @@ export default function SignupPage() {
 				</form>
 				{/* Make descriptive text darker */}
 				<p className={`text-center text-sm ${SEMANTIC_COLORS.TEXT.SECONDARY}`}>
-					{" "}
 					{/* Changed from text-gray-600 */}
-					Already have an account?{" "}
-					<Link href="/login" legacyBehavior>
+					Already have an account? <Link href="/login" legacyBehavior>
 						<a className={`font-medium ${SEMANTIC_COLORS.TEXT.ACCENT} ${INTERACTIVE_STYLES.TEXT.HOVER_ACCENT}`}>
 							Login
 						</a>

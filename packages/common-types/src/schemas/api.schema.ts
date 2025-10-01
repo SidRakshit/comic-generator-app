@@ -2,7 +2,7 @@
 
 import { z } from 'zod';
 import { ComicCharacterSchema, GeneratedImageDataSchema } from './comic.schema';
-import { COMIC_RULES, PASSWORD_RULES, USER_RULES, FILE_LIMITS } from '../constants/business-rules';
+import { COMIC_RULES, PASSWORD_RULES, USER_RULES } from '../constants/business-rules';
 
 // Request schemas
 export const CreateComicRequestSchema = z.object({

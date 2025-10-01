@@ -26,10 +26,12 @@ export const PROTECTED_ROUTES = {
  * API routes - backend endpoints (without /api prefix)
  */
 export const API_ROUTES = {
+	ROOT: '/',
+
 	// Comic management
 	COMICS: {
 		BASE: '/comics',
-		BY_ID: (id: string) => `/comics/${id}`,
+		BY_ID: (id: string | number) => `/comics/${id}`,
 		GENERATE_PANEL_IMAGE: '/comics/generate-panel-image',
 		GENERATE_SCRIPT: '/comics/generate-script',
 	},
@@ -37,21 +39,84 @@ export const API_ROUTES = {
 	// User management  
 	USERS: {
 		BASE: '/users',
-		BY_ID: (id: string) => `/users/${id}`,
+		BY_ID: (id: string | number) => `/users/${id}`,
 		PROFILE: '/users/profile',
+		ME_CREDITS: '/users/me/credits',
 	},
-	
+
+	// Favorites
+	FAVORITES: {
+		BASE: '/favorites',
+		BY_ID: (id: string | number) => `/favorites/${id}`,
+	},
+
+	// Billing (customer-facing)
+	BILLING: {
+		BASE: '/billing',
+		CHECKOUT: '/billing/checkout',
+	},
+
+	// Administration
+	ADMIN: {
+		BASE: '/admin',
+		DASHBOARD: '/admin/dashboard',
+		USERS: {
+			BASE: '/admin/users',
+			BY_ID: (id: string | number) => `/admin/users/${id}`,
+			IMPERSONATE: (id: string | number) => `/admin/users/${id}/impersonate`,
+			CREDITS: (id: string | number) => `/admin/users/${id}/credits`,
+		},
+		BILLING: {
+			PURCHASES: '/admin/billing/purchases',
+			EXPORT: '/admin/billing/purchases/export',
+			REFUND: '/admin/billing/refund',
+		},
+		AUDIT_LOGS: '/admin/audit-logs',
+		ANALYTICS_OVERVIEW: '/admin/analytics/overview',
+		SECURITY: {
+			MFA_SETUP: '/admin/security/mfa/setup',
+			MFA_VERIFY: '/admin/security/mfa/verify',
+			MFA_DISABLE: '/admin/security/mfa',
+		},
+	},
+
+	// Impersonation
+	IMPERSONATION: {
+		BASE: '/impersonation',
+		EXCHANGE: '/impersonation/exchange',
+	},
+
+	// Webhooks
+	WEBHOOKS: {
+		BASE: '/webhooks',
+		STRIPE: '/webhooks/stripe',
+	},
+
+	// Utility endpoints
+	UTILITY: {
+		PLACEHOLDER: '/placeholder',
+		PLACEHOLDER_WITH_SIZE: (
+			width: string | number,
+			height?: string | number,
+			extraPath = ''
+		) => `/placeholder/${width}${height !== undefined ? `/${height}` : ''}${extraPath}`,
+	},
+
 	// Authentication
 	AUTH: {
 		LOGIN: '/auth/login',
 		LOGOUT: '/auth/logout', 
 		REFRESH: '/auth/refresh',
 	},
-	
-	// System
+
+	// System-level (non /api) routes
 	HEALTH: '/health',
 	PING: '/ping',
+	METRICS: '/metrics',
+	TEST_CORS: '/test-cors',
 } as const;
+
+export const API_BASE_PATH = '/api' as const;
 
 /**
  * Navigation paths for UI components
@@ -82,6 +147,8 @@ export const EXTERNAL_LINKS = {
 /**
  * Route helpers and utilities
  */
+type PublicRoute = (typeof PUBLIC_ROUTES)[keyof typeof PUBLIC_ROUTES];
+
 export const ROUTE_HELPERS = {
 	/**
 	 * Check if a route requires authentication
@@ -96,7 +163,7 @@ export const ROUTE_HELPERS = {
 	 * Check if a route is public
 	 */
 	isPublicRoute: (path: string): boolean => {
-		return Object.values(PUBLIC_ROUTES).includes(path as any);
+		return Object.values(PUBLIC_ROUTES).includes(path as PublicRoute);
 	},
 	
 	/**

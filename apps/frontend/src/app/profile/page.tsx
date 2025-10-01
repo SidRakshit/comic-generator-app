@@ -30,30 +30,13 @@ const initialUserData = {
 	username: "User",
 	name: "Comic Creator",
 	bio: "Loading profile...",
-	avatarUrl: "/api/placeholder/150/150",
+	avatarUrl: `${API_ENDPOINTS.PLACEHOLDER_IMAGE}?width=150&height=150`,
 	joinDate: "",
 	email: "",
 	website: "",
 	twitter: "",
 	stats: { created: 0, favorites: 0, followers: 0, following: 0 },
 };
-// Mock favorites (replace with fetched data if implementing)
-const userFavoriteComics = [
-	{
-		id: "comic-4",
-		title: "Heroes of Tomorrow",
-		author: "CosmicCreator",
-		coverImage: "/api/placeholder/300/400?text=Heroes+Tomorrow",
-		likes: 87,
-	},
-	{
-		id: "comic-5",
-		title: "Mystery Island",
-		author: "StoryWeaver",
-		coverImage: "/api/placeholder/300/400?text=Mystery+Island",
-		likes: 56,
-	},
-];
 
 export default function ProfilePage() {
 	const [isEditingProfile, setIsEditingProfile] = useState(false);
@@ -66,6 +49,10 @@ export default function ProfilePage() {
 	const [errorLoadingComics, setErrorLoadingComics] = useState<string | null>(
 		null
 	);
+
+	const [userFavoriteComics, setUserFavoriteComics] = useState<any[]>([]);
+	const [isLoadingFavorites, setIsLoadingFavorites] = useState(true);
+	const [creditBalance, setCreditBalance] = useState(0);
 
 	// Get auth state from context
 	const {
@@ -143,6 +130,51 @@ export default function ProfilePage() {
 		}
 	}, [isLoadingAuth, isAuthenticated]); // Re-run when auth state changes
 
+	useEffect(() => {
+		if (isAuthenticated) {
+			const fetchFavorites = async () => {
+				setIsLoadingFavorites(true);
+				try {
+					const data = await apiRequest<any[]>(API_ENDPOINTS.FAVORITES, "GET");
+					setUserFavoriteComics(data || []);
+				} catch (err: unknown) {
+					console.error("Failed to fetch user favorites:", err);
+				} finally {
+					setIsLoadingFavorites(false);
+				}
+			};
+			fetchFavorites();
+		}
+	}, [isAuthenticated]);
+
+	useEffect(() => {
+		if (isAuthenticated) {
+			const fetchCredits = async () => {
+				try {
+					const data = await apiRequest<{ panel_balance: number }>(API_ENDPOINTS.USER_CREDITS_ME, "GET");
+					setCreditBalance(data?.panel_balance || 0);
+				} catch (err: unknown) {
+					console.error("Failed to fetch user credits:", err);
+				}
+			};
+			fetchCredits();
+		}
+	}, [isAuthenticated]);
+
+	const toggleFavorite = async (comicId: string) => {
+		const isFavorite = userFavoriteComics.some((comic) => comic.comic_id === comicId);
+		if (isFavorite) {
+		await apiRequest(API_ENDPOINTS.FAVORITE_BY_ID(comicId), "DELETE");
+			setUserFavoriteComics(userFavoriteComics.filter((comic) => comic.comic_id !== comicId));
+		} else {
+			await apiRequest(API_ENDPOINTS.FAVORITES, "POST", { comicId });
+			// Ideally, the API would return the newly favorited comic
+			// For now, we just refetch the list
+			const data = await apiRequest<any[]>(API_ENDPOINTS.FAVORITES, "GET");
+			setUserFavoriteComics(data || []);
+		}
+	};
+
 	// --- Profile Edit Handlers (Keep or modify as needed) ---
 	const handleSaveProfile = () => {
 		// TODO: Add API call here to save profileData to your backend
@@ -206,10 +238,10 @@ export default function ProfilePage() {
 									<div className="space-y-3">
 										{/* Edit fields */}
 										<div>
-											{" "}
+											
 											<label className="block text-sm font-medium text-gray-700">
 												Display Name
-											</label>{" "}
+											</label>
 											<input
 												type="text"
 												value={profileData.name}
@@ -220,26 +252,26 @@ export default function ProfilePage() {
 													})
 												}
 												className={COMPONENT_STYLES.FORM.INPUT}
-											/>{" "}
+											/>
 										</div>
 										<div>
-											{" "}
+											
 											<label className="block text-sm font-medium text-gray-700">
 												Username
-											</label>{" "}
+											</label>
 											<input
 												type="text"
 												value={profileData.username}
 												disabled
 												className={`${COMPONENT_STYLES.FORM.INPUT} ${SEMANTIC_COLORS.BACKGROUND.TERTIARY} cursor-not-allowed`}
-											/>{" "}
-										</div>{" "}
+											/>
+										</div>
 										{/* Usually username is not editable */}
 										<div>
-											{" "}
+											
 											<label className="block text-sm font-medium text-gray-700">
 												Bio
-											</label>{" "}
+											</label>
 											<textarea
 												value={profileData.bio}
 												onChange={(e) =>
@@ -250,7 +282,7 @@ export default function ProfilePage() {
 												}
 												rows={3}
 												className={COMPONENT_STYLES.FORM.INPUT}
-											/>{" "}
+											/>
 										</div>
 									</div>
 								) : (
@@ -273,26 +305,33 @@ export default function ProfilePage() {
 													onClick={handleSaveProfile}
 													className="flex items-center"
 												>
-													{" "}
-													<Save size={16} className="mr-1" /> Save Changes{" "}
+													
+													<Save size={16} className="mr-1" /> Save Changes
 												</Button>
 												<Button
 													variant="outline"
 													onClick={handleCancelEditProfile}
 												>
-													{" "}
-													Cancel{" "}
+													
+													Cancel
 												</Button>
 											</>
 										) : (
-											<Button
-												variant="outline"
-												className="flex items-center"
-												onClick={() => setIsEditingProfile(true)}
-											>
-												{" "}
-												<Edit size={16} className="mr-1" /> Edit Profile{" "}
-											</Button>
+											<>
+												<Button
+													variant="outline"
+													className="flex items-center"
+													onClick={() => setIsEditingProfile(true)}
+												>
+													
+													<Edit size={16} className="mr-1" /> Edit Profile
+												</Button>
+												<Button asChild variant="outline">
+													<Link href="/billing" className="flex items-center">
+														<PlusCircle size={16} className="mr-1" /> Buy Credits
+													</Link>
+												</Button>
+											</>
 										)}
 									</div>
 								)}
@@ -302,39 +341,45 @@ export default function ProfilePage() {
 							<div className="mt-6 md:mt-0 flex flex-col items-center md:items-end space-y-2 w-full md:w-auto">
 								<div className="grid grid-cols-2 gap-4 text-center">
 									<div className={`${SEMANTIC_COLORS.BACKGROUND.SECONDARY} px-4 py-2 ${UI_CONSTANTS.BORDER_RADIUS.LARGE}`}>
-										{" "}
+										<div className="text-2xl font-bold text-gray-900">
+											{creditBalance}
+										</div>
+										<div className="text-sm text-gray-500">Credits</div>
+									</div>
+									<div className={`${SEMANTIC_COLORS.BACKGROUND.SECONDARY} px-4 py-2 ${UI_CONSTANTS.BORDER_RADIUS.LARGE}`}>
+										
 										<div className="text-2xl font-bold text-gray-900">
 											{profileData.stats.created}
-										</div>{" "}
-										<div className="text-sm text-gray-500">Comics</div>{" "}
+										</div>
+										<div className="text-sm text-gray-500">Comics</div>
 									</div>
 									<div className={`${SEMANTIC_COLORS.BACKGROUND.SECONDARY} px-4 py-2 ${UI_CONSTANTS.BORDER_RADIUS.LARGE}`}>
-										{" "}
+										
 										<div className="text-2xl font-bold text-gray-900">
-											{profileData.stats.favorites}
-										</div>{" "}
-										<div className="text-sm text-gray-500">Favorites</div>{" "}
+											{userFavoriteComics.length}
+										</div>
+										<div className="text-sm text-gray-500">Favorites</div>
 									</div>
 									<div className={`${SEMANTIC_COLORS.BACKGROUND.SECONDARY} px-4 py-2 ${UI_CONSTANTS.BORDER_RADIUS.LARGE}`}>
-										{" "}
+										
 										<div className="text-2xl font-bold text-gray-900">
 											{profileData.stats.followers}
-										</div>{" "}
-										<div className="text-sm text-gray-500">Followers</div>{" "}
+										</div>
+										<div className="text-sm text-gray-500">Followers</div>
 									</div>
 									<div className={`${SEMANTIC_COLORS.BACKGROUND.SECONDARY} px-4 py-2 ${UI_CONSTANTS.BORDER_RADIUS.LARGE}`}>
-										{" "}
+										
 										<div className="text-2xl font-bold text-gray-900">
 											{profileData.stats.following}
-										</div>{" "}
-										<div className="text-sm text-gray-500">Following</div>{" "}
+										</div>
+										<div className="text-sm text-gray-500">Following</div>
 									</div>
 								</div>
 								<div className="text-sm text-gray-500 pt-2">
-									{" "}
+									
 									{profileData.joinDate
 										? `Joined ${profileData.joinDate}`
-										: ""}{" "}
+										: ""}
 								</div>
 							</div>
 						</div>
@@ -425,8 +470,7 @@ export default function ProfilePage() {
 										Start creating your first comic!
 									</p>
 									<Button asChild>
-										{" "}
-										<Link href="/comics/create"> Get Started </Link>{" "}
+										<Link href="/comics/create">Get Started</Link>
 									</Button>
 								</div>
 							)}
@@ -438,26 +482,34 @@ export default function ProfilePage() {
 							myComics.length > 0 && (
 								<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
 									{myComics.map((comic) => (
-										<Link
-											href={`/comics/${comic.comic_id}`}
-											key={comic.comic_id}
-										>
-											<div className="${SEMANTIC_COLORS.BACKGROUND.PRIMARY} border ${UI_CONSTANTS.BORDER_RADIUS.LARGE} overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-												{/* Placeholder for Cover Image */}
-												<div className={`${UI_CONSTANTS.ASPECT_RATIOS.COMIC_COVER} ${SEMANTIC_COLORS.BACKGROUND.TERTIARY} relative flex items-center justify-center ${SEMANTIC_COLORS.TEXT.DISABLED}`}>
-													<ImageIcon size={48} />
-												</div>
-												<div className="p-4">
-													<h3 className="font-medium text-lg text-gray-900 mb-1 truncate">
-														{comic.title}
-													</h3>
-													<div className="flex justify-between text-sm text-gray-500">
-														<span>Updated: {formatDate(comic.updated_at)}</span>
-														{/* Add likes if available */}
+										<div key={comic.comic_id} className="relative">
+											<Link
+												href={`/comics/${comic.comic_id}`}
+											>
+												<div className="${SEMANTIC_COLORS.BACKGROUND.PRIMARY} border ${UI_CONSTANTS.BORDER_RADIUS.LARGE} overflow-hidden shadow-sm hover:shadow-md transition-shadow">
+													{/* Placeholder for Cover Image */}
+													<div className={`${UI_CONSTANTS.ASPECT_RATIOS.COMIC_COVER} ${SEMANTIC_COLORS.BACKGROUND.TERTIARY} relative flex items-center justify-center ${SEMANTIC_COLORS.TEXT.DISABLED}`}>
+														<ImageIcon size={48} />
+													</div>
+													<div className="p-4">
+														<h3 className="font-medium text-lg text-gray-900 mb-1 truncate">
+															{comic.title}
+														</h3>
+														<div className="flex justify-between text-sm text-gray-500">
+															<span>Updated: {formatDate(comic.updated_at)}</span>
+															{/* Add likes if available */}
+														</div>
 													</div>
 												</div>
-											</div>
-										</Link>
+											</Link>
+											<Button
+												variant="outline"
+												className="absolute top-2 right-2"
+												onClick={() => toggleFavorite(comic.comic_id)}
+											>
+												<Heart size={16} className={`${userFavoriteComics.some((fav) => fav.comic_id === comic.comic_id) ? "fill-red-500" : ""}`} />
+											</Button>
+										</div>
 									))}
 								</div>
 							)}
@@ -467,39 +519,42 @@ export default function ProfilePage() {
 					<TabsContent value="favorites" className="space-y-6">
 						{/* Keep mock data or implement fetching similar to 'My Comics' */}
 						<h2 className="text-xl font-bold text-gray-900">Favorite Comics</h2>
-						{userFavoriteComics.length > 0 ? (
+						{isLoadingFavorites ? (
+							<div className="text-center py-12">
+								<Loader2 className="h-8 w-8 mx-auto animate-spin text-gray-500" />
+								<p className="mt-2 text-gray-600">Loading...</p>
+							</div>
+						) : userFavoriteComics.length > 0 ? (
 							<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-								{userFavoriteComics.map((comic) => (
-									<Link href={`/comics/${comic.id}`} key={comic.id}>
-										{" "}
-										{/* Link to external comics if needed */}
+								{userFavoriteComics.map((fav) => (
+									<Link href={`/comics/${fav.comic.comic_id}`} key={fav.comic.comic_id}>
 										<div className="${SEMANTIC_COLORS.BACKGROUND.PRIMARY} border ${UI_CONSTANTS.BORDER_RADIUS.LARGE} overflow-hidden shadow-sm hover:shadow-md transition-shadow">
 											<div className={`${UI_CONSTANTS.ASPECT_RATIOS.COMIC_COVER} ${SEMANTIC_COLORS.BACKGROUND.TERTIARY} relative`}>
 												<Image
-													src={comic.coverImage}
-													alt={comic.title}
+													src={
+														fav.comic.coverImage ||
+														API_ENDPOINTS.PLACEHOLDER_IMAGE_WITH_SIZE(300, 400, '?text=Comic')
+													}
+													alt={fav.comic.title}
 													fill
 													style={{ objectFit: "cover" }}
 													sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
 												/>
 											</div>
 											<div className="p-4">
-												{" "}
 												<h3 className="font-medium text-lg text-gray-900 mb-1">
-													{comic.title}
-												</h3>{" "}
+													{fav.comic.title}
+												</h3>
 												<div className="flex justify-between text-sm text-gray-500">
-													{" "}
-													<span>By: {comic.author}</span>{" "}
+													<span>By: {fav.comic.author}</span>
 													<span className="flex items-center">
-														{" "}
 														<Heart
 															size={14}
 															className="mr-1 text-red-500"
-														/>{" "}
-														{comic.likes}{" "}
-													</span>{" "}
-												</div>{" "}
+														/>
+														{fav.comic.likes}
+													</span>
+												</div>
 											</div>
 										</div>
 									</Link>
@@ -507,22 +562,19 @@ export default function ProfilePage() {
 							</div>
 						) : (
 							<div className="text-center py-12 ${SEMANTIC_COLORS.BACKGROUND.PRIMARY} ${UI_CONSTANTS.BORDER_RADIUS.LARGE} border">
-								{" "}
-								<Heart size={48} className="mx-auto text-gray-400 mb-4" />{" "}
+								<Heart size={48} className="mx-auto text-gray-400 mb-4" />
 								<h3 className="text-lg font-medium text-gray-900 mb-2">
 									No favorites yet
-								</h3>{" "}
+								</h3>
 								<p className={`${SEMANTIC_COLORS.TEXT.TERTIARY} mb-4`}>
 									Browse comics and add some!
-								</p>{" "}
+								</p>
 								<Button asChild>
-									{" "}
-									<Link href="/comics"> Browse Comics </Link>{" "}
-								</Button>{" "}
+									<Link href="/comics">Browse Comics</Link>
+								</Button>
 							</div>
 						)}
 					</TabsContent>
-
 					{/* Settings Tab */}
 					<TabsContent value="settings" className="space-y-6">
 						{/* Keep mock settings form or implement saving */}
@@ -543,8 +595,8 @@ export default function ProfilePage() {
 													/* TODO: Implement save settings API call */
 												}}
 											>
-												{" "}
-												Save Settings{" "}
+												
+												Save Settings
 											</Button>
 										</div>
 									</div>
@@ -552,10 +604,10 @@ export default function ProfilePage() {
 								{/* Security Settings */}
 								<div className="mt-4 ${SEMANTIC_COLORS.BACKGROUND.PRIMARY} shadow overflow-hidden ${UI_CONSTANTS.BORDER_RADIUS.LARGE}">
 									<div className="px-4 py-5 sm:px-6 border-b">
-										{" "}
+										
 										<h3 className="text-lg font-medium text-gray-900">
 											Security
-										</h3>{" "}
+										</h3>
 									</div>
 									<div className="px-4 py-5 sm:p-6">
 										{/* Add link/button for change password flow */}
@@ -565,25 +617,25 @@ export default function ProfilePage() {
 								{/* Danger Zone */}
 								<div className="mt-4 ${SEMANTIC_COLORS.BACKGROUND.PRIMARY} shadow overflow-hidden ${UI_CONSTANTS.BORDER_RADIUS.LARGE}">
 									<div className="px-4 py-5 sm:px-6 border-b">
-										{" "}
+										
 										<h3 className="text-lg font-medium text-red-600">
 											Danger Zone
-										</h3>{" "}
+										</h3>
 									</div>
 									<div className="px-4 py-5 sm:p-6">
 										<Button
 											variant="destructive"
 											onClick={() => {
-												/* TODO: Implement delete account flow */
+													/* TODO: Implement delete account flow */
 											}}
 										>
-											{" "}
-											Delete Account{" "}
+											
+											Delete Account
 										</Button>
 										<p className="mt-2 text-sm text-gray-500">
-											{" "}
+											
 											Once you delete your account, there is no going back.
-											Please be certain.{" "}
+											Please be certain.
 										</p>
 									</div>
 								</div>

@@ -14,7 +14,8 @@ import {
 	AWS_REGION,
 } from "../config";
 import pool from "../database";
-import { Panel, CreateComicRequest, ComicPageRequest, ComicPanelRequest, ComicResponse, ComicPageResponse, ComicPanelResponse, ErrorFactory, EXTERNAL_APIS, AI_CONFIG, FILE_FORMATS, CONTENT_TYPES, S3_CONFIG } from "@repo/common-types";
+import { stripeService } from "./stripe.service";
+import { CreateComicRequest, ComicPageRequest, ComicPanelRequest, ComicResponse, ComicPageResponse, EXTERNAL_APIS, AI_CONFIG, FILE_FORMATS, CONTENT_TYPES, S3_CONFIG } from "@repo/common-types";
 
 // Use shared types from @repo/common-types
 // Map the shared API types to our internal naming for easier migration:
@@ -42,11 +43,6 @@ type FullComicData = ComicResponse & {
 };
 
 // Use the shared types from common-types for consistency
-
-// Helper types for internal operations (use shared types)
-type FullPanelData = ComicPanelResponse & {
-	image_url: string; // Make image_url required for internal operations
-};
 
 type FullPageData = ComicPageResponse;
 
@@ -79,18 +75,6 @@ interface Comic {
 	description?: string;
 	created_at: string;
 	updated_at: string;
-}
-
-interface ComicPage {
-	page_id: string;
-	comic_id: string;
-	page_number: number;
-	created_at: string;
-	panels: Panel[];
-}
-
-interface ComicWithPanels extends Comic {
-	pages: ComicPage[];
 }
 
 // Panel type for script generation (simpler than the full Panel interface)
@@ -165,8 +149,8 @@ Guidelines:
 			try {
 				const panelScript = JSON.parse(content);
 				return panelScript as ScriptPanel;
-			} catch (parseError) {
-				console.error("Failed to parse OpenAI response as JSON:", content);
+			} catch (error) {
+				console.error("Failed to parse OpenAI response as JSON:", content, error);
 				return null;
 			}
 		} catch (error: any) {
@@ -181,7 +165,7 @@ Guidelines:
 	 * @param panelDescription - Description of the panel to generate image for.
 	 * @returns Object containing base64 image data and prompt used.
 	 */
-	async generatePanelImage(panelDescription: string): Promise<GeneratedImageData> {
+	async generatePanelImage(userId: string, panelDescription: string): Promise<GeneratedImageData> {
 		if (!OPENAI_API_KEY) {
 			throw new Error("OpenAI API key is not configured.");
 		}
@@ -237,6 +221,8 @@ Guidelines:
 			}
 
 			console.log(`✅ Image generated successfully (${imageDataBase64.length} chars base64)`);
+
+			await stripeService.decrementPanelBalance(userId);
 
 			// Return base64 data - NO S3 UPLOAD HERE (matches original working version)
 			return {
@@ -460,18 +446,21 @@ Guidelines:
 						continue;
 					}
 
-					const s3ImageUrl = await this.uploadImageToS3(
-						panelData.imageBase64,
-						internalUserId,
-						comicId,
-						panelId
-					);
+				const s3ImageUrl = await this.uploadImageToS3(
+					panelData.imageBase64,
+					internalUserId,
+					comicId,
+					panelId
+				);
 
-					await client.query(
-						"UPDATE panels SET image_url = $1, updated_at = NOW() WHERE panel_id = $2",
-						[s3ImageUrl, panelId]
-					);
-					console.log(`Updated panel ${panelId} with S3 URL: ${s3ImageUrl}`);
+				await client.query(
+					"UPDATE panels SET image_url = $1, updated_at = NOW() WHERE panel_id = $2",
+					[s3ImageUrl, panelId]
+				);
+				console.log(`Updated panel ${panelId} with S3 URL: ${s3ImageUrl}`);
+
+				await this.consumePanelCredits(client, internalUserId, 1);
+				await this.recordPanelUsage(client, internalUserId, comicId, panelId, 1);
 				}
 			}
 
@@ -608,6 +597,42 @@ Guidelines:
 		} catch (error: any) {
 			console.error("Error in listComicsByUser:", error.message);
 			throw error;
+		}
+	}
+
+	private async recordPanelUsage(
+		client: PoolClient,
+		userId: string,
+		comicId: string,
+		panelId: string,
+		creditsConsumed: number
+	): Promise<void> {
+		try {
+			await client.query(
+				`INSERT INTO panel_usage_log (user_id, comic_id, panel_id, credits_consumed)
+				 VALUES ($1, $2, $3, $4)` ,
+				[userId, comicId, panelId, creditsConsumed]
+			);
+		} catch (error) {
+			console.warn("Failed to record panel usage log entry", error);
+		}
+	}
+
+	private async consumePanelCredits(
+		client: PoolClient,
+		userId: string,
+		amount: number
+	): Promise<void> {
+		const result = await client.query(
+			`UPDATE user_credits
+			 SET panel_balance = panel_balance - $1,
+			     updated_at = NOW()
+			 WHERE user_id = $2 AND panel_balance >= $1` ,
+			[amount, userId]
+		);
+
+		if (result.rowCount === 0) {
+			throw new Error("Insufficient panel balance during save operation");
 		}
 	}
 }

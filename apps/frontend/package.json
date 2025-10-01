@@ -7,7 +7,7 @@
     "build": "npm run build:deps && next build",
     "build:deps": "cd ../../packages/utils && npm run build && cd ../../packages/common-types && npm run build && cd ../../packages/ui && npm run build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "eslint . --max-warnings 0"
   },
   "dependencies": {
     "@aws-amplify/ui-react": "^6.11.1",
@@ -17,7 +17,7 @@
     "autoprefixer": "^10.4.21",
     "aws-amplify": "^6.14.3",
     "lucide-react": "^0.544.0",
-    "next": "15.2.4",
+    "next": "^15.5.4",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "tailwindcss-animate": "^1.0.7"
@@ -29,7 +29,7 @@
     "@types/react-dom": "^19",
     "autoprefixer": "^10.4.20",
     "eslint": "^9",
-    "eslint-config-next": "15.2.4",
+    "eslint-config-next": "^15.5.4",
     "postcss": "^8.4.31",
     "tailwindcss": "^3.4.0",
     "typescript": "^5"

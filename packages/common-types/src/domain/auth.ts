@@ -1,6 +1,7 @@
 // Domain types for Authentication
 
 import type { AuthUser, FetchUserAttributesOutput } from "aws-amplify/auth";
+import type { AdminRole, AdminPermission } from "./admin";
 
 export type UserAttributes = FetchUserAttributesOutput;
 
@@ -23,11 +24,20 @@ export interface AuthenticatedRequestFields {
     [key: string]: unknown;
   };
   internalUserId?: string;
+  isAdmin?: boolean;
+  adminRoles?: AdminRole[];
+  adminPermissions?: AdminPermission[];
+  impersonatedUserId?: string;
+  impersonatedByAdminId?: string;
+  adminMfaRequired?: boolean;
+  adminMfaSecret?: string;
+  authenticatedUsingServiceToken?: boolean;
 }
 
 // Type alias for backend - to be used with Express Request
 // Usage: AuthenticatedRequest = Request & AuthenticatedRequestFields
-export type AuthenticatedRequest<T = any> = T & AuthenticatedRequestFields;
+export type AuthenticatedRequest<T extends Record<string, unknown> = Record<string, unknown>> =
+  T & AuthenticatedRequestFields;
 
 // Cognito JWT payload type (simplified)
 export interface CognitoAccessTokenPayload {

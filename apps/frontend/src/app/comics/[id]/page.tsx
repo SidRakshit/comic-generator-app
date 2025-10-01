@@ -11,7 +11,7 @@ import { useComicContext } from "@/context/comic-context"; // Use context hook
 import { Button } from "@repo/ui/button";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { apiRequest } from "@/lib/api";
-import { ComicCharacter, Panel, SEMANTIC_COLORS, UI_CONSTANTS } from "@repo/common-types";
+import { ComicCharacter, Panel, SEMANTIC_COLORS, UI_CONSTANTS, API_ENDPOINTS } from "@repo/common-types";
 
 export default function ComicEditorPage() {
 	const params = useParams();
@@ -104,7 +104,7 @@ export default function ComicEditorPage() {
 			// Call API using shared apiRequest utility
 			console.log(`Editor: Sending prompt to API: "${fullPrompt}"`);
 			const response = await apiRequest<{ imageUrl: string }>(
-				"/generate-panel-image",
+				API_ENDPOINTS.GENERATE_PANEL_IMAGE,
 				"POST",
 				{ panelDescription: fullPrompt }
 			);
