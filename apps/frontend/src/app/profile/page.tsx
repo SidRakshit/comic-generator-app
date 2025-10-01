@@ -164,7 +164,7 @@ export default function ProfilePage() {
 	const toggleFavorite = async (comicId: string) => {
 		const isFavorite = userFavoriteComics.some((comic) => comic.comic_id === comicId);
 		if (isFavorite) {
-		await apiRequest(API_ENDPOINTS.FAVORITE_BY_ID(comicId), "DELETE");
+			await apiRequest(API_ENDPOINTS.FAVORITE_BY_ID(comicId), "DELETE");
 			setUserFavoriteComics(userFavoriteComics.filter((comic) => comic.comic_id !== comicId));
 		} else {
 			await apiRequest(API_ENDPOINTS.FAVORITES, "POST", { comicId });
@@ -203,10 +203,10 @@ export default function ProfilePage() {
 	};
 
 	// --- Render JSX ---
-		return (
-			<div className={`min-h-screen ${SEMANTIC_COLORS.BACKGROUND.SECONDARY} pb-12`}>
-				{/* Profile header */}
-				<div className={`${SEMANTIC_COLORS.BACKGROUND.PRIMARY} shadow`}>
+	return (
+		<div className={`min-h-screen ${SEMANTIC_COLORS.BACKGROUND.SECONDARY} pb-12`}>
+			{/* Profile header */}
+			<div className={`${SEMANTIC_COLORS.BACKGROUND.PRIMARY} shadow`}>
 				<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 					{/* Basic loading state for header */}
 					{isLoadingAuth ? (
@@ -238,7 +238,7 @@ export default function ProfilePage() {
 									<div className="space-y-3">
 										{/* Edit fields */}
 										<div>
-											
+
 											<label className="block text-sm font-medium text-gray-700">
 												Display Name
 											</label>
@@ -255,7 +255,7 @@ export default function ProfilePage() {
 											/>
 										</div>
 										<div>
-											
+
 											<label className="block text-sm font-medium text-gray-700">
 												Username
 											</label>
@@ -268,7 +268,7 @@ export default function ProfilePage() {
 										</div>
 										{/* Usually username is not editable */}
 										<div>
-											
+
 											<label className="block text-sm font-medium text-gray-700">
 												Bio
 											</label>
@@ -305,14 +305,14 @@ export default function ProfilePage() {
 													onClick={handleSaveProfile}
 													className="flex items-center"
 												>
-													
+
 													<Save size={16} className="mr-1" /> Save Changes
 												</Button>
 												<Button
 													variant="outline"
 													onClick={handleCancelEditProfile}
 												>
-													
+
 													Cancel
 												</Button>
 											</>
@@ -323,7 +323,7 @@ export default function ProfilePage() {
 													className="flex items-center"
 													onClick={() => setIsEditingProfile(true)}
 												>
-													
+
 													<Edit size={16} className="mr-1" /> Edit Profile
 												</Button>
 												<Button asChild variant="outline">
@@ -347,28 +347,28 @@ export default function ProfilePage() {
 										<div className="text-sm text-gray-500">Credits</div>
 									</div>
 									<div className={`${SEMANTIC_COLORS.BACKGROUND.SECONDARY} px-4 py-2 ${UI_CONSTANTS.BORDER_RADIUS.LARGE}`}>
-										
+
 										<div className="text-2xl font-bold text-gray-900">
 											{profileData.stats.created}
 										</div>
 										<div className="text-sm text-gray-500">Comics</div>
 									</div>
 									<div className={`${SEMANTIC_COLORS.BACKGROUND.SECONDARY} px-4 py-2 ${UI_CONSTANTS.BORDER_RADIUS.LARGE}`}>
-										
+
 										<div className="text-2xl font-bold text-gray-900">
 											{userFavoriteComics.length}
 										</div>
 										<div className="text-sm text-gray-500">Favorites</div>
 									</div>
 									<div className={`${SEMANTIC_COLORS.BACKGROUND.SECONDARY} px-4 py-2 ${UI_CONSTANTS.BORDER_RADIUS.LARGE}`}>
-										
+
 										<div className="text-2xl font-bold text-gray-900">
 											{profileData.stats.followers}
 										</div>
 										<div className="text-sm text-gray-500">Followers</div>
 									</div>
 									<div className={`${SEMANTIC_COLORS.BACKGROUND.SECONDARY} px-4 py-2 ${UI_CONSTANTS.BORDER_RADIUS.LARGE}`}>
-										
+
 										<div className="text-2xl font-bold text-gray-900">
 											{profileData.stats.following}
 										</div>
@@ -376,7 +376,7 @@ export default function ProfilePage() {
 									</div>
 								</div>
 								<div className="text-sm text-gray-500 pt-2">
-									
+
 									{profileData.joinDate
 										? `Joined ${profileData.joinDate}`
 										: ""}
@@ -391,19 +391,20 @@ export default function ProfilePage() {
 			<div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 mt-6">
 				<Tabs defaultValue="comics">
 					<TabsList className="mb-8">
-						<TabsTrigger value="comics" className="flex items-center">
-							
-							<BookOpen size={16} className="mr-1" /> My Comics
+						<TabsTrigger value="comics" className="flex items-center data-[state=active]:bg-black data-[state=active]:text-white data-[state=inactive]:border data-[state=inactive]:border-gray-300 data-[state=inactive]:bg-white data-[state=inactive]:text-gray-600">
+							{" "}
+							<BookOpen size={16} className="mr-1" /> My Comics{" "}
 						</TabsTrigger>
-						<TabsTrigger value="favorites" className="flex items-center">
-							
-							<Heart size={16} className="mr-1" /> Favorites
+						<TabsTrigger value="favorites" className="flex items-center data-[state=active]:bg-black data-[state=active]:text-white data-[state=inactive]:border data-[state=inactive]:border-gray-300 data-[state=inactive]:bg-white data-[state=inactive]:text-gray-600">
+							{" "}
+							<Heart size={16} className="mr-1" /> Favorites{" "}
 						</TabsTrigger>
-						<TabsTrigger value="settings" className="flex items-center">
-							
-							<Settings size={16} className="mr-1" /> Settings
+						<TabsTrigger value="settings" className="flex items-center data-[state=active]:bg-black data-[state=active]:text-white data-[state=inactive]:border data-[state=inactive]:border-gray-300 data-[state=inactive]:bg-white data-[state=inactive]:text-gray-600">
+							{" "}
+							<Settings size={16} className="mr-1" /> Settings{" "}
 						</TabsTrigger>
 					</TabsList>
+
 
 					{/* My Comics Tab */}
 					<TabsContent value="comics" className="space-y-6">
@@ -595,7 +596,7 @@ export default function ProfilePage() {
 													/* TODO: Implement save settings API call */
 												}}
 											>
-												
+
 												Save Settings
 											</Button>
 										</div>
@@ -604,7 +605,7 @@ export default function ProfilePage() {
 								{/* Security Settings */}
 								<div className="mt-4 ${SEMANTIC_COLORS.BACKGROUND.PRIMARY} shadow overflow-hidden ${UI_CONSTANTS.BORDER_RADIUS.LARGE}">
 									<div className="px-4 py-5 sm:px-6 border-b">
-										
+
 										<h3 className="text-lg font-medium text-gray-900">
 											Security
 										</h3>
@@ -617,7 +618,7 @@ export default function ProfilePage() {
 								{/* Danger Zone */}
 								<div className="mt-4 ${SEMANTIC_COLORS.BACKGROUND.PRIMARY} shadow overflow-hidden ${UI_CONSTANTS.BORDER_RADIUS.LARGE}">
 									<div className="px-4 py-5 sm:px-6 border-b">
-										
+
 										<h3 className="text-lg font-medium text-red-600">
 											Danger Zone
 										</h3>
@@ -626,14 +627,14 @@ export default function ProfilePage() {
 										<Button
 											variant="destructive"
 											onClick={() => {
-													/* TODO: Implement delete account flow */
+												/* TODO: Implement delete account flow */
 											}}
 										>
-											
+
 											Delete Account
 										</Button>
 										<p className="mt-2 text-sm text-gray-500">
-											
+
 											Once you delete your account, there is no going back.
 											Please be certain.
 										</p>
