@@ -260,7 +260,7 @@ export default function ProfilePage() {
 														});
 													}
 												}}
-												className={`${COMPONENT_STYLES.FORM.INPUT} ${
+													className={`${COMPONENT_STYLES.FORM.INPUT} ${SEMANTIC_COLORS.TEXT.DISABLED} ${SEMANTIC_COLORS.BACKGROUND.PRIMARY} ${
 													profileData.name && profileData.name !== "Click here to edit your name" 
 														? SEMANTIC_COLORS.TEXT.PRIMARY 
 														: ""
@@ -303,7 +303,7 @@ export default function ProfilePage() {
 													}
 												}}
 												rows={3}
-												className={`${COMPONENT_STYLES.FORM.INPUT} ${
+												className={`${COMPONENT_STYLES.FORM.INPUT} ${SEMANTIC_COLORS.TEXT.DISABLED} ${SEMANTIC_COLORS.BACKGROUND.PRIMARY}  ${
 													profileData.bio && profileData.bio !== "Click here to edit your bio" 
 														? SEMANTIC_COLORS.TEXT.PRIMARY 
 														: ""
