@@ -28,7 +28,7 @@ import {
 // Initial user data structure (consider fetching this too if needed)
 const initialUserData = {
 	username: "User",
-	name: "Comic Creator",
+	name: "Click here to edit your name",
 	bio: "Click here to edit your bio",
 	avatarUrl: `${API_ENDPOINTS.PLACEHOLDER_IMAGE}?width=150&height=150`,
 	joinDate: "",
@@ -253,14 +253,18 @@ export default function ProfilePage() {
 												}
 												// only when it is Comic Creator set the value to empty
 												onFocus={(e) => {
-													if (e.target.value === "Comic Creator") {
+													if (e.target.value === "Click here to edit your name") {
 														setProfileData({
 															...profileData,
 															name: "",
 														});
 													}
 												}}
-												className={COMPONENT_STYLES.FORM.INPUT}
+												className={`${COMPONENT_STYLES.FORM.INPUT} ${
+													profileData.name && profileData.name !== "Click here to edit your name" 
+														? SEMANTIC_COLORS.TEXT.PRIMARY 
+														: ""
+												}`}
 											/>
 										</div>
 										<div>
@@ -299,7 +303,11 @@ export default function ProfilePage() {
 													}
 												}}
 												rows={3}
-												className={COMPONENT_STYLES.FORM.INPUT}
+												className={`${COMPONENT_STYLES.FORM.INPUT} ${
+													profileData.bio && profileData.bio !== "Click here to edit your bio" 
+														? SEMANTIC_COLORS.TEXT.PRIMARY 
+														: ""
+												}`}
 											/>
 										</div>
 									</div>
