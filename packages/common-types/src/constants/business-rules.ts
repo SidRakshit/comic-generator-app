@@ -71,7 +71,7 @@ export const COMIC_RULES = {
 		},
 		DIALOGUE: {
 			MIN_LENGTH: 0,
-			MAX_LENGTH: 750,
+			MAX_LENGTH: 200,
 		},
 		MAX_PANELS_PER_COMIC: 20, // Reasonable limit for performance
 	},
