@@ -4,7 +4,7 @@
 import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { signUp } from "aws-amplify/auth";
+import { signUp, resendSignUpCode } from "aws-amplify/auth";
 import { Button } from "@repo/ui/button";
 import { Input } from "@repo/ui/input";
 import { Label } from "@repo/ui/label";
@@ -16,6 +16,7 @@ export default function SignupPage() {
 	const [password, setPassword] = useState("");
 	const [error, setError] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
+	const [isCheckingExistingUser, setIsCheckingExistingUser] = useState(false);
 	const [passwordValidation, setPasswordValidation] = useState<{
 		isValid: boolean;
 		requirements: string[];
@@ -73,7 +74,23 @@ export default function SignupPage() {
 		} catch (err: unknown) {
 			if (err instanceof Error) {
 				if (err.name === "UsernameExistsException") {
-					setError("An account with this email already exists.");
+					// Check if the user is unconfirmed by trying to resend confirmation code
+					setIsCheckingExistingUser(true);
+					try {
+						await resendSignUpCode({ username: email });
+						// If resend succeeds, user is unconfirmed - redirect to confirmation page
+						router.push(`/confirm-signup?email=${encodeURIComponent(email)}`);
+						return;
+					} catch (resendErr) {
+						// If resend fails, user might be confirmed or there's another issue
+						if (resendErr instanceof Error && resendErr.name === "UserNotFoundException") {
+							setError("An account with this email already exists and is confirmed. Please try logging in instead.");
+						} else {
+							setError("An account with this email already exists. Please try logging in or contact support if you need help.");
+						}
+					} finally {
+						setIsCheckingExistingUser(false);
+					}
 				} else if (
 					err.message?.includes("password policy") ||
 					err.name === "InvalidPasswordException"
@@ -179,9 +196,14 @@ export default function SignupPage() {
 						type="submit"
 						variant="outline" // Use outline variant
 						className={`w-full ${SEMANTIC_COLORS.BORDER.DEFAULT} ${SEMANTIC_COLORS.TEXT.PRIMARY} ${INTERACTIVE_STYLES.BUTTON.HOVER_LIGHT} bg-white`} // Override colors
-						disabled={isLoading}
+						disabled={isLoading || isCheckingExistingUser}
 					>
-						{isLoading ? "Creating Account..." : "Sign Up"}
+						{isCheckingExistingUser 
+							? "Checking account status..." 
+							: isLoading 
+								? "Creating Account..." 
+								: "Sign Up"
+						}
 					</Button>
 				</form>
 				{/* Make descriptive text darker */}
