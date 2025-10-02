@@ -34,7 +34,7 @@ const initialUserData = {
 	email: "",
 	website: "",
 	twitter: "",
-	stats: { created: 0, favorites: 0, followers: 0, following: 0 },
+	stats: { created: 0, favorites: 0 },
 };
 
 export default function ProfilePage() {
@@ -386,7 +386,7 @@ export default function ProfilePage() {
 
 							{/* Stats */}
 							<div className="mt-6 md:mt-0 flex flex-col items-center md:items-end space-y-2 w-full md:w-auto">
-								<div className="grid grid-cols-2 gap-4 text-center">
+								<div className="grid grid-cols-3 gap-4 text-center">
 									<div className={`${SEMANTIC_COLORS.BACKGROUND.SECONDARY} px-4 py-2 ${UI_CONSTANTS.BORDER_RADIUS.LARGE}`}>
 										<div className="text-2xl font-bold text-gray-900">
 											{creditBalance}
@@ -406,20 +406,6 @@ export default function ProfilePage() {
 											{userFavoriteComics.length}
 										</div>
 										<div className="text-sm text-gray-500">Favorites</div>
-									</div>
-									<div className={`${SEMANTIC_COLORS.BACKGROUND.SECONDARY} px-4 py-2 ${UI_CONSTANTS.BORDER_RADIUS.LARGE}`}>
-
-										<div className="text-2xl font-bold text-gray-900">
-											{profileData.stats.followers}
-										</div>
-										<div className="text-sm text-gray-500">Followers</div>
-									</div>
-									<div className={`${SEMANTIC_COLORS.BACKGROUND.SECONDARY} px-4 py-2 ${UI_CONSTANTS.BORDER_RADIUS.LARGE}`}>
-
-										<div className="text-2xl font-bold text-gray-900">
-											{profileData.stats.following}
-										</div>
-										<div className="text-sm text-gray-500">Following</div>
 									</div>
 								</div>
 								<div className="text-sm text-gray-500 pt-2">
