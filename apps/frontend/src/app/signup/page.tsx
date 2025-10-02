@@ -8,22 +8,51 @@ import { signUp } from "aws-amplify/auth";
 import { Button } from "@repo/ui/button";
 import { Input } from "@repo/ui/input";
 import { Label } from "@repo/ui/label";
-import { UI_CONSTANTS, SEMANTIC_COLORS, INTERACTIVE_STYLES } from "@repo/common-types";
+import { UI_CONSTANTS, SEMANTIC_COLORS, INTERACTIVE_STYLES, PASSWORD_RULES } from "@repo/common-types";
+import { validatePasswordStrength } from "@repo/utils";
 
 export default function SignupPage() {
 	const [email, setEmail] = useState("");
 	const [password, setPassword] = useState("");
 	const [error, setError] = useState<string | null>(null);
 	const [isLoading, setIsLoading] = useState(false);
+	const [passwordValidation, setPasswordValidation] = useState<{
+		isValid: boolean;
+		requirements: string[];
+		score: number;
+	} | null>(null);
 	const router = useRouter();
 
+	const validatePassword = (password: string) => {
+		const validation = validatePasswordStrength(password, {
+			minLength: PASSWORD_RULES.MIN_LENGTH,
+			requireUppercase: PASSWORD_RULES.REQUIRE_UPPERCASE,
+			requireLowercase: PASSWORD_RULES.REQUIRE_LOWERCASE,
+			requireNumbers: PASSWORD_RULES.REQUIRE_NUMBERS,
+			requireSpecialChars: PASSWORD_RULES.REQUIRE_SPECIAL_CHARS,
+		});
+		setPasswordValidation(validation);
+		return validation;
+	};
+
+	const handlePasswordChange = (newPassword: string) => {
+		setPassword(newPassword);
+		if (newPassword.length > 0) {
+			validatePassword(newPassword);
+		} else {
+			setPasswordValidation(null);
+		}
+	};
+
 	const handleSignup = async (e: React.FormEvent) => {
-		// ... (handleSignup logic remains the same) ...
 		e.preventDefault();
 		setIsLoading(true);
 		setError(null);
-		if (password.length < 8) {
-			setError("Password must be at least 8 characters long.");
+		
+		// Validate password using our validation function
+		const validation = validatePassword(password);
+		if (!validation.isValid) {
+			setError(`Password requirements not met: ${validation.requirements.join(', ')}`);
 			setIsLoading(false);
 			return;
 		}
@@ -49,7 +78,24 @@ export default function SignupPage() {
 					err.message?.includes("password policy") ||
 					err.name === "InvalidPasswordException"
 				) {
-					setError("Password does not meet the requirements.");
+					// Provide specific password requirements based on our rules
+					const requirements = [];
+					if (password.length < PASSWORD_RULES.MIN_LENGTH) {
+						requirements.push(`at least ${PASSWORD_RULES.MIN_LENGTH} characters`);
+					}
+					if (PASSWORD_RULES.REQUIRE_UPPERCASE && !/[A-Z]/.test(password)) {
+						requirements.push("uppercase letter");
+					}
+					if (PASSWORD_RULES.REQUIRE_LOWERCASE && !/[a-z]/.test(password)) {
+						requirements.push("lowercase letter");
+					}
+					if (PASSWORD_RULES.REQUIRE_NUMBERS && !/\d/.test(password)) {
+						requirements.push("number");
+					}
+					if (PASSWORD_RULES.REQUIRE_SPECIAL_CHARS && !/[!@#$%^&*(),.?":{}|<>]/.test(password)) {
+						requirements.push("special character");
+					}
+					setError(`Password must contain: ${requirements.join(', ')}`);
 				} else if (err.name === "InvalidParameterException") {
 					setError("Invalid input provided.");
 				} else {
@@ -96,17 +142,38 @@ export default function SignupPage() {
 							id="password"
 							type="password"
 							value={password}
-							onChange={(e) => setPassword(e.target.value)}
+							onChange={(e) => handlePasswordChange(e.target.value)}
 							required
 							placeholder="********"
 							disabled={isLoading}
 						/>
-						{/* Make descriptive text darker */}
-						<p className={`text-xs ${SEMANTIC_COLORS.TEXT.TERTIARY} mt-1`}>
-							
-							{/* Changed from text-gray-500 */}
-							Min. 8 characters. Consider adding complexity requirements.
-						</p>
+						{/* Password requirements display */}
+						{passwordValidation && (
+							<div className="mt-2">
+								<p className={`text-xs ${SEMANTIC_COLORS.TEXT.TERTIARY} mb-1`}>
+									Password requirements:
+								</p>
+								<ul className="text-xs space-y-1">
+									{passwordValidation.requirements.map((requirement, index) => (
+										<li key={index} className={`flex items-center ${SEMANTIC_COLORS.ERROR.TEXT}`}>
+											<span className="mr-2">✗</span>
+											{requirement}
+										</li>
+									))}
+									{passwordValidation.isValid && (
+										<li className={`flex items-center ${SEMANTIC_COLORS.SUCCESS?.TEXT || 'text-green-600'}`}>
+											<span className="mr-2">✓</span>
+											All requirements met
+										</li>
+									)}
+								</ul>
+							</div>
+						)}
+						{!passwordValidation && password.length === 0 && (
+							<p className={`text-xs ${SEMANTIC_COLORS.TEXT.TERTIARY} mt-1`}>
+								{PASSWORD_RULES.REQUIREMENTS_TEXT}
+							</p>
+						)}
 					</div>
 					<Button
 						type="submit"
