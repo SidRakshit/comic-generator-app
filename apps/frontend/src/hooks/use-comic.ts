@@ -1,9 +1,16 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useMemo } from "react";
 import { generateId } from "@repo/utils";
 import { apiRequest, GeneratedImageDataResponse } from "@/lib/api";
 import { PanelStatus, Panel, ComicCharacter, Comic, TemplateDefinition, CreateComicRequest, ComicResponse, ComicPanelResponse, ComicPageResponse, COMIC_TEMPLATES, API_ENDPOINTS } from "@repo/common-types";
+
+// Import our Phase 1 hooks
+import { useAutoSave } from "./use-auto-save";
+import { useBeforeUnloadWarning } from "./use-before-unload-warning";
+import { useChangeDetection } from "./use-change-detection";
+import { useDraftStorage } from "./use-draft-storage";
+import { useRetry } from "./use-retry";
 
 // Use shared response type for SSoT compliance
 type SaveComicResponseFromBackend = ComicResponse;
@@ -30,6 +37,28 @@ export function useComic(
 	const [isSaving, setIsSaving] = useState(false);
 	const [isLoading, setIsLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
+	const [originalComic, setOriginalComic] = useState<Comic | null>(null);
+
+	// --- Phase 1 Hook Integrations ---
+	const { saveDraft, loadDraft, clearDraft, hasDraft, isStorageAvailable } = useDraftStorage({
+		storageKey: "comic-draft",
+		enabled: true,
+		maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+	});
+
+	const { executeWithRetry, retryCount, isRetrying, canRetry, lastError } = useRetry({
+		maxRetries: 3,
+		baseDelay: 1000,
+		maxDelay: 10000,
+		enableJitter: true,
+	});
+
+	const { hasChanges, markAsSaved, getChanges } = useChangeDetection({
+		originalData: originalComic,
+		currentData: comic,
+		enabled: true,
+		debounceMs: 500, // Debounce change detection by 500ms
+	});
 
 	// Helper function for parsing characters safely
 	const parseCharacters = (charData: unknown): ComicCharacter[] => {
@@ -67,63 +96,69 @@ export function useComic(
 		return defaultChar;
 	};
 
-	// --- Load Existing Comic ---
+	// --- Load Existing Comic with Retry ---
 	const loadComic = useCallback(async (comicId: string) => {
-		console.log(`Hook: Loading comic ID: ${comicId}`);
-		setIsLoading(true);
-		setError(null);
-		try {
-			const data = await apiRequest<ComicResponse>(
-				API_ENDPOINTS.COMIC_BY_ID(comicId),
-				"GET"
-			);
-			console.log("Raw backend data received:", JSON.stringify(data, null, 2));
+		return executeWithRetry(async () => {
+			console.log(`Hook: Loading comic ID: ${comicId}`);
+			setIsLoading(true);
+			setError(null);
+			
+			try {
+				const data = await apiRequest<ComicResponse>(
+					API_ENDPOINTS.COMIC_BY_ID(comicId),
+					"GET"
+				);
+				console.log("Raw backend data received:", JSON.stringify(data, null, 2));
 
-			// Use helper function for parsing
-			const loadedCharacters = parseCharacters(data.characters);
+				// Use helper function for parsing
+				const loadedCharacters = parseCharacters(data.characters);
 
-			// CORRECTED: Add ?? [] before .map and type 'p' - using consolidated types
-			const loadedPanels: Panel[] =
-				(data.pages?.[0]?.panels ?? []).map((p: ComicPanelResponse) => ({
-					id: p.panel_id,
-					status: p.image_url ? "complete" : "empty",
-					prompt: p.prompt || "",
-					imageUrl: p.image_url || undefined,
-					imageBase64: undefined, // Ensure base64 is not stored for loaded comics
-					error: undefined,
-					panelNumber: p.panel_number,
-					layoutPosition: (p.layout_position as Record<string, unknown>) || {},
-				})) || []; // Fallback to empty array if map fails (less likely now)
+				// CORRECTED: Add ?? [] before .map and type 'p' - using consolidated types
+				const loadedPanels: Panel[] =
+					(data.pages?.[0]?.panels ?? []).map((p: ComicPanelResponse) => ({
+						id: p.panel_id,
+						status: p.image_url ? "complete" : "empty",
+						prompt: p.prompt || "",
+						imageUrl: p.image_url || undefined,
+						imageBase64: undefined, // Ensure base64 is not stored for loaded comics
+						error: undefined,
+						panelNumber: p.panel_number,
+						layoutPosition: (p.layout_position as Record<string, unknown>) || {},
+					})) || []; // Fallback to empty array if map fails (less likely now)
 
-			const loadedTemplateKey =
-				data.template ||
-				Object.keys(templates).find(
-					(key) => templates[key]?.panelCount === loadedPanels.length
-				) ||
-				null;
+				const loadedTemplateKey =
+					data.template ||
+					Object.keys(templates).find(
+						(key) => templates[key]?.panelCount === loadedPanels.length
+					) ||
+					null;
 
-			setComic({
-				id: data.comic_id,
-				title: data.title,
-				description: data.description || "",
-				genre: data.genre || "",
-				characters: loadedCharacters, // Use parsed characters
-				template: loadedTemplateKey,
-				panels: loadedPanels,
-				createdAt: data.created_at,
-				updatedAt: data.updated_at,
-				published: false,
-			});
-			console.log(`Hook: Comic ${comicId} loaded successfully.`);
-		} catch (err: unknown) {
-			console.error("Hook: Failed to load comic:", err);
-			setError(
-				err instanceof Error ? err.message : "Failed to load comic data."
-			);
-		} finally {
-			setIsLoading(false);
-		}
-	}, []); // Keep useCallback dependencies empty if loadComic itself doesn't change
+				const loadedComic: Comic = {
+					id: data.comic_id,
+					title: data.title,
+					description: data.description || "",
+					genre: data.genre || "",
+					characters: loadedCharacters, // Use parsed characters
+					template: loadedTemplateKey,
+					panels: loadedPanels,
+					createdAt: data.created_at,
+					updatedAt: data.updated_at,
+					published: false,
+				};
+
+				setComic(loadedComic);
+				setOriginalComic(loadedComic); // Set as baseline for change detection
+				console.log(`Hook: Comic ${comicId} loaded successfully.`);
+			} catch (err: unknown) {
+				console.error("Hook: Failed to load comic:", err);
+				const errorMsg = err instanceof Error ? err.message : "Failed to load comic data.";
+				setError(errorMsg);
+				throw err; // Re-throw for retry logic
+			} finally {
+				setIsLoading(false);
+			}
+		}, "Load Comic");
+	}, [executeWithRetry]);
 
 	// --- Initialize New Comic ---
 	const setTemplate = useCallback((templateId: string | null) => {
@@ -243,43 +278,40 @@ export function useComic(
 		[]
 	);
 
-	// --- Save Comic (Create or Update) ---
+	// --- Save Comic (Create or Update) with Retry ---
 	const saveComic = useCallback(async (): Promise<Comic | undefined> => {
-		if (!comic || !comic.template) {
-			setError("Cannot save: Comic data or template is missing.");
-			return undefined;
-		}
-		if (!comic.title) {
-			setError("Cannot save: Comic title is required.");
-			return undefined;
-		}
-		if (!comic.panels.every((p) => p.status === "complete")) {
-			setError("Cannot save: All panels must have generated images first.");
-			return undefined;
-		}
+		return executeWithRetry(async () => {
+			if (!comic || !comic.template) {
+				throw new Error("Cannot save: Comic data or template is missing.");
+			}
+			if (!comic.title) {
+				throw new Error("Cannot save: Comic title is required.");
+			}
+			if (!comic.panels.every((p) => p.status === "complete")) {
+				throw new Error("Cannot save: All panels must have generated images first.");
+			}
 
-		setIsSaving(true);
-		setError(null);
+			setIsSaving(true);
+			setError(null);
 
-		// Create payload using shared API types for SSoT compliance
-		const finalPanelsPayload = comic.panels.map((panel, index) => ({
-			panel_number: panel.panelNumber ?? index + 1,
-			prompt: panel.prompt || "",
-			layout_position: panel.layoutPosition || {},
-			image_base64: panel.imageBase64 || "",
-		}));
-		const finalPagesData = [{ page_number: 1, panels: finalPanelsPayload }];
-		const comicPayload: CreateComicRequest = {
-			title: comic.title,
-			description: comic.description,
-			genre: comic.genre,
-			characters: comic.characters,
-			setting: {},
-			template: comic.template,
-			pages: finalPagesData,
-		};
+			// Create payload using shared API types for SSoT compliance
+			const finalPanelsPayload = comic.panels.map((panel, index) => ({
+				panel_number: panel.panelNumber ?? index + 1,
+				prompt: panel.prompt || "",
+				layout_position: panel.layoutPosition || {},
+				image_base64: panel.imageBase64 || "",
+			}));
+			const finalPagesData = [{ page_number: 1, panels: finalPanelsPayload }];
+			const comicPayload: CreateComicRequest = {
+				title: comic.title,
+				description: comic.description,
+				genre: comic.genre,
+				characters: comic.characters,
+				setting: {},
+				template: comic.template,
+				pages: finalPagesData,
+			};
 
-		try {
 			let responseData: SaveComicResponseFromBackend;
 
 			if (comic.id) {
@@ -339,21 +371,46 @@ export function useComic(
 			};
 
 			setComic(finalComicState);
+			setOriginalComic(finalComicState); // Update baseline after successful save
 			setIsSaving(false);
+			
+			// Clear draft if this was a new comic that got saved
+			if (!comic.id && finalComicState.id) {
+				clearDraft();
+			}
+			
 			return finalComicState;
-		} catch (err: unknown) {
-			console.error("Hook: Failed to save comic:", err);
-			const errorMsg =
-				err instanceof Error
-					? err.message
-					: "An unknown error occurred during save.";
-			setError(errorMsg);
-			setIsSaving(false);
-			return undefined;
+		}, "Save Comic");
+	}, [comic, executeWithRetry, clearDraft]);
+
+	// --- Auto-save functionality ---
+	const { isAutoSaving, lastAutoSave, failureCount: autoSaveFailureCount, triggerAutoSave } = useAutoSave({
+		enabled: !!comic.id, // Only auto-save existing comics
+		interval: 30000, // 30 seconds
+		onSave: saveComic,
+		hasChanges,
+		onAutoSaveStart: () => console.log("Auto-save started"),
+		onAutoSaveComplete: () => console.log("Auto-save completed"),
+		onAutoSaveError: (error) => console.error("Auto-save failed:", error),
+	});
+
+	// --- Before unload warning ---
+	useBeforeUnloadWarning({
+		hasUnsavedChanges: hasChanges,
+		message: "You have unsaved changes to your comic. Are you sure you want to leave?",
+		enabled: true,
+	});
+
+	// --- Draft management ---
+	useEffect(() => {
+		// Save draft for new comics (without ID)
+		if (!comic.id && comic.template && isStorageAvailable) {
+			saveDraft(comic);
 		}
-	}, [comic]); // Removed parseCharacters from dependencies as it's stable
+	}, [comic, saveDraft, isStorageAvailable]);
 
 	return {
+		// Original return values
 		comic,
 		isLoading,
 		isSaving,
@@ -365,5 +422,20 @@ export function useComic(
 		removeCharacter,
 		updateCharacter,
 		saveComic,
+		
+		// Enhanced Phase 1 features
+		hasChanges,
+		isAutoSaving,
+		lastAutoSave,
+		autoSaveFailureCount,
+		hasDraft,
+		loadDraft,
+		clearDraft,
+		markAsSaved,
+		triggerAutoSave,
+		isRetrying,
+		retryCount,
+		canRetry,
+		lastError,
 	};
 }

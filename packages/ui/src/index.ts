@@ -8,3 +8,4 @@ export { Modal } from './modal';
 export { Tabs } from './tabs';
 export { Textarea } from './textarea';
 export { Card, CardHeader, CardTitle, CardContent } from './card';
+export { ErrorRecoveryBanner, ErrorRecoveryBannerSimple } from './error-recovery-banner';

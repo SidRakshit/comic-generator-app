@@ -46,6 +46,7 @@ export interface GeneratedImageData {
 
 // Frontend context type
 export interface ComicContextType {
+  // Original properties
   comic: Comic;
   isLoading: boolean;
   isSaving: boolean;
@@ -66,6 +67,21 @@ export interface ComicContextType {
     value: string
   ) => void;
   saveComic: () => Promise<Comic | undefined>;
+  
+  // Enhanced Phase 1 features
+  hasChanges: boolean;
+  isAutoSaving: boolean;
+  lastAutoSave: Date | null;
+  autoSaveFailureCount: number;
+  hasDraft: boolean;
+  loadDraft: () => Comic | null;
+  clearDraft: () => void;
+  markAsSaved: () => void;
+  triggerAutoSave: () => Promise<void>;
+  isRetrying: boolean;
+  retryCount: number;
+  canRetry: boolean;
+  lastError: Error | null;
 }
 
 // REMOVED: Duplicate backend types - use API response types instead

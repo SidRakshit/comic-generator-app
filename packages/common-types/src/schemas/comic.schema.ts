@@ -48,6 +48,7 @@ export const GeneratedImageDataSchema = z.object({
 
 // ComicContextType schema
 export const ComicContextTypeSchema = z.object({
+  // Original properties
   comic: ComicSchema,
   isLoading: z.boolean(),
   isSaving: z.boolean(),
@@ -87,6 +88,21 @@ export const ComicContextTypeSchema = z.object({
     z.string()
   ).returns(z.void()),
   saveComic: z.function().returns(z.promise(ComicSchema.optional())),
+  
+  // Enhanced Phase 1 features
+  hasChanges: z.boolean(),
+  isAutoSaving: z.boolean(),
+  lastAutoSave: z.date().nullable(),
+  autoSaveFailureCount: z.number(),
+  hasDraft: z.boolean(),
+  loadDraft: z.function().returns(ComicSchema.nullable()),
+  clearDraft: z.function().returns(z.void()),
+  markAsSaved: z.function().returns(z.void()),
+  triggerAutoSave: z.function().returns(z.promise(z.void())),
+  isRetrying: z.boolean(),
+  retryCount: z.number(),
+  canRetry: z.boolean(),
+  lastError: z.instanceof(Error).nullable(),
 });
 
 // Backend schemas
