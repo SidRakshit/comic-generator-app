@@ -16,9 +16,13 @@ interface ErrorRecoveryBannerProps {
     error: Error;
     timestamp: number;
     retryCount: number;
+    operationType?: string;
+    priority?: 'low' | 'medium' | 'high';
   }>;
   /** Function to retry a specific operation */
   onRetryOperation: (operationId: string) => Promise<void>;
+  /** Function to retry all operations */
+  onRetryAllOperations?: () => Promise<void>;
   /** Function to clear a specific error */
   onClearError: (operationId: string) => void;
   /** Function to clear all errors */
@@ -27,6 +31,13 @@ interface ErrorRecoveryBannerProps {
   isExpanded?: boolean;
   /** Callback when expansion state changes */
   onExpansionChange?: (expanded: boolean) => void;
+  /** Network state information */
+  networkState?: {
+    isOnline: boolean;
+    isSlowConnection: boolean;
+    isUnstable: boolean;
+    failureCount: number;
+  };
   /** Custom className for styling */
   className?: string;
 }
@@ -39,10 +50,12 @@ export function ErrorRecoveryBanner({
   hasFailedOperations,
   failedOperations,
   onRetryOperation,
+  onRetryAllOperations,
   onClearError,
   onClearAllErrors,
   isExpanded = false,
   onExpansionChange,
+  networkState,
   className = "",
 }: ErrorRecoveryBannerProps) {
   const [isRetrying, setIsRetrying] = useState<string | null>(null);
@@ -61,8 +74,12 @@ export function ErrorRecoveryBanner({
   };
 
   const handleRetryAll = async () => {
-    for (const operation of failedOperations) {
-      await handleRetry(operation.operationId);
+    if (onRetryAllOperations) {
+      await onRetryAllOperations();
+    } else {
+      for (const operation of failedOperations) {
+        await handleRetry(operation.operationId);
+      }
     }
   };
 
@@ -84,6 +101,35 @@ export function ErrorRecoveryBanner({
     onExpansionChange?.(!isExpanded);
   };
 
+  const getPriorityColor = (priority?: 'low' | 'medium' | 'high') => {
+    switch (priority) {
+      case 'high': return 'text-red-600 bg-red-100';
+      case 'medium': return 'text-orange-600 bg-orange-100';
+      case 'low': return 'text-yellow-600 bg-yellow-100';
+      default: return 'text-gray-600 bg-gray-100';
+    }
+  };
+
+  const getNetworkStatusMessage = () => {
+    if (!networkState) return null;
+    
+    if (!networkState.isOnline) {
+      return "You're offline. Operations will retry when connection is restored.";
+    }
+    
+    if (networkState.isUnstable) {
+      return "Connection is unstable. Some operations may fail.";
+    }
+    
+    if (networkState.isSlowConnection) {
+      return "Connection is slow. Operations may take longer.";
+    }
+    
+    return null;
+  };
+
+  const networkMessage = getNetworkStatusMessage();
+
   return (
     <div className={`bg-red-50 border border-red-200 rounded-lg p-4 ${className}`}>
       {/* Header */}
@@ -97,6 +143,11 @@ export function ErrorRecoveryBanner({
             <p className="text-sm text-red-600">
               Some operations couldn't complete. You can retry them or clear the errors.
             </p>
+            {networkMessage && (
+              <p className="text-xs text-red-500 mt-1">
+                {networkMessage}
+              </p>
+            )}
           </div>
         </div>
         
@@ -149,9 +200,21 @@ export function ErrorRecoveryBanner({
             >
               <div className="flex-1 min-w-0">
                 <div className="flex items-center justify-between mb-1">
-                  <span className="text-sm font-medium text-gray-900 truncate">
-                    {operation.operationId}
-                  </span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-gray-900 truncate">
+                      {operation.operationId}
+                    </span>
+                    {operation.priority && (
+                      <span className={`text-xs px-2 py-1 rounded-full ${getPriorityColor(operation.priority)}`}>
+                        {operation.priority}
+                      </span>
+                    )}
+                    {operation.operationType && (
+                      <span className="text-xs text-gray-500 bg-gray-100 px-2 py-1 rounded">
+                        {operation.operationType}
+                      </span>
+                    )}
+                  </div>
                   <span className="text-xs text-gray-500 ml-2">
                     {formatTimeAgo(operation.timestamp)}
                   </span>
