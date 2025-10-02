@@ -111,7 +111,7 @@ export default function SignupPage() {
 					<Button
 						type="submit"
 						variant="outline" // Use outline variant
-						className={`w-full ${SEMANTIC_COLORS.BORDER.DEFAULT} ${SEMANTIC_COLORS.TEXT.PRIMARY} ${INTERACTIVE_STYLES.BUTTON.HOVER_LIGHT}`} // Override colors
+						className={`w-full ${SEMANTIC_COLORS.BORDER.DEFAULT} ${SEMANTIC_COLORS.TEXT.PRIMARY} ${INTERACTIVE_STYLES.BUTTON.HOVER_LIGHT} bg-white`} // Override colors
 						disabled={isLoading}
 					>
 						{isLoading ? "Creating Account..." : "Sign Up"}
