@@ -3,6 +3,7 @@
 
 /**
  * Standard error codes used across the application
+ * These are exported for use by other packages and applications
  */
 export enum ErrorCode {
 	// Authentication & Authorization

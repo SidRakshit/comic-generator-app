@@ -16,9 +16,9 @@ export interface ApiClientConfig {
 
 // Generic API request function type
 export type ApiRequestFunction = <T = unknown>(
-  endpoint: string,
-  method?: HttpMethod,
-  body?: Record<string, unknown> | null
+  _endpoint: string,
+  _method?: HttpMethod,
+  _body?: Record<string, unknown> | null
 ) => Promise<T>;
 
 const API_PREFIX = API_BASE_PATH;
@@ -103,6 +103,6 @@ export class ApiError extends Error {
 }
 
 // Request/Response interceptors
-export type RequestInterceptor = (config: ApiRequestConfig) => ApiRequestConfig | Promise<ApiRequestConfig>;
-export type ResponseInterceptor = (response: Response) => Response | Promise<Response>;
-export type ErrorInterceptor = (error: ApiError) => ApiError | Promise<ApiError>;
+export type RequestInterceptor = (_config: ApiRequestConfig) => ApiRequestConfig | Promise<ApiRequestConfig>;
+export type ResponseInterceptor = (_response: globalThis.Response) => globalThis.Response | Promise<globalThis.Response>;
+export type ErrorInterceptor = (_error: ApiError) => ApiError | Promise<ApiError>;

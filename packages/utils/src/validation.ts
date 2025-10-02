@@ -72,7 +72,7 @@ export function isValidUUID(uuid: string): boolean {
  * ```
  */
 export function isValidPhone(phone: string): boolean {
-  const phoneRegex = /^[\+]?[1]?[\s\-\.]?[\(]?[0-9]{3}[\)]?[\s\-\.]?[0-9]{3}[\s\-\.]?[0-9]{4}$/;
+  const phoneRegex = /^[+]?[1]?[\s\-.]?[(]?[0-9]{3}[)]?[\s\-.]?[0-9]{3}[\s\-.]?[0-9]{4}$/;
   return phoneRegex.test(phone.replace(/\s/g, ''));
 }
 

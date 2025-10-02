@@ -51,20 +51,20 @@ export interface ComicContextType {
   isLoading: boolean;
   isSaving: boolean;
   error: string | null;
-  setTemplate: (templateId: string | null) => void;
+  setTemplate: (_templateId: string | null) => void;
   updatePanelContent: (
-    panelIndex: number,
-    updates: Partial<Panel> & { imageData?: string }
+    _panelIndex: number,
+    _updates: Partial<Panel> & { imageData?: string }
   ) => void;
   updateComicMetadata: (
-    updates: Partial<Omit<Comic, "panels" | "characters">>
+    _updates: Partial<Omit<Comic, "panels" | "characters">>
   ) => void;
   addCharacter: () => void;
-  removeCharacter: (idToRemove: string) => void;
+  removeCharacter: (_idToRemove: string) => void;
   updateCharacter: (
-    idToUpdate: string,
-    field: keyof Omit<ComicCharacter, "id">,
-    value: string
+    _idToUpdate: string,
+    _field: keyof Omit<ComicCharacter, "id">,
+    _value: string
   ) => void;
   saveComic: () => Promise<Comic | undefined>;
   
