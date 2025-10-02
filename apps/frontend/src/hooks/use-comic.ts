@@ -14,6 +14,11 @@ import { useRetry } from "./use-retry";
 // Import Phase 3 hooks
 import { useRetryStrategies, OperationType } from "./use-retry-strategies";
 import { useErrorRecovery } from "@/context/error-recovery-context";
+// Import Phase 4 hooks
+import { useOptimisticUpdates } from "./use-optimistic-updates";
+import { useBackgroundSync } from "./use-background-sync";
+import { useOfflineMode } from "./use-offline-mode";
+import { useLoadingStates, useToast } from "./use-loading-states";
 
 // Use shared response type for SSoT compliance
 type SaveComicResponseFromBackend = ComicResponse;
@@ -59,6 +64,11 @@ export function useComic(
 	// Phase 3: Enhanced retry strategies and error recovery
 	const { executeWithRetry: executeWithStrategy } = useRetryStrategies();
 	const { addFailedOperation } = useErrorRecovery();
+
+	// Phase 4: Advanced UX features
+	const { queueOperation: queueBackgroundOperation } = useBackgroundSync();
+	const { queueOperation: queueOfflineOperation } = useOfflineMode();
+	const { showToast } = useToast();
 
 	const { hasChanges, markAsSaved, getChanges } = useChangeDetection({
 		originalData: originalComic,
@@ -297,9 +307,12 @@ export function useComic(
 		[]
 	);
 
-	// --- Save Comic (Create or Update) with Enhanced Retry ---
+	// --- Save Comic (Create or Update) with Enhanced Retry and Optimistic Updates ---
 	const saveComic = useCallback(async (): Promise<Comic | undefined> => {
 		const operationId = `save-comic-${comic.id || 'new'}`;
+		
+		// Show optimistic feedback
+		showToast("Saving comic...", "info", 2000);
 		
 		try {
 			return await executeWithStrategy(async () => {
@@ -401,12 +414,18 @@ export function useComic(
 					clearDraft();
 				}
 				
+				// Show success feedback
+				showToast("Comic saved successfully!", "success", 3000);
+				
 				return finalComicState;
 			}, "save", operationId);
 		} catch (err: unknown) {
 			console.error("Hook: Failed to save comic:", err);
 			const errorMsg = err instanceof Error ? err.message : "Failed to save comic data.";
 			setError(errorMsg);
+			
+			// Show error feedback
+			showToast(`Failed to save comic: ${errorMsg}`, "error", 5000);
 			
 			// Add to error recovery system
 			addFailedOperation(
@@ -421,7 +440,7 @@ export function useComic(
 		} finally {
 			setIsSaving(false);
 		}
-	}, [comic, executeWithStrategy, clearDraft, addFailedOperation]);
+	}, [comic, executeWithStrategy, clearDraft, addFailedOperation, showToast, queueOfflineOperation]);
 
 	// --- Auto-save functionality ---
 	const { isAutoSaving, lastAutoSave, failureCount: autoSaveFailureCount, triggerAutoSave } = useAutoSave({
