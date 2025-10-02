@@ -5,6 +5,7 @@ import "./globals.css";
 import { AuthProvider } from "@/context/auth-context";
 import { ErrorRecoveryProvider } from "@/context/error-recovery-context";
 import { ErrorRecoveryWrapper } from "@/components/error-recovery-wrapper";
+import { DevErrorBoundary } from "@repo/ui/error-boundary";
 import Navbar from "@/components/layouts/navbar";
 import { SEMANTIC_COLORS } from "@repo/common-types";
 // import Footer from "@/components/layouts/footer"; // Assuming you have a Footer
@@ -24,15 +25,17 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body className={`${inter.className} flex flex-col min-h-screen ${SEMANTIC_COLORS.BACKGROUND.SECONDARY}`}>
-        <AuthProvider>
-          <ErrorRecoveryProvider>
-            <Navbar />
-            <main className="flex-grow container mx-auto px-4 py-8">
-              <ErrorRecoveryWrapper />
-              {children}
-            </main>          
-          </ErrorRecoveryProvider>
-        </AuthProvider>
+        <DevErrorBoundary>
+          <AuthProvider>
+            <ErrorRecoveryProvider>
+              <Navbar />
+              <main className="flex-grow container mx-auto px-4 py-8">
+                <ErrorRecoveryWrapper />
+                {children}
+              </main>          
+            </ErrorRecoveryProvider>
+          </AuthProvider>
+        </DevErrorBoundary>
       </body>
     </html>
   );
