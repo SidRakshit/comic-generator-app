@@ -33,7 +33,10 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
+    "@typescript-eslint/eslint-plugin": "^8.45.0",
+    "@typescript-eslint/parser": "^8.45.0",
     "aws-amplify": "^6.14.3",
+    "eslint": "^9.36.0",
     "zod": "^3.22.0"
   },
   "devDependencies": {

@@ -45,6 +45,30 @@
       "types": "./dist/textarea.d.ts",
       "default": "./dist/textarea.js"
     },
+    "./toast-notification": {
+      "types": "./dist/toast-notification.d.ts",
+      "default": "./dist/toast-notification.js"
+    },
+    "./accessibility": {
+      "types": "./dist/accessibility.d.ts",
+      "default": "./dist/accessibility.js"
+    },
+    "./error-recovery-banner": {
+      "types": "./dist/error-recovery-banner.d.ts",
+      "default": "./dist/error-recovery-banner.js"
+    },
+    "./skeleton-loader": {
+      "types": "./dist/skeleton-loader.d.ts",
+      "default": "./dist/skeleton-loader.js"
+    },
+    "./progress-indicator": {
+      "types": "./dist/progress-indicator.d.ts",
+      "default": "./dist/progress-indicator.js"
+    },
+    "./error-boundary": {
+      "types": "./dist/error-boundary.d.ts",
+      "default": "./dist/error-boundary.js"
+    },
     "./styles": "./styles/globals.css",
     "./styles/globals.css": "./styles/globals.css"
   },

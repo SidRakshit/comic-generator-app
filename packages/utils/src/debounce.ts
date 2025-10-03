@@ -23,7 +23,7 @@ export function debounce<T extends (...args: unknown[]) => unknown>(
   func: T,
   wait: number
 ): (...args: Parameters<T>) => void {
-  let timeout: NodeJS.Timeout | null = null;
+  let timeout: ReturnType<typeof setTimeout> | null = null;
 
   return function (...args: Parameters<T>) {
     if (timeout) clearTimeout(timeout);
@@ -91,7 +91,7 @@ export function createCancellableDebounce<T extends (...args: unknown[]) => unkn
   debounced: (...args: Parameters<T>) => void;
   cancel: () => void;
 } {
-  let timeout: NodeJS.Timeout | null = null;
+  let timeout: ReturnType<typeof setTimeout> | null = null;
 
   const debounced = (...args: Parameters<T>) => {
     if (timeout) clearTimeout(timeout);
