@@ -23,6 +23,8 @@
     "tailwindcss-animate": "^1.0.7"
   },
   "devDependencies": {
+    "@babel/core": "^7.28.4",
+    "@babel/eslint-parser": "^7.28.4",
     "@eslint/eslintrc": "^3",
     "@types/node": "^20",
     "@types/react": "^19",
