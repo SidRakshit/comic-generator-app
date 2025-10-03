@@ -82,8 +82,8 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
   private reportError = (error: Error, errorInfo: ErrorInfo) => {
     // In a real app, you would send this to an error monitoring service
     // like Sentry, LogRocket, or Bugsnag
-    if (typeof window !== "undefined" && window.gtag) {
-      window.gtag("event", "exception", {
+    if (typeof window !== "undefined" && (window as unknown as { gtag?: (...args: unknown[]) => void }).gtag) {
+      (window as unknown as { gtag: (...args: unknown[]) => void }).gtag("event", "exception", {
         description: error.message,
         fatal: false,
         custom_map: {
@@ -149,7 +149,7 @@ export class ErrorBoundary extends Component<ErrorBoundaryProps, ErrorBoundarySt
     if (hasError && error) {
       // Use custom fallback if provided
       if (fallback) {
-        return fallback(error, errorInfo!, this.handleRetry);
+        return fallback(error, errorInfo || { componentStack: "" }, this.handleRetry);
       }
 
       // Default error UI

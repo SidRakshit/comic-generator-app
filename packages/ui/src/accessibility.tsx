@@ -95,8 +95,8 @@ export function useAriaLiveRegion() {
  * Hook for keyboard navigation
  * Handles arrow key navigation for lists, grids, etc.
  */
-export function useKeyboardNavigation(
-  items: any[],
+export function useKeyboardNavigation<T>(
+  items: T[],
   orientation: "horizontal" | "vertical" | "both" = "both"
 ) {
   const [focusedIndex, setFocusedIndex] = useState<number>(-1);
@@ -318,7 +318,7 @@ export function AccessibleField({
   children,
   className = "",
 }: AccessibleFieldProps) {
-  const fieldId = children.props.id || `field-${Math.random().toString(36).substr(2, 9)}`;
+  const fieldId = (children.props as { id?: string }).id || `field-${Math.random().toString(36).substr(2, 9)}`;
   const errorId = error ? `${fieldId}-error` : undefined;
   const hintId = hint ? `${fieldId}-hint` : undefined;
 
@@ -340,7 +340,7 @@ export function AccessibleField({
         </p>
       )}
       
-      {React.cloneElement(children, {
+      {React.cloneElement(children as React.ReactElement<{ id?: string; 'aria-invalid'?: string; 'aria-describedby'?: string; 'aria-required'?: boolean }>, {
         id: fieldId,
         "aria-invalid": error ? "true" : "false",
         "aria-describedby": describedBy || undefined,

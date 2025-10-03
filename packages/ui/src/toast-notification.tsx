@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { X, CheckCircle, AlertCircle, AlertTriangle, Info } from "lucide-react";
 
 /**
@@ -40,6 +40,13 @@ export function ToastNotification({
   const [isVisible, setIsVisible] = useState(false);
   const [isLeaving, setIsLeaving] = useState(false);
 
+  const handleDismiss = useCallback(() => {
+    setIsLeaving(true);
+    setTimeout(() => {
+      onDismiss(toast.id);
+    }, 300); // Match animation duration
+  }, [onDismiss, toast.id]);
+
   useEffect(() => {
     // Animate in
     const timer = setTimeout(() => setIsVisible(true), 10);
@@ -54,14 +61,7 @@ export function ToastNotification({
       }, toast.duration);
       return () => clearTimeout(timer);
     }
-  }, [toast.duration]);
-
-  const handleDismiss = () => {
-    setIsLeaving(true);
-    setTimeout(() => {
-      onDismiss(toast.id);
-    }, 300); // Match animation duration
-  };
+  }, [toast.duration, handleDismiss]);
 
   const getIcon = () => {
     switch (toast.type) {
