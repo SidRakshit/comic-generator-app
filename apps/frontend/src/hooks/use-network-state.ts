@@ -167,18 +167,20 @@ export function useNetworkState({
   }, [networkState.isOnline, updateNetworkState, onOnline, onOffline, checkConnectionQuality]);
 
   const markNetworkFailure = useCallback(() => {
-    updateNetworkState(prev => ({
+    setNetworkState(prev => ({
+      ...prev,
       failureCount: prev.failureCount + 1,
       isRetrying: true,
     }));
-  }, [updateNetworkState]);
+  }, []);
 
   const markNetworkSuccess = useCallback(() => {
-    updateNetworkState(prev => ({
+    setNetworkState(prev => ({
+      ...prev,
       failureCount: 0,
       isRetrying: false,
     }));
-  }, [updateNetworkState]);
+  }, []);
 
   const resetFailureCount = useCallback(() => {
     updateNetworkState({

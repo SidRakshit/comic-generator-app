@@ -160,7 +160,7 @@ export function usePerformanceMonitoring({
           navigationTiming: {
             domContentLoaded: navigation.domContentLoadedEventEnd - navigation.domContentLoadedEventStart,
             loadComplete: navigation.loadEventEnd - navigation.loadEventStart,
-            domInteractive: navigation.domInteractive - navigation.navigationStart,
+            domInteractive: navigation.domInteractive - (performance.timing?.navigationStart || 0),
           },
         });
       }
@@ -202,8 +202,8 @@ export function usePerformanceMonitoring({
     }
 
     // Report to analytics if enabled
-    if (reportToAnalytics && typeof window !== "undefined" && window.gtag) {
-      window.gtag("event", "custom_metric", {
+    if (reportToAnalytics && typeof window !== "undefined" && (window as unknown as { gtag?: (...args: unknown[]) => void }).gtag) {
+      (window as unknown as { gtag: (...args: unknown[]) => void }).gtag("event", "custom_metric", {
         metric_name: name,
         metric_value: value,
         metric_unit: unit,
@@ -216,8 +216,8 @@ export function usePerformanceMonitoring({
     const loadTime = performance.now();
     trackCustomMetric("page_load_time", loadTime);
     
-    if (reportToAnalytics && typeof window !== "undefined" && window.gtag) {
-      window.gtag("event", "page_load", {
+    if (reportToAnalytics && typeof window !== "undefined" && (window as unknown as { gtag?: (...args: unknown[]) => void }).gtag) {
+      (window as unknown as { gtag: (...args: unknown[]) => void }).gtag("event", "page_load", {
         page_name: pageName,
         load_time: loadTime,
       });
@@ -230,8 +230,8 @@ export function usePerformanceMonitoring({
       console.log(`User Interaction - ${action}: ${target}${duration ? ` (${duration}ms)` : ""}`);
     }
 
-    if (reportToAnalytics && typeof window !== "undefined" && window.gtag) {
-      window.gtag("event", "user_interaction", {
+    if (reportToAnalytics && typeof window !== "undefined" && (window as unknown as { gtag?: (...args: unknown[]) => void }).gtag) {
+      (window as unknown as { gtag: (...args: unknown[]) => void }).gtag("event", "user_interaction", {
         action,
         target,
         duration,
@@ -245,8 +245,8 @@ export function usePerformanceMonitoring({
       console.error("Performance Error:", error, context);
     }
 
-    if (reportToAnalytics && typeof window !== "undefined" && window.gtag) {
-      window.gtag("event", "exception", {
+    if (reportToAnalytics && typeof window !== "undefined" && (window as unknown as { gtag?: (...args: unknown[]) => void }).gtag) {
+      (window as unknown as { gtag: (...args: unknown[]) => void }).gtag("event", "exception", {
         description: error.message,
         fatal: false,
         custom_map: {
@@ -321,13 +321,13 @@ export function useNetworkPerformance() {
 
     updateNetworkInfo();
 
-    if (navigator.connection) {
-      navigator.connection.addEventListener("change", updateNetworkInfo);
+    if ((navigator as any).connection) {
+      (navigator as any).connection.addEventListener("change", updateNetworkInfo);
     }
 
     return () => {
-      if (navigator.connection) {
-        navigator.connection.removeEventListener("change", updateNetworkInfo);
+      if ((navigator as any).connection) {
+        (navigator as any).connection.removeEventListener("change", updateNetworkInfo);
       }
     };
   }, []);

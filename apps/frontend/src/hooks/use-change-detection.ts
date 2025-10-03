@@ -19,7 +19,7 @@ interface UseChangeDetectionOptions<T> {
   debounceMs?: number;
 }
 
-interface UseChangeDetectionReturn {
+interface UseChangeDetectionReturn<T> {
   /** Whether there are changes between original and current data */
   hasChanges: boolean;
   /** Reset the original data to current data (mark as saved) */
@@ -43,7 +43,7 @@ export function useChangeDetection<T>({
   isEqual,
   enabled = true,
   debounceMs,
-}: UseChangeDetectionOptions<T>): UseChangeDetectionReturn {
+}: UseChangeDetectionOptions<T>): UseChangeDetectionReturn<T> {
   const [hasChanges, setHasChanges] = useState(false);
   const [originalDataRef, setOriginalDataRef] = useState(originalData);
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);

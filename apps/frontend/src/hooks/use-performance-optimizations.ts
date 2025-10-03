@@ -76,7 +76,6 @@ export function usePerformanceOptimizations({
     lastRenderTime: 0,
     averageRenderTime: 0,
     memoryUsage: null,
-    memoryUsage: null,
     isVisible: true,
     isInViewport: true,
   });

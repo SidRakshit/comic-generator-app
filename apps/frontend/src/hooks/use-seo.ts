@@ -210,8 +210,8 @@ export function usePageAnalytics(pageName: string, metadata?: Partial<SEOMetadat
     if (typeof window === "undefined") return;
 
     // Track page view
-    if (window.gtag) {
-      window.gtag("config", "GA_MEASUREMENT_ID", {
+    if ((window as unknown as { gtag?: (...args: unknown[]) => void }).gtag) {
+      (window as unknown as { gtag: (...args: unknown[]) => void }).gtag("config", "GA_MEASUREMENT_ID", {
         page_title: metadata?.title || pageName,
         page_location: window.location.href,
         custom_map: {
@@ -221,8 +221,8 @@ export function usePageAnalytics(pageName: string, metadata?: Partial<SEOMetadat
     }
 
     // Track custom event
-    if (window.gtag) {
-      window.gtag("event", "page_view", {
+    if ((window as unknown as { gtag?: (...args: unknown[]) => void }).gtag) {
+      (window as unknown as { gtag: (...args: unknown[]) => void }).gtag("event", "page_view", {
         page_name: pageName,
         page_title: metadata?.title || pageName,
         page_url: window.location.href,
