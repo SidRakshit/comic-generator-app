@@ -118,12 +118,23 @@ export default function ProfilePage() {
 			
 			console.log(`Filtered ${data.length - validComics.length} invalid comics`);
 			console.log("Valid comics:", validComics);
-			setMyComics(validComics);
+			
+			// Double-check that all comics are valid before setting state
+			const finalValidComics = validComics.filter(comic => {
+				const isValid = comic && comic.comic_id && typeof comic.comic_id === 'string';
+				if (!isValid) {
+					console.error('Found invalid comic in final validation:', comic);
+				}
+				return isValid;
+			});
+			
+			console.log(`Final valid comics count: ${finalValidComics.length}`);
+			setMyComics(finalValidComics);
 			
 			// Update created count based on fetched data
 			setProfileData((prev) => ({
 				...prev,
-				stats: { ...prev.stats, created: validComics.length },
+				stats: { ...prev.stats, created: finalValidComics.length },
 			}));
 		} catch (err: unknown) {
 			console.error("Failed to fetch user comics:", err);
@@ -565,9 +576,25 @@ export default function ProfilePage() {
 							!isLoadingComics &&
 							!errorLoadingComics &&
 							isAuthenticated &&
+							myComics &&
+							Array.isArray(myComics) &&
 							myComics.length > 0 && (
 								<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-									{myComics.filter(comic => comic && comic.comic_id).map((comic) => (
+									{(myComics || [])
+										.filter(comic => {
+											const isValid = comic && comic.comic_id && typeof comic.comic_id === 'string';
+											if (!isValid) {
+												console.warn('Filtering out invalid comic:', comic);
+											}
+											return isValid;
+										})
+										.map((comic) => {
+											// Additional safety check
+											if (!comic || !comic.comic_id) {
+												console.error('Invalid comic in map function:', comic);
+												return null;
+											}
+											return (
 										<div key={comic.comic_id} className="relative">
 											<Link
 												href={`/comics/${comic.comic_id}`}
@@ -608,7 +635,9 @@ export default function ProfilePage() {
 												<Heart size={16} className={`${userFavoriteComics.some((fav) => fav.comic_id === comic.comic_id) ? "fill-red-500" : ""}`} />
 											</Button>
 										</div>
-									))}
+											);
+										})
+										.filter(Boolean)}
 								</div>
 							)}
 					</TabsContent>
