@@ -102,9 +102,10 @@ export class ComicService {
 	 * RESTORED: Original working version that returns base64 data, no S3 upload
 	 * @param panelDescription - Description of the panel to generate image for.
 	 * @param characterContext - Character information for visual consistency
+	 * @param dialogue - Dialogue text to include in the panel
 	 * @returns Object containing base64 image data and prompt used.
 	 */
-	async generatePanelImage(userId: string, panelDescription: string, characterContext?: string): Promise<GeneratedImageData> {
+	async generatePanelImage(userId: string, panelDescription: string, characterContext?: string, dialogue?: string): Promise<GeneratedImageData> {
 		if (!OPENAI_API_KEY) {
 			throw new Error("OpenAI API key is not configured.");
 		}
@@ -120,6 +121,10 @@ export class ComicService {
 		
 		if (characterContext) {
 			fullPrompt += `\n\nCharacter consistency requirements:\n${characterContext}\n\nMaintain consistent character appearance, clothing, and visual style across all panels.`;
+		}
+		
+		if (dialogue) {
+			fullPrompt += `\n\nDialogue: "${dialogue}"\n\nInclude this dialogue as speech bubbles or text in the comic panel. Make sure the dialogue is clearly visible and readable.`;
 		}
 		
 		fullPrompt += `\n\n${AI_CONFIG.OPENAI.PROMPTS.IMAGE_STYLE_SUFFIX}`;

@@ -64,6 +64,7 @@ export const GenerateImageRequestSchema = z.object({
 export const GeneratePanelImageRequestSchema = z.object({
   panelDescription: z.string().min(COMIC_RULES.PANEL.PROMPT.MIN_LENGTH, `Panel description must be at least ${COMIC_RULES.PANEL.PROMPT.MIN_LENGTH} characters`).max(COMIC_RULES.PANEL.PROMPT.MAX_LENGTH, `Panel description must be less than ${COMIC_RULES.PANEL.PROMPT.MAX_LENGTH} characters`),
   characterContext: z.string().optional(),
+  dialogue: z.string().max(COMIC_RULES.PANEL.DIALOGUE.MAX_LENGTH, `Dialogue must be less than ${COMIC_RULES.PANEL.DIALOGUE.MAX_LENGTH} characters`).optional(),
 });
 
 
