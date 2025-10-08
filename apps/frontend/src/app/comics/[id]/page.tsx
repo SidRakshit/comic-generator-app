@@ -167,15 +167,48 @@ export default function ComicEditorPage() {
 		}
 	};
 
-	// --- Render Logic (Loading, Error, Not Found states remain similar) ---
+	// --- Render Logic (Loading, Error, Not Found states) ---
 	if (isLoading) {
-		/* ... Loading UI ... */
+		return (
+			<div className="container mx-auto py-8 px-4 md:px-6 lg:px-8">
+				<div className="flex flex-col items-center justify-center min-h-[400px]">
+					<Loader2 className="h-8 w-8 animate-spin text-gray-500 mb-4" />
+					<p className="text-gray-600">Loading comic...</p>
+				</div>
+			</div>
+		);
 	}
+	
 	if (comicHookError && !comic && !isLoading) {
-		/* ... Error UI ... */
+		return (
+			<div className="container mx-auto py-8 px-4 md:px-6 lg:px-8">
+				<div className="flex flex-col items-center justify-center min-h-[400px]">
+					<div className="text-center">
+						<h2 className="text-2xl font-bold text-red-600 mb-4">Error Loading Comic</h2>
+						<p className="text-gray-600 mb-6">{comicHookError}</p>
+						<Button onClick={() => window.location.reload()}>
+							Try Again
+						</Button>
+					</div>
+				</div>
+			</div>
+		);
 	}
+	
 	if (!comic && !isLoading) {
-		/* ... Not Found UI ... */
+		return (
+			<div className="container mx-auto py-8 px-4 md:px-6 lg:px-8">
+				<div className="flex flex-col items-center justify-center min-h-[400px]">
+					<div className="text-center">
+						<h2 className="text-2xl font-bold text-gray-800 mb-4">Comic Not Found</h2>
+						<p className="text-gray-600 mb-6">The comic you're looking for doesn't exist or you don't have permission to view it.</p>
+						<Link href="/profile">
+							<Button>Back to Profile</Button>
+						</Link>
+					</div>
+				</div>
+			</div>
+		);
 	}
 
 	// Determine if comic can be published (all panels complete)
@@ -187,7 +220,14 @@ export default function ComicEditorPage() {
 	return (
 		<div className="container mx-auto py-8 px-4 md:px-6 lg:px-8">
 			{/* Back Navigation */}
-			{/* ... (Back link) ... */}
+			<div className="mb-6">
+				<Link href="/profile">
+					<Button variant="outline" className="flex items-center gap-2">
+						<ArrowLeft size={16} />
+						Back to Profile
+					</Button>
+				</Link>
+			</div>
 
 			{/* Header Section */}
 			{/* ... (Header with title and save button) ... */}
