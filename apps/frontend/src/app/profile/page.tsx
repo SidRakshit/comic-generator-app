@@ -29,7 +29,7 @@ import {
 const initialUserData = {
 	name: "Click here to edit your name",
 	bio: "Click here to edit your bio",
-	avatarUrl: `${API_ENDPOINTS.PLACEHOLDER_IMAGE}?width=150&height=150`,
+	avatarUrl: "", // Empty string to use fallback icon instead
 	joinDate: "",
 	email: "",
 	website: "",
@@ -205,14 +205,20 @@ export default function ProfilePage() {
 					console.log("Raw favorites data from API:", data);
 					
 					// Filter out any invalid favorites
+					// Note: The API returns 'comics' (plural), not 'comic' (singular)
 					const validFavorites = (data || []).filter((fav, index) => {
 						console.log(`Favorite ${index}:`, fav);
-						const isValid = fav && fav.comic && fav.comic.comic_id;
+						// Check both 'comic' and 'comics' for compatibility
+						const comicData = fav?.comic || fav?.comics;
+						const isValid = fav && comicData && comicData.comic_id;
 						if (!isValid) {
 							console.warn(`Found invalid favorite at index ${index}:`, fav);
 						}
 						return isValid;
-					});
+					}).map(fav => ({
+						...fav,
+						comic: fav.comic || fav.comics  // Normalize to use 'comic'
+					}));
 					
 					console.log(`Filtered ${(data || []).length - validFavorites.length} invalid favorites`);
 					setUserFavoriteComics(validFavorites);
@@ -328,14 +334,20 @@ export default function ProfilePage() {
 						<div className="flex flex-col md:flex-row items-center md:items-start">
 							{/* Avatar */}
 							<div className="relative mb-4 md:mb-0 md:mr-6 flex-shrink-0">
-								<Image
-									src={profileData.avatarUrl} // Use dynamic avatar if available
-									alt={`${profileData.name}'s avatar`}
-									width={128}
-									height={128}
-									className={`${UI_CONSTANTS.BORDER_RADIUS.FULL} object-cover border-4 ${SEMANTIC_COLORS.BORDER.INVERTED} shadow`}
-									priority // Prioritize loading avatar image
-								/>
+								{profileData.avatarUrl ? (
+									<Image
+										src={profileData.avatarUrl}
+										alt={`${profileData.name}'s avatar`}
+										width={128}
+										height={128}
+										className={`${UI_CONSTANTS.BORDER_RADIUS.FULL} object-cover border-4 ${SEMANTIC_COLORS.BORDER.INVERTED} shadow`}
+										priority
+									/>
+								) : (
+									<div className={`w-32 h-32 ${UI_CONSTANTS.BORDER_RADIUS.FULL} ${SEMANTIC_COLORS.BACKGROUND.TERTIARY} border-4 ${SEMANTIC_COLORS.BORDER.INVERTED} shadow flex items-center justify-center`}>
+										<User size={64} className="text-gray-400" />
+									</div>
+								)}
 								{isEditingProfile && (
 									<button className={`absolute bottom-0 right-0 ${INTERACTIVE_STYLES.BUTTON.PRIMARY} rounded-full p-2 shadow-md`}>
 										<ImageIcon size={16} />
@@ -667,15 +679,21 @@ export default function ProfilePage() {
 						) : userFavoriteComics.length > 0 ? (
 							<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
 								{userFavoriteComics
-									.filter(fav => fav && fav.comic && fav.comic.comic_id)
-									.map((fav) => (
-									<Link href={`/comics/${fav.comic.comic_id}`} key={fav.comic.comic_id}>
+									.filter(fav => {
+										const comicData = fav?.comic || fav?.comics;
+										return fav && comicData && comicData.comic_id;
+									})
+									.map((fav) => {
+										// Normalize comic data
+										const comic = fav.comic || fav.comics;
+										return (
+									<Link href={`/comics/${comic.comic_id}`} key={comic.comic_id}>
 										<div className="${SEMANTIC_COLORS.BACKGROUND.PRIMARY} border ${UI_CONSTANTS.BORDER_RADIUS.LARGE} overflow-hidden shadow-sm hover:shadow-md transition-shadow">
 											<div className={`${UI_CONSTANTS.ASPECT_RATIOS.COMIC_COVER} ${SEMANTIC_COLORS.BACKGROUND.TERTIARY} relative overflow-hidden`}>
-												{(fav.comic as any).cover_image_url ? (
+												{(comic as any).cover_image_url ? (
 													<Image
-														src={(fav.comic as any).cover_image_url}
-														alt={fav.comic.title}
+														src={(comic as any).cover_image_url}
+														alt={comic.title}
 														fill
 														className="object-cover"
 														sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
@@ -688,22 +706,23 @@ export default function ProfilePage() {
 											</div>
 											<div className="p-4">
 												<h3 className="font-medium text-lg text-gray-900 mb-1">
-													{fav.comic.title}
+													{comic.title}
 												</h3>
 												<div className="flex justify-between text-sm text-gray-500">
-													<span>By: {fav.comic.author}</span>
+													<span>By: {(comic as any).author || 'Unknown'}</span>
 													<span className="flex items-center">
 														<Heart
 															size={14}
 															className="mr-1 text-red-500"
 														/>
-														{fav.comic.likes}
+														{(comic as any).likes || 0}
 													</span>
 												</div>
 											</div>
 										</div>
 									</Link>
-								))}
+										);
+									})}
 							</div>
 						) : (
 							<div className="text-center py-12 ${SEMANTIC_COLORS.BACKGROUND.PRIMARY} ${UI_CONSTANTS.BORDER_RADIUS.LARGE} border">
