@@ -2,6 +2,7 @@
 
 import { useCallback, useState, useEffect } from "react";
 import type { Comic } from "@repo/common-types";
+import { cleanupLocalStorage, hasEnoughSpace, getLocalStorageInfo } from "@/lib/localStorage-utils";
 
 /**
  * Hook for managing draft storage in localStorage
@@ -70,18 +71,18 @@ export function useDraftStorage({
       return;
     }
 
-    try {
-      // Strip base64 images to save space (they're too large for localStorage)
-      // Keep imageUrl references but remove imageBase64 to prevent quota errors
-      const comicDataWithoutBase64 = {
-        ...comicData,
-        panels: comicData.panels?.map(panel => ({
-          ...panel,
-          imageBase64: undefined, // Remove base64 data
-          // Keep imageUrl so we know the panel has an image
-        })) || [],
-      };
+    // Strip base64 images to save space (they're too large for localStorage)
+    // Keep imageUrl references but remove imageBase64 to prevent quota errors
+    const comicDataWithoutBase64 = {
+      ...comicData,
+      panels: comicData.panels?.map(panel => ({
+        ...panel,
+        imageBase64: undefined, // Remove base64 data
+        // Keep imageUrl so we know the panel has an image
+      })) || [],
+    };
 
+    try {
       const draftData = {
         comic: comicDataWithoutBase64,
         timestamp: Date.now(),
@@ -89,6 +90,30 @@ export function useDraftStorage({
       };
 
       const serialized = JSON.stringify(draftData);
+      
+      // Check if the data is too large before attempting to save
+      if (serialized.length > 5 * 1024 * 1024) { // 5MB limit
+        console.warn("Draft data too large for localStorage, skipping save");
+        return;
+      }
+      
+      // Check if we have enough space
+      if (!hasEnoughSpace(serialized.length)) {
+        console.warn("Not enough localStorage space, attempting cleanup...");
+        const cleanupResult = cleanupLocalStorage({
+          maxAge: 3 * 24 * 60 * 60 * 1000, // 3 days
+          appPrefixes: ['comic-draft', 'offline-operations', 'impersonation-token'],
+        });
+        
+        console.log(`Cleanup freed ${cleanupResult.freedSpace} bytes, removed ${cleanupResult.removedKeys.length} keys`);
+        
+        // Check again after cleanup
+        if (!hasEnoughSpace(serialized.length)) {
+          console.warn("Still not enough space after cleanup, skipping save");
+          return;
+        }
+      }
+      
       localStorage.setItem(storageKey, serialized);
       
       console.log("Draft saved to localStorage:", {
@@ -99,13 +124,36 @@ export function useDraftStorage({
       });
     } catch (error) {
       if (error instanceof Error && error.name === 'QuotaExceededError') {
-        console.warn("LocalStorage quota exceeded. Draft not saved. Consider clearing old data.");
-        // Try to clear the old draft and retry once
+        console.warn("LocalStorage quota exceeded. Attempting cleanup...");
+        
         try {
-          localStorage.removeItem(storageKey);
-          console.log("Cleared old draft, but skipping save to avoid quota issues");
-        } catch (clearError) {
-          console.error("Failed to clear old draft:", clearError);
+          // Use the utility function for cleanup
+          const cleanupResult = cleanupLocalStorage({
+            maxAge: 1 * 24 * 60 * 60 * 1000, // 1 day for emergency cleanup
+            appPrefixes: ['comic-draft', 'offline-operations', 'impersonation-token'],
+          });
+          
+          console.log(`Emergency cleanup freed ${cleanupResult.freedSpace} bytes, removed ${cleanupResult.removedKeys.length} keys`);
+          
+          // Try to save the draft again after cleanup
+          try {
+            const draftData = {
+              comic: comicDataWithoutBase64,
+              timestamp: Date.now(),
+              version: "1.0",
+            };
+            const serialized = JSON.stringify(draftData);
+            if (serialized.length < 5 * 1024 * 1024) { // 5MB limit
+              localStorage.setItem(storageKey, serialized);
+              console.log("Draft saved successfully after emergency cleanup");
+            } else {
+              console.warn("Draft still too large after cleanup, skipping save");
+            }
+          } catch (retryError) {
+            console.error("Failed to save draft even after emergency cleanup:", retryError);
+          }
+        } catch (cleanupError) {
+          console.error("Failed to cleanup localStorage:", cleanupError);
         }
       } else {
         console.error("Failed to save draft to localStorage:", error);

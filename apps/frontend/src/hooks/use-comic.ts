@@ -460,11 +460,15 @@ export function useComic(
 		enabled: true,
 	});
 
-	// --- Draft management ---
+	// --- Draft management (with debouncing) ---
 	useEffect(() => {
-		// Save draft for new comics (without ID)
+		// Save draft for new comics (without ID) with debouncing
 		if (!comic.id && comic.template && isStorageAvailable) {
-			saveDraft(comic);
+			const timeoutId = setTimeout(() => {
+				saveDraft(comic);
+			}, 1000); // 1 second debounce
+			
+			return () => clearTimeout(timeoutId);
 		}
 	}, [comic, saveDraft, isStorageAvailable]);
 
