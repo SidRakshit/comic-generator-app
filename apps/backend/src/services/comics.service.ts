@@ -621,6 +621,117 @@ Guidelines:
 		}
 	}
 
+	/**
+	 * TEMPORARY: Find problematic comics for debugging
+	 */
+	async findProblematicComics(internalUserId: string): Promise<any> {
+		const client = await pool.connect();
+		
+		try {
+			console.log(`Service: Finding problematic comics for user ${internalUserId}`);
+			
+			// Find comics with NULL comic_id
+			const nullComics = await client.query(`
+				SELECT 'NULL comic_id' as issue_type, comic_id, user_id, title, created_at 
+				FROM comics 
+				WHERE comic_id IS NULL AND user_id = $1
+			`, [internalUserId]);
+			
+			// Find comics with empty string comic_id
+			const emptyComics = await client.query(`
+				SELECT 'Empty comic_id' as issue_type, comic_id, user_id, title, created_at 
+				FROM comics 
+				WHERE comic_id = '' AND user_id = $1
+			`, [internalUserId]);
+			
+			// Find comics with invalid UUID format
+			const invalidUuidComics = await client.query(`
+				SELECT 'Invalid UUID format' as issue_type, comic_id, user_id, title, created_at 
+				FROM comics 
+				WHERE comic_id IS NOT NULL 
+				  AND comic_id != '' 
+				  AND comic_id !~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+				  AND user_id = $1
+			`, [internalUserId]);
+			
+			// List all comics for debugging
+			const allComics = await client.query(`
+				SELECT 'All comics' as issue_type, comic_id, user_id, title, created_at 
+				FROM comics 
+				WHERE user_id = $1
+				ORDER BY created_at DESC
+			`, [internalUserId]);
+			
+			return {
+				nullComics: nullComics.rows,
+				emptyComics: emptyComics.rows,
+				invalidUuidComics: invalidUuidComics.rows,
+				allComics: allComics.rows,
+				summary: {
+					totalNull: nullComics.rows.length,
+					totalEmpty: emptyComics.rows.length,
+					totalInvalidUuid: invalidUuidComics.rows.length,
+					totalComics: allComics.rows.length
+				}
+			};
+			
+		} catch (error: any) {
+			console.error("Error in findProblematicComics:", error.message);
+			throw error;
+		} finally {
+			client.release();
+		}
+	}
+
+	/**
+	 * Deletes a comic and all its related data.
+	 */
+	async deleteComic(comicId: string, internalUserId: string): Promise<boolean> {
+		const client = await pool.connect();
+		
+		try {
+			console.log(`Service: Deleting comic ${comicId} for user ${internalUserId}`);
+			
+			// First, verify the comic belongs to the user
+			const comicCheck = await client.query(
+				'SELECT comic_id FROM comics WHERE comic_id = $1 AND user_id = $2',
+				[comicId, internalUserId]
+			);
+			
+			if (comicCheck.rows.length === 0) {
+				console.log(`Service: Comic ${comicId} not found or access denied`);
+				return false;
+			}
+			
+			// Delete panels first (due to foreign key constraints)
+			await client.query(
+				'DELETE FROM panels WHERE page_id IN (SELECT page_id FROM pages WHERE comic_id = $1)',
+				[comicId]
+			);
+			
+			// Delete pages
+			await client.query(
+				'DELETE FROM pages WHERE comic_id = $1',
+				[comicId]
+			);
+			
+			// Delete the comic
+			await client.query(
+				'DELETE FROM comics WHERE comic_id = $1',
+				[comicId]
+			);
+			
+			console.log(`Service: Successfully deleted comic ${comicId}`);
+			return true;
+			
+		} catch (error: any) {
+			console.error("Error in deleteComic:", error.message);
+			throw error;
+		} finally {
+			client.release();
+		}
+	}
+
 	private async recordPanelUsage(
 		client: PoolClient,
 		userId: string,

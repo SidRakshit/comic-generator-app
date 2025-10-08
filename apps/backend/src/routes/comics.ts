@@ -48,7 +48,18 @@ router.get(
     comicController.getComic
 );
 
-// DELETE /api/comics/:comicId - Delete a comic (Add controller method + service logic)
+router.delete(
+    COMICS.BY_ID(':comicId'),
+    authenticateToken,
+    comicController.deleteComic
+);
+
+// TEMPORARY: Debug endpoint to find problematic comics
+router.get(
+    '/debug/problematic',
+    authenticateToken,
+    comicController.findProblematicComics
+);
 // router.delete(COMICS.BY_ID(':comicId'), authenticateToken, comicController.deleteComic);
 
 
