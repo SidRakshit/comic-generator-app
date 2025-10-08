@@ -1,5 +1,5 @@
 import { fetchAuthSession } from "aws-amplify/auth";
-import { GeneratedImageDataResponse, API_CONFIG } from "@repo/common-types";
+import { GeneratedImageDataResponse, API_CONFIG, API_ENDPOINTS } from "@repo/common-types";
 import { getImpersonationToken } from "@/lib/impersonation";
 
 const API_BASE_URL =
@@ -7,6 +7,7 @@ const API_BASE_URL =
 
 // Re-export for backward compatibility
 export type { GeneratedImageDataResponse };
+
 
 /**
  * Makes an authenticated request to the backend API.

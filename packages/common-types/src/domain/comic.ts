@@ -6,6 +6,7 @@ export interface Panel {
   id: string;
   status: PanelStatus;
   prompt?: string;
+  dialogue?: string; // Generated dialogue text for the panel
   imageUrl?: string; // Holds S3 URL (loaded) or Data URL (newly generated)
   imageBase64?: string; // Holds the raw base64 from generation, used for saving
   error?: string;
@@ -54,7 +55,7 @@ export interface ComicContextType {
   setTemplate: (_templateId: string | null) => void;
   updatePanelContent: (
     _panelIndex: number,
-    _updates: Partial<Panel> & { imageData?: string }
+    _updates: Partial<Panel> & { imageData?: string; dialogue?: string }
   ) => void;
   updateComicMetadata: (
     _updates: Partial<Omit<Comic, "panels" | "characters">>

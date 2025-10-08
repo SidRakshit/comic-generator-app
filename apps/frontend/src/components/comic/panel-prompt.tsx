@@ -12,9 +12,10 @@ import { Sparkles, Camera, RefreshCw } from 'lucide-react';
 interface PanelPromptModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (prompt: string) => void;
+  onSubmit: (prompt: string, dialogue?: string) => void;
   panelNumber: number;
   initialPrompt: string;
+  initialDialogue?: string;
   isRegenerating?: boolean
 }
 
@@ -24,9 +25,11 @@ export default function PanelPromptModal({
   onSubmit,
   panelNumber,
   initialPrompt,
+  initialDialogue,
   isRegenerating
 }: PanelPromptModalProps) {
   const [prompt, setPrompt] = useState(initialPrompt || '');
+  const [dialogue, setDialogue] = useState(initialDialogue || '');
   const [promptType, setPromptType] = useState<'text' | 'image'>('text');
   const [isSubmitting, setIsSubmitting] = useState(false);
   
@@ -43,9 +46,10 @@ export default function PanelPromptModal({
   useEffect(() => {
     if (isOpen) {
       setPrompt(initialPrompt || '');
+      setDialogue(initialDialogue || '');
       setIsSubmitting(false);
     }
-  }, [isOpen, initialPrompt]);
+  }, [isOpen, initialPrompt, initialDialogue]);
 
   const handleSubmit = async () => {
     if (!prompt.trim()) return;
@@ -53,7 +57,7 @@ export default function PanelPromptModal({
     setIsSubmitting(true);
     
     try {
-      await onSubmit(prompt);
+      await onSubmit(prompt, dialogue.trim() || undefined);
     } catch (error) {
       console.error('Error submitting prompt:', error);
     } finally {
@@ -101,7 +105,19 @@ export default function PanelPromptModal({
                 placeholder="Enter your prompt here..."
                 value={prompt}
                 onChange={(e) => setPrompt(e.target.value)}
-                rows={5}
+                rows={4}
+                className="resize-none"
+              />
+            </div>
+            
+            <div className="space-y-2">
+              <Label htmlFor="dialogue">Dialogue (Optional)</Label>
+              <Textarea
+                id="dialogue"
+                placeholder="What are the characters saying? (e.g., 'Hello there!' or 'I can't believe this is happening!')"
+                value={dialogue}
+                onChange={(e) => setDialogue(e.target.value)}
+                rows={2}
                 className="resize-none"
               />
             </div>

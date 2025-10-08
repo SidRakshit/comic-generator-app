@@ -68,7 +68,7 @@ export default function ComicEditorPage() {
 	};
 
 	// Submit prompt to generate/regenerate image via API
-	const handlePromptSubmit = async (prompt: string) => {
+	const handlePromptSubmit = async (prompt: string, dialogue?: string) => {
 		if (activePanelIndex === null || !comic) return; // Use activePanelIndex
 		const panelIndex = activePanelIndex; // Get index
 
@@ -79,34 +79,39 @@ export default function ComicEditorPage() {
 		updatePanelContent(panelIndex, {
 			status: "loading",
 			prompt: prompt,
+			dialogue: dialogue,
 			error: undefined,
 		});
 
+		// Build character context for visual consistency
+		let characterContext = "";
+		if (comic.characters && comic.characters.length > 0) {
+			characterContext = "CHARACTERS:\n";
+			comic.characters.forEach((char: ComicCharacter) => {
+				if (char.name && char.description) {
+					characterContext += `- ${char.name}: ${char.description}\n`;
+				}
+			});
+		}
+
 		// Construct full prompt (using comic metadata from context)
-		// ... (fullPrompt construction logic remains the same) ...
 		let metadataPrefix = "";
 		if (comic.title) metadataPrefix += `Comic Title: ${comic.title}. `;
 		if (comic.genre) metadataPrefix += `Genre: ${comic.genre}. `;
-		if (comic.characters && comic.characters.length > 0) {
-			metadataPrefix += "Characters: ";
-			comic.characters.forEach((char: ComicCharacter) => {
-				if (char.name && char.description)
-					metadataPrefix += `(${char.name}: ${char.description}) `;
-				else if (char.name) metadataPrefix += `(${char.name}) `;
-			});
-		}
 		metadataPrefix = metadataPrefix.trim();
 		const fullPrompt = metadataPrefix
-			? `${metadataPrefix}\\n\\nPanel Prompt: ${prompt}`
+			? `${metadataPrefix}\n\nPanel Prompt: ${prompt}`
 			: prompt;
 
 		try {
-			// Call API using shared apiRequest utility
-			console.log(`Editor: Sending prompt to API: "${fullPrompt}"`);
+			console.log("Generating image with character context for visual consistency...");
 			const response = await apiRequest<{ imageUrl: string }>(
 				API_ENDPOINTS.GENERATE_PANEL_IMAGE,
 				"POST",
-				{ panelDescription: fullPrompt }
+				{ 
+					panelDescription: fullPrompt,
+					characterContext: characterContext
+				}
 			);
 
 			if (!response || !response.imageUrl) {
@@ -118,6 +123,7 @@ export default function ComicEditorPage() {
 				status: "complete",
 				imageUrl: response.imageUrl,
 				prompt: prompt,
+				dialogue: dialogue,
 				error: undefined,
 			});
 			console.log(`Editor: Panel ${panelIndex} generation success.`);
@@ -129,6 +135,7 @@ export default function ComicEditorPage() {
 				error:
 					error instanceof Error ? error.message : "Image generation failed.",
 				prompt: prompt,
+				dialogue: dialogue,
 				imageUrl: undefined,
 			});
 		}
@@ -294,6 +301,11 @@ export default function ComicEditorPage() {
 				initialPrompt={
 					activePanelIndex !== null
 						? comic?.panels[activePanelIndex]?.prompt || ""
+						: ""
+				}
+				initialDialogue={
+					activePanelIndex !== null
+						? comic?.panels[activePanelIndex]?.dialogue || ""
 						: ""
 				}
 				isRegenerating={

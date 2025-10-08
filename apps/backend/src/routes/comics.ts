@@ -10,11 +10,6 @@ const router = express.Router();
 const { COMICS } = API_ROUTES;
 
 router.post(
-    COMICS.GENERATE_SCRIPT,
-    authenticateToken,
-    comicController.generateScript
-);
-router.post(
     COMICS.GENERATE_PANEL_IMAGE,
     authenticateToken,
     checkPanelBalance,

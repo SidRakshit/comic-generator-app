@@ -63,7 +63,9 @@ export const GenerateImageRequestSchema = z.object({
 
 export const GeneratePanelImageRequestSchema = z.object({
   panelDescription: z.string().min(COMIC_RULES.PANEL.PROMPT.MIN_LENGTH, `Panel description must be at least ${COMIC_RULES.PANEL.PROMPT.MIN_LENGTH} characters`).max(COMIC_RULES.PANEL.PROMPT.MAX_LENGTH, `Panel description must be less than ${COMIC_RULES.PANEL.PROMPT.MAX_LENGTH} characters`),
+  characterContext: z.string().optional(),
 });
+
 
 export const UpdateUserProfileRequestSchema = z.object({
   display_name: z.string().max(USER_RULES.USERNAME.MAX_LENGTH, `Display name must be less than ${USER_RULES.USERNAME.MAX_LENGTH} characters`).optional(),

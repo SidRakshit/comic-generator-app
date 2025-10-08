@@ -15,10 +15,14 @@ import { apiRequest, GeneratedImageDataResponse } from "@/lib/api";
 import { ComicCharacter, Panel, SEMANTIC_COLORS, INTERACTIVE_STYLES, UI_CONSTANTS, API_ENDPOINTS } from "@repo/common-types";
 
 async function generateImageAPI(
-	prompt: string
+	prompt: string,
+	characterContext?: string
 ): Promise<GeneratedImageDataResponse> {
 	console.log(`Calling generateImageAPI with prompt: "${prompt}"`);
-	const requestBody = { panelDescription: prompt };
+	const requestBody = { 
+		panelDescription: prompt,
+		...(characterContext && { characterContext })
+	};
 
 	try {
 		const data = await apiRequest<GeneratedImageDataResponse>(
@@ -109,21 +113,25 @@ function NewComicEditorContent() {
 		setIsPromptModalOpen(true);
 	};
 
-	const handlePromptSubmit = async (prompt: string) => {
+	const handlePromptSubmit = async (prompt: string, dialogue?: string) => {
 		if (activePanel === null || !comic || !comic.panels) return;
 		const panelIndex = activePanel;
 
+		// Build character context for visual consistency
+		let characterContext = "";
+		if (comic.characters && comic.characters.length > 0) {
+			characterContext = "CHARACTERS:\n";
+			comic.characters.forEach((char: ComicCharacter) => {
+				if (char.name && char.description) {
+					characterContext += `- ${char.name}: ${char.description}\n`;
+				}
+			});
+		}
+
+		// Build metadata prefix for the prompt
 		let metadataPrefix = "";
 		if (comic.title) metadataPrefix += `Comic Title: ${comic.title}. `;
 		if (comic.genre) metadataPrefix += `Genre: ${comic.genre}. `;
-		if (comic.characters && comic.characters.length > 0) {
-			metadataPrefix += "Characters: ";
-			comic.characters.forEach((char: ComicCharacter) => {
-				if (char.name && char.description)
-					metadataPrefix += `(${char.name}: ${char.description}) `;
-				else if (char.name) metadataPrefix += `(${char.name}) `;
-			});
-		}
 		metadataPrefix = metadataPrefix.trim();
 		const fullPrompt = metadataPrefix
 			? `${metadataPrefix}\n\nPanel Prompt: ${prompt}`
@@ -134,19 +142,21 @@ function NewComicEditorContent() {
 		updatePanelContent(panelIndex, {
 			status: "loading",
 			prompt: prompt,
+			dialogue: dialogue,
 			error: undefined,
 			imageUrl: undefined,
 			imageBase64: undefined,
 		});
 
 		try {
-			console.log("Sending prompt to API via generateImageAPI:", fullPrompt);
-			const response = await generateImageAPI(fullPrompt);
+			console.log("Generating image with character context for visual consistency...");
+			const imageResponse = await generateImageAPI(fullPrompt, characterContext);
 
 			updatePanelContent(panelIndex, {
 				status: "complete",
-				imageData: response.imageData,
+				imageData: imageResponse.imageData,
 				prompt: prompt,
+				dialogue: dialogue,
 				error: undefined,
 			});
 			console.log(`Panel ${panelIndex + 1} generation success.`);
@@ -157,6 +167,7 @@ function NewComicEditorContent() {
 				error:
 					error instanceof Error ? error.message : "Image generation failed.",
 				prompt: prompt,
+				dialogue: dialogue,
 				imageUrl: undefined,
 				imageBase64: undefined,
 			});
@@ -259,6 +270,9 @@ function NewComicEditorContent() {
 			panelNumber={activePanel !== null ? activePanel + 1 : 0}
 			initialPrompt={
 				(activePanel !== null && comic.panels?.[activePanel]?.prompt) || ""
+			}
+			initialDialogue={
+				(activePanel !== null && comic.panels?.[activePanel]?.dialogue) || ""
 			}
 			isRegenerating={
 				activePanel !== null &&

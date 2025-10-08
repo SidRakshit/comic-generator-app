@@ -12,7 +12,6 @@ export class ComicController {
 
 	constructor() {
 		this.comicService = new ComicService();
-		this.generateScript = this.generateScript.bind(this);
 		this.generateImage = this.generateImage.bind(this);
 		this.saveComic = this.saveComic.bind(this);
 		this.listComics = this.listComics.bind(this);
@@ -20,29 +19,16 @@ export class ComicController {
 		this.deleteComic = this.deleteComic.bind(this);
 	}
 
-	generateScript = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-		const { prompt } = req.body;
-		if (!prompt) {
-			throw ErrorFactory.invalidInput("Prompt is required", "prompt");
-		}
-		
-		const scriptPanel = await this.comicService.generateSinglePanelScript(prompt);
-		if (!scriptPanel) {
-			throw ErrorFactory.openAiError("Failed to parse generated panel content");
-		}
-		
-		res.status(200).json(scriptPanel);
-	});
 
 	generateImage = asyncHandler(async (req: AuthenticatedRequest, res: Response): Promise<void> => {
 		// Request body is already validated by middleware
-		const { panelDescription } = req.body;
+		const { panelDescription, characterContext } = req.body;
 		const internalUserId = req.internalUserId;
 		if (!internalUserId) {
 			throw ErrorFactory.unauthorized("User ID not found in request");
 		}
 		
-		const panelImage = await this.comicService.generatePanelImage(internalUserId, panelDescription);
+		const panelImage = await this.comicService.generatePanelImage(internalUserId, panelDescription, characterContext);
 		res.status(200).json(panelImage);
 	});
 

@@ -96,79 +96,15 @@ interface GeneratedImageData {
 export class ComicService {
 	constructor() {}
 
-	/**
-	 * Generates a single comic panel script using OpenAI Chat API.
-	 * @param prompt - User input prompt for the comic panel.
-	 * @returns Generated panel script object or null if parsing fails.
-	 */
-	async generateSinglePanelScript(prompt: string): Promise<ScriptPanel | null> {
-		if (!OPENAI_API_KEY) {
-			throw new Error("OpenAI API key is not configured.");
-		}
-
-		const systemMessage = `
-You are a creative comic book writer. Generate a single comic panel based on the user's prompt.
-
-Return ONLY a valid JSON object with this exact structure:
-{
-  "panelNumber": 1,
-  "dialogueText": "Character dialogue here",
-  "panelDescription": "Detailed visual description of the scene, characters, and setting for the artist"
-}
-
-Guidelines:
-- Keep dialogue concise and impactful (max 2-3 sentences)
-- Make panel descriptions vivid and specific for visual artists
-- Ensure the content is appropriate for all audiences
-- Focus on visual storytelling elements
-`;
-
-		try {
-			const response = await axios.post(
-				EXTERNAL_APIS.OPENAI.CHAT_COMPLETIONS,
-				{
-					model: OPENAI_CHAT_MODEL,
-					messages: [
-						{ role: "system", content: systemMessage },
-						{ role: "user", content: prompt },
-					],
-					max_tokens: AI_CONFIG.OPENAI.CHAT.MAX_TOKENS,
-					temperature: AI_CONFIG.OPENAI.CHAT.TEMPERATURE,
-				},
-				{
-					headers: {
-						Authorization: `Bearer ${OPENAI_API_KEY}`,
-						"Content-Type": "application/json",
-					},
-				}
-			);
-
-			const content = response.data.choices[0]?.message?.content?.trim();
-			if (!content) {
-				throw new Error("Empty response from OpenAI API.");
-			}
-
-			// Parse the JSON response
-			try {
-				const panelScript = JSON.parse(content);
-				return panelScript as ScriptPanel;
-			} catch (error) {
-				console.error("Failed to parse OpenAI response as JSON:", content, error);
-				return null;
-			}
-		} catch (error: any) {
-			console.error("Error generating comic panel script:", error.message);
-			throw error;
-		}
-	}
 
 	/**
 	 * Generates an image for a comic panel using OpenAI DALL-E API.
 	 * RESTORED: Original working version that returns base64 data, no S3 upload
 	 * @param panelDescription - Description of the panel to generate image for.
+	 * @param characterContext - Character information for visual consistency
 	 * @returns Object containing base64 image data and prompt used.
 	 */
-	async generatePanelImage(userId: string, panelDescription: string): Promise<GeneratedImageData> {
+	async generatePanelImage(userId: string, panelDescription: string, characterContext?: string): Promise<GeneratedImageData> {
 		if (!OPENAI_API_KEY) {
 			throw new Error("OpenAI API key is not configured.");
 		}
@@ -179,7 +115,14 @@ Guidelines:
 
 		console.log(`🎨 Generating image for description: "${panelDescription}"`);
 
-		const fullPrompt = `Comic book panel illustration: ${panelDescription}. ${AI_CONFIG.OPENAI.PROMPTS.IMAGE_STYLE_SUFFIX}`;
+		// Build enhanced prompt with character context for visual consistency
+		let fullPrompt = `Comic book panel illustration: ${panelDescription}`;
+		
+		if (characterContext) {
+			fullPrompt += `\n\nCharacter consistency requirements:\n${characterContext}\n\nMaintain consistent character appearance, clothing, and visual style across all panels.`;
+		}
+		
+		fullPrompt += `\n\n${AI_CONFIG.OPENAI.PROMPTS.IMAGE_STYLE_SUFFIX}`;
 
 		try {
 			// Generate image using DALL-E
