@@ -75,6 +75,8 @@ interface Comic {
 	description?: string;
 	created_at: string;
 	updated_at: string;
+	panel_count: number;
+	published: boolean;
 }
 
 // Panel type for script generation (simpler than the full Panel interface)
@@ -585,10 +587,20 @@ Guidelines:
 			console.log(`Service: Listing comics for user ${internalUserId}`);
 
 			const result = await pool.query(
-				`SELECT comic_id, title, description, created_at, updated_at 
-         FROM comics 
-         WHERE user_id = $1 
-         ORDER BY updated_at DESC`,
+				`SELECT 
+					c.comic_id, 
+					c.title, 
+					c.description, 
+					c.created_at, 
+					c.updated_at,
+					COUNT(pn.panel_id) as panel_count,
+					false as published
+				FROM comics c
+				LEFT JOIN pages p ON c.comic_id = p.comic_id
+				LEFT JOIN panels pn ON p.page_id = pn.page_id
+				WHERE c.user_id = $1 
+				GROUP BY c.comic_id, c.title, c.description, c.created_at, c.updated_at
+				ORDER BY c.updated_at DESC`,
 				[internalUserId]
 			);
 
