@@ -71,6 +71,14 @@ export function useDraftStorage({
       return;
     }
 
+    // Check if comic has base64 images that would make it too large
+    const hasBase64Images = comicData.panels?.some(panel => panel.imageBase64) || false;
+    
+    if (hasBase64Images) {
+      console.log("Skipping draft save - comic has base64 images, will be auto-saved to backend instead");
+      return;
+    }
+
     // Strip base64 images to save space (they're too large for localStorage)
     // Keep imageUrl references but remove imageBase64 to prevent quota errors
     const comicDataWithoutBase64 = {

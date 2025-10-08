@@ -472,6 +472,27 @@ export function useComic(
 		}
 	}, [comic, saveDraft, isStorageAvailable]);
 
+	// --- Auto-save to backend when images are generated ---
+	useEffect(() => {
+		// Auto-save to backend when comic has images but no ID yet
+		if (!comic.id && comic.template && comic.panels?.some(panel => panel.status === "complete" && panel.imageBase64)) {
+			const timeoutId = setTimeout(async () => {
+				try {
+					console.log("Auto-saving comic to backend after image generation...");
+					const savedComic = await saveComic();
+					if (savedComic) {
+						console.log("Auto-save successful! Comic now has ID:", savedComic.id);
+						// The comic state will be updated with S3 URLs from the backend response
+					}
+				} catch (error) {
+					console.error("Auto-save failed:", error);
+				}
+			}, 2000); // 2 second delay to allow for multiple rapid changes
+			
+			return () => clearTimeout(timeoutId);
+		}
+	}, [comic, saveComic]);
+
 	return {
 		// Original return values
 		comic,
