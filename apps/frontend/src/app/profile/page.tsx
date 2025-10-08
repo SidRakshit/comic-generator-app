@@ -1,7 +1,7 @@
 // src/app/profile/page.tsx
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/tabs";
@@ -89,6 +89,27 @@ export default function ProfilePage() {
 	}, [isLoadingAuth, isAuthenticated, user, attributes, authError]);
 
 	// Fetch user's comics, dependent on auth state
+	const fetchComics = useCallback(async () => {
+		setIsLoadingComics(true);
+		setErrorLoadingComics(null);
+		try {
+			const data = await apiRequest<ComicListItemResponse[]>(API_ENDPOINTS.COMICS, "GET");
+			setMyComics(data || []);
+			// Update created count based on fetched data
+			setProfileData((prev) => ({
+				...prev,
+				stats: { ...prev.stats, created: data?.length || 0 },
+			}));
+		} catch (err: unknown) {
+			console.error("Failed to fetch user comics:", err);
+			setErrorLoadingComics(
+				err instanceof Error ? err.message : "Failed to load comics."
+			);
+		} finally {
+			setIsLoadingComics(false);
+		}
+	}, []);
+
 	useEffect(() => {
 		if (isLoadingAuth) {
 			console.log("ProfilePage: Waiting for authentication...");
@@ -100,26 +121,6 @@ export default function ProfilePage() {
 			console.log(
 				"ProfilePage: Auth loaded, user authenticated. Fetching comics..."
 			);
-			const fetchComics = async () => {
-				setIsLoadingComics(true);
-				setErrorLoadingComics(null);
-				try {
-					const data = await apiRequest<ComicListItemResponse[]>(API_ENDPOINTS.COMICS, "GET");
-					setMyComics(data || []);
-					// Update created count based on fetched data
-					setProfileData((prev) => ({
-						...prev,
-						stats: { ...prev.stats, created: data?.length || 0 },
-					}));
-				} catch (err: unknown) {
-					console.error("Failed to fetch user comics:", err);
-					setErrorLoadingComics(
-						err instanceof Error ? err.message : "Failed to load comics."
-					);
-				} finally {
-					setIsLoadingComics(false);
-				}
-			};
 			fetchComics();
 		} else {
 			console.log("ProfilePage: Auth loaded, user is not authenticated.");
@@ -131,7 +132,33 @@ export default function ProfilePage() {
 				stats: { ...prev.stats, created: 0 },
 			})); // Reset count
 		}
-	}, [isLoadingAuth, isAuthenticated]); // Re-run when auth state changes
+	}, [isLoadingAuth, isAuthenticated, fetchComics]); // Re-run when auth state changes
+
+	// Refetch comics when the page becomes visible (e.g., navigating back from editor)
+	useEffect(() => {
+		if (!isAuthenticated) return;
+
+		const handleVisibilityChange = () => {
+			if (document.visibilityState === 'visible') {
+				console.log("ProfilePage: Page became visible, refetching comics...");
+				fetchComics();
+			}
+		};
+
+		// Also refetch when the window regains focus
+		const handleFocus = () => {
+			console.log("ProfilePage: Window focused, refetching comics...");
+			fetchComics();
+		};
+
+		document.addEventListener('visibilitychange', handleVisibilityChange);
+		window.addEventListener('focus', handleFocus);
+
+		return () => {
+			document.removeEventListener('visibilitychange', handleVisibilityChange);
+			window.removeEventListener('focus', handleFocus);
+		};
+	}, [isAuthenticated, fetchComics]);
 
 	useEffect(() => {
 		if (isAuthenticated) {

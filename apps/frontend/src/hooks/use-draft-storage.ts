@@ -71,8 +71,19 @@ export function useDraftStorage({
     }
 
     try {
+      // Strip base64 images to save space (they're too large for localStorage)
+      // Keep imageUrl references but remove imageBase64 to prevent quota errors
+      const comicDataWithoutBase64 = {
+        ...comicData,
+        panels: comicData.panels?.map(panel => ({
+          ...panel,
+          imageBase64: undefined, // Remove base64 data
+          // Keep imageUrl so we know the panel has an image
+        })) || [],
+      };
+
       const draftData = {
-        comic: comicData,
+        comic: comicDataWithoutBase64,
         timestamp: Date.now(),
         version: "1.0", // For future compatibility
       };
@@ -81,12 +92,24 @@ export function useDraftStorage({
       localStorage.setItem(storageKey, serialized);
       
       console.log("Draft saved to localStorage:", {
-        title: comicData.title || "Untitled",
+        title: comicDataWithoutBase64.title || "Untitled",
         size: serialized.length,
+        panelCount: comicDataWithoutBase64.panels?.length || 0,
         timestamp: new Date().toISOString(),
       });
     } catch (error) {
-      console.error("Failed to save draft to localStorage:", error);
+      if (error instanceof Error && error.name === 'QuotaExceededError') {
+        console.warn("LocalStorage quota exceeded. Draft not saved. Consider clearing old data.");
+        // Try to clear the old draft and retry once
+        try {
+          localStorage.removeItem(storageKey);
+          console.log("Cleared old draft, but skipping save to avoid quota issues");
+        } catch (clearError) {
+          console.error("Failed to clear old draft:", clearError);
+        }
+      } else {
+        console.error("Failed to save draft to localStorage:", error);
+      }
     }
   }, [enabled, isStorageAvailable, storageKey]);
 
