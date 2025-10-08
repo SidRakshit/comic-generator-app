@@ -627,9 +627,9 @@ export default function ProfilePage() {
 												<div className="${SEMANTIC_COLORS.BACKGROUND.PRIMARY} border ${UI_CONSTANTS.BORDER_RADIUS.LARGE} overflow-hidden shadow-sm hover:shadow-md transition-shadow">
 													{/* Cover Image */}
 													<div className={`${UI_CONSTANTS.ASPECT_RATIOS.COMIC_COVER} ${SEMANTIC_COLORS.BACKGROUND.TERTIARY} relative overflow-hidden`}>
-														{ (comic as any).cover_image_url ? (
+														{ comic.cover_image_url ? (
 															<Image
-																src={(comic as any).cover_image_url}
+																src={comic.cover_image_url}
 																alt={comic.title}
 																fill
 																className="object-cover"
@@ -691,9 +691,9 @@ export default function ProfilePage() {
 									<Link href={`/comics/${comic.comic_id}`} key={comic.comic_id}>
 										<div className="${SEMANTIC_COLORS.BACKGROUND.PRIMARY} border ${UI_CONSTANTS.BORDER_RADIUS.LARGE} overflow-hidden shadow-sm hover:shadow-md transition-shadow">
 											<div className={`${UI_CONSTANTS.ASPECT_RATIOS.COMIC_COVER} ${SEMANTIC_COLORS.BACKGROUND.TERTIARY} relative overflow-hidden`}>
-												{ (comic as any).cover_image_url ? (
+												{ comic.cover_image_url ? (
 													<Image
-														src={(comic as any).cover_image_url}
+														src={comic.cover_image_url}
 														alt={comic.title}
 														fill
 														className="object-cover"
