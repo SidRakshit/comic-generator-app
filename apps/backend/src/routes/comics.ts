@@ -56,7 +56,7 @@ router.delete(
 
 // TEMPORARY: Debug endpoint to find problematic comics
 router.get(
-    '/debug/problematic',
+    'debug/problematic',
     authenticateToken,
     comicController.findProblematicComics
 );
