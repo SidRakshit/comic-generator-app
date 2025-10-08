@@ -12,7 +12,7 @@ import { COMIC_TEMPLATES as templates } from "@repo/common-types";
 import { Button } from "@repo/ui/button";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { apiRequest, GeneratedImageDataResponse } from "@/lib/api";
-import { ComicCharacter, Panel, SEMANTIC_COLORS, INTERACTIVE_STYLES, UI_CONSTANTS, API_ENDPOINTS, ANIMATIONS } from "@repo/common-types";
+import { ComicCharacter, Panel, SEMANTIC_COLORS, INTERACTIVE_STYLES, UI_CONSTANTS, API_ENDPOINTS } from "@repo/common-types";
 
 async function generateImageAPI(
 	prompt: string,
@@ -199,6 +199,14 @@ function NewComicEditorContent() {
 		}
 	};
 
+	const handleSaveClick = () => {
+		if (!canSave) {
+			alert("Comic saved as draft - complete all panels to publish");
+			return;
+		}
+		handleSaveComic();
+	};
+
 	// --- Render Logic ---
 	if (isLoading) {
 		return (
@@ -242,10 +250,10 @@ function NewComicEditorContent() {
 				</h1>
 				<div className="flex gap-3 flex-shrink-0 relative z-20">
 					<Button
-						onClick={handleSaveComic}
-						disabled={isSaving || !canSave || isLoading}
-						title={!canSave ? "All panels must have generated images." : ""}
-						className={`relative z-10 ${INTERACTIVE_STYLES.BUTTON.PRIMARY} disabled:opacity-50 disabled:cursor-not-allowed`}
+						variant="outline"
+						size="sm"
+						onClick={handleSaveClick}
+						disabled={isSaving || isLoading}
 					>
 						{isSaving ? (
 							<Loader2 className="mr-2 h-4 w-4 animate-spin" />
