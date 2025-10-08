@@ -698,24 +698,22 @@ export default function ProfilePage() {
 													</div>
 												</div>
 											</Link>
-											<div className="absolute top-2 right-2 flex gap-1">
-												<Button
-													variant="outline"
-													size="sm"
-													onClick={() => toggleFavorite(comic.comic_id)}
-													className="bg-white/90 hover:bg-white"
-												>
-													<Heart size={14} className={`${userFavoriteComics.some((fav) => fav.comic_id === comic.comic_id) ? "fill-red-500" : ""}`} />
-												</Button>
-												<Button
-													variant="outline"
-													size="sm"
-													onClick={() => handleDeleteComic(comic)}
-													className="bg-white/90 hover:bg-red-50 hover:border-red-300"
-												>
-													<Trash2 size={14} className="text-red-500" />
-												</Button>
-											</div>
+											{/* Heart button in top right */}
+											<Button
+												variant="outline"
+												className="absolute top-2 right-2"
+												onClick={() => toggleFavorite(comic.comic_id)}
+											>
+												<Heart size={16} className={`${userFavoriteComics.some((fav) => fav.comic_id === comic.comic_id) ? "fill-red-500" : ""}`} />
+											</Button>
+											{/* Trash button in bottom right */}
+											<Button
+												variant="outline"
+												className="absolute bottom-2 right-2"
+												onClick={() => handleDeleteComic(comic)}
+											>
+												<Trash2 size={16} className="text-red-500" />
+											</Button>
 										</div>
 											);
 										})
