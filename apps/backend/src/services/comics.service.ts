@@ -124,7 +124,7 @@ export class ComicService {
 		}
 		
 		if (dialogue) {
-			fullPrompt += `\n\nDialogue: "${dialogue}"\n\nInclude this dialogue as speech bubbles or text in the comic panel. Make sure the dialogue is clearly visible and readable.`;
+			fullPrompt += `\n\nDIALOGUE REQUIREMENTS:\n- Include ONLY this exact dialogue in speech bubbles: "${dialogue}"\n- Do not add any other text, gibberish, placeholder words, or random letters\n- Do not include any text that is not part of the provided dialogue\n- Make sure the dialogue is clearly visible and readable in speech bubbles\n- No additional text should appear in the image\n- Avoid Lorem ipsum, placeholder text, or any random character sequences`;
 		}
 		
 		fullPrompt += `\n\n${AI_CONFIG.OPENAI.PROMPTS.IMAGE_STYLE_SUFFIX}`;
