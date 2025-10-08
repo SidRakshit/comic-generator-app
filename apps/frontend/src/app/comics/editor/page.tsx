@@ -12,7 +12,7 @@ import { COMIC_TEMPLATES as templates } from "@repo/common-types";
 import { Button } from "@repo/ui/button";
 import { ArrowLeft, Loader2 } from "lucide-react";
 import { apiRequest, GeneratedImageDataResponse } from "@/lib/api";
-import { ComicCharacter, Panel, SEMANTIC_COLORS, INTERACTIVE_STYLES, UI_CONSTANTS, API_ENDPOINTS } from "@repo/common-types";
+import { ComicCharacter, Panel, SEMANTIC_COLORS, INTERACTIVE_STYLES, UI_CONSTANTS, API_ENDPOINTS, ANIMATIONS } from "@repo/common-types";
 
 async function generateImageAPI(
 	prompt: string,
@@ -215,6 +215,15 @@ function NewComicEditorContent() {
 	const templateName =
 		templates[comic.template || ""]?.name || "Unknown Template";
 		const canSave = comic.panels?.every((p: Panel) => p.status === "complete");
+		
+		// Debug logging for button state
+		console.log("Button state debug:", {
+			isSaving,
+			isLoading,
+			canSave,
+			panelsCount: comic.panels?.length,
+			panelsStatus: comic.panels?.map(p => p.status)
+		});
 
 	return (
 		<div className="container mx-auto py-8 px-4">
@@ -231,11 +240,12 @@ function NewComicEditorContent() {
 				<h1 className={`text-3xl font-bold break-words ${SEMANTIC_COLORS.TEXT.PRIMARY}`}>
 				Comic Title: {comic.title || `New ${templateName} Comic`}
 				</h1>
-				<div className="flex gap-3 flex-shrink-0">
+				<div className="flex gap-3 flex-shrink-0 relative z-20">
 					<Button
 						onClick={handleSaveComic}
 						disabled={isSaving || !canSave || isLoading}
 						title={!canSave ? "All panels must have generated images." : ""}
+						className={`relative z-10 ${INTERACTIVE_STYLES.BUTTON.PRIMARY} disabled:opacity-50 disabled:cursor-not-allowed`}
 					>
 						{isSaving ? (
 							<Loader2 className="mr-2 h-4 w-4 animate-spin" />
