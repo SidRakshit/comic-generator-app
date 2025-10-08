@@ -48,19 +48,6 @@ router.get(
     comicController.getComic
 );
 
-router.delete(
-    COMICS.BY_ID(':comicId'),
-    authenticateToken,
-    comicController.deleteComic
-);
-
-// TEMPORARY: Debug endpoint to find problematic comics
-router.get(
-    'debug/problematic',
-    authenticateToken,
-    comicController.findProblematicComics
-);
-// router.delete(COMICS.BY_ID(':comicId'), authenticateToken, comicController.deleteComic);
 
 
 export default router; // Ensure this is exported correctly
