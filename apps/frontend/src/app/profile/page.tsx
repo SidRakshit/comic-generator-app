@@ -94,30 +94,17 @@ export default function ProfilePage() {
 		setErrorLoadingComics(null);
 		try {
 			const data = await apiRequest<ComicListItemResponse[]>(API_ENDPOINTS.COMICS, "GET");
-			console.log("Fetched comics data:", data);
-			
-			// Validate that data is an array and has the expected structure
-			if (Array.isArray(data)) {
-				// Filter out any invalid entries that don't have comic_id
-				const validComics = data.filter(comic => comic && comic.comic_id);
-				console.log("Valid comics:", validComics);
-				setMyComics(validComics);
-				// Update created count based on fetched data
-				setProfileData((prev) => ({
-					...prev,
-					stats: { ...prev.stats, created: validComics.length },
-				}));
-			} else {
-				console.error("Invalid comics data format:", data);
-				setMyComics([]);
-				setErrorLoadingComics("Invalid data format received from server.");
-			}
+			setMyComics(data || []);
+			// Update created count based on fetched data
+			setProfileData((prev) => ({
+				...prev,
+				stats: { ...prev.stats, created: data?.length || 0 },
+			}));
 		} catch (err: unknown) {
 			console.error("Failed to fetch user comics:", err);
 			setErrorLoadingComics(
 				err instanceof Error ? err.message : "Failed to load comics."
 			);
-			setMyComics([]);
 		} finally {
 			setIsLoadingComics(false);
 		}
@@ -555,13 +542,7 @@ export default function ProfilePage() {
 							isAuthenticated &&
 							myComics.length > 0 && (
 								<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-									{myComics.map((comic) => {
-										// Safety check to prevent undefined comic_id errors
-										if (!comic || !comic.comic_id) {
-											console.warn("Invalid comic data:", comic);
-											return null;
-										}
-										return (
+									{myComics.map((comic) => (
 										<div key={comic.comic_id} className="relative">
 											<Link
 												href={`/comics/${comic.comic_id}`}
@@ -602,8 +583,7 @@ export default function ProfilePage() {
 												<Heart size={16} className={`${userFavoriteComics.some((fav) => fav.comic_id === comic.comic_id) ? "fill-red-500" : ""}`} />
 											</Button>
 										</div>
-										);
-									})}
+									))}
 								</div>
 							)}
 					</TabsContent>
