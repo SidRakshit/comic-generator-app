@@ -9,7 +9,7 @@ const nextConfig = {
 			},
 			{
 				protocol: "https",
-				hostname: "comic-gen-image-prod-us-east-1.s3.us-east-1.amazonaws.com",
+				hostname: "comic-gen-app-images-prod-us-east-1.s3.us-east-1.amazonaws.com",
 			},
 			// Add any other external domains you use
 		],
