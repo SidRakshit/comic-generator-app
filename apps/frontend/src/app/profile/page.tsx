@@ -627,13 +627,14 @@ export default function ProfilePage() {
 												<div className="${SEMANTIC_COLORS.BACKGROUND.PRIMARY} border ${UI_CONSTANTS.BORDER_RADIUS.LARGE} overflow-hidden shadow-sm hover:shadow-md transition-shadow">
 													{/* Cover Image */}
 													<div className={`${UI_CONSTANTS.ASPECT_RATIOS.COMIC_COVER} ${SEMANTIC_COLORS.BACKGROUND.TERTIARY} relative overflow-hidden`}>
-														{(comic as any).cover_image_url ? (
+														{ (comic as any).cover_image_url ? (
 															<Image
 																src={(comic as any).cover_image_url}
 																alt={comic.title}
 																fill
 																className="object-cover"
 																sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+																unoptimized
 															/>
 														) : (
 															<div className="flex items-center justify-center h-full">
@@ -690,13 +691,14 @@ export default function ProfilePage() {
 									<Link href={`/comics/${comic.comic_id}`} key={comic.comic_id}>
 										<div className="${SEMANTIC_COLORS.BACKGROUND.PRIMARY} border ${UI_CONSTANTS.BORDER_RADIUS.LARGE} overflow-hidden shadow-sm hover:shadow-md transition-shadow">
 											<div className={`${UI_CONSTANTS.ASPECT_RATIOS.COMIC_COVER} ${SEMANTIC_COLORS.BACKGROUND.TERTIARY} relative overflow-hidden`}>
-												{(comic as any).cover_image_url ? (
+												{ (comic as any).cover_image_url ? (
 													<Image
 														src={(comic as any).cover_image_url}
 														alt={comic.title}
 														fill
 														className="object-cover"
 														sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+														unoptimized
 													/>
 												) : (
 													<div className="flex items-center justify-center h-full">
