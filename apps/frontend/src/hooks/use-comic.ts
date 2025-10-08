@@ -447,15 +447,15 @@ export function useComic(
 	}, [comic, executeWithStrategy, clearDraft, addFailedOperation, showToast, queueOfflineOperation]);
 
 	// --- Auto-save functionality ---
-	const { isAutoSaving, lastAutoSave, failureCount: autoSaveFailureCount, triggerAutoSave } = useAutoSave({
-		enabled: !!comic.id, // Only auto-save existing comics
-		interval: 30000, // 30 seconds
-		onSave: async () => { await saveComic(); },
-		hasChanges,
-		onAutoSaveStart: () => console.log("Auto-save started"),
-		onAutoSaveComplete: () => console.log("Auto-save completed"),
-		onAutoSaveError: (error) => console.error("Auto-save failed:", error),
-	});
+	// Disabled the useAutoSave hook to prevent hook violations
+	// We handle auto-save manually in the useEffect above
+	const isAutoSaving = false;
+	const lastAutoSave = null;
+	const autoSaveFailureCount = 0;
+	const triggerAutoSave = async () => {
+		// Manual trigger for auto-save if needed
+		console.log("Manual auto-save trigger not implemented");
+	};
 
 	// --- Before unload warning ---
 	useBeforeUnloadWarning({
