@@ -202,7 +202,20 @@ export default function ProfilePage() {
 				setIsLoadingFavorites(true);
 				try {
 					const data = await apiRequest<any[]>(API_ENDPOINTS.FAVORITES, "GET");
-					setUserFavoriteComics(data || []);
+					console.log("Raw favorites data from API:", data);
+					
+					// Filter out any invalid favorites
+					const validFavorites = (data || []).filter((fav, index) => {
+						console.log(`Favorite ${index}:`, fav);
+						const isValid = fav && fav.comic && fav.comic.comic_id;
+						if (!isValid) {
+							console.warn(`Found invalid favorite at index ${index}:`, fav);
+						}
+						return isValid;
+					});
+					
+					console.log(`Filtered ${(data || []).length - validFavorites.length} invalid favorites`);
+					setUserFavoriteComics(validFavorites);
 				} catch (err: unknown) {
 					console.error("Failed to fetch user favorites:", err);
 				} finally {
@@ -653,7 +666,9 @@ export default function ProfilePage() {
 							</div>
 						) : userFavoriteComics.length > 0 ? (
 							<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-								{userFavoriteComics.map((fav) => (
+								{userFavoriteComics
+									.filter(fav => fav && fav.comic && fav.comic.comic_id)
+									.map((fav) => (
 									<Link href={`/comics/${fav.comic.comic_id}`} key={fav.comic.comic_id}>
 										<div className="${SEMANTIC_COLORS.BACKGROUND.PRIMARY} border ${UI_CONSTANTS.BORDER_RADIUS.LARGE} overflow-hidden shadow-sm hover:shadow-md transition-shadow">
 											<div className={`${UI_CONSTANTS.ASPECT_RATIOS.COMIC_COVER} ${SEMANTIC_COLORS.BACKGROUND.TERTIARY} relative overflow-hidden`}>
