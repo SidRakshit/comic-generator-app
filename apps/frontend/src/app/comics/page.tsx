@@ -22,7 +22,15 @@ export default function CreateComicPage() {
     setError(null);
 
     try {
-      const newComic = await apiRequest<any>(API_ENDPOINTS.COMICS, "POST", { templateId });
+      // Create a proper CreateComicRequest object with required fields
+      const comicRequest = {
+        title: "Untitled Comic", // Default title, user can change later
+        description: "", // Empty description
+        template: templateId,
+        pages: [] // Empty pages array, user will add content in editor
+      };
+
+      const newComic = await apiRequest<any>(API_ENDPOINTS.COMICS, "POST", comicRequest);
       const newComicId = newComic.comic_id;
 
       if (!newComicId) {
