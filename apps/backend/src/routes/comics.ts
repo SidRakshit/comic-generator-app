@@ -48,6 +48,10 @@ router.get(
     comicController.getComic
 );
 
-
+router.delete(
+    COMICS.BY_ID(':comicId'),
+    authenticateToken,
+    comicController.deleteComic
+);
 
 export default router; // Ensure this is exported correctly

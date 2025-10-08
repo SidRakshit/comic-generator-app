@@ -623,6 +623,53 @@ Guidelines:
 		}
 	}
 
+	/**
+	 * Deletes a comic and all its associated data (pages, panels, images) for the authenticated user.
+	 * @param comicId - The ID of the comic to delete
+	 * @param internalUserId - The ID of the user requesting the deletion
+	 * @returns Promise<boolean> - True if the comic was deleted successfully, false if not found
+	 */
+	async deleteComic(comicId: string, internalUserId: string): Promise<boolean> {
+		const client = await pool.connect();
+		
+		try {
+			await client.query('BEGIN');
+
+			// First, verify the comic exists and belongs to the user
+			const comicCheck = await client.query(
+				'SELECT comic_id FROM comics WHERE comic_id = $1 AND user_id = $2',
+				[comicId, internalUserId]
+			);
+
+			if (comicCheck.rows.length === 0) {
+				await client.query('ROLLBACK');
+				return false; // Comic not found or doesn't belong to user
+			}
+
+			// Delete panels first (due to foreign key constraints)
+			await client.query(
+				"DELETE FROM panels WHERE page_id IN (SELECT page_id FROM pages WHERE comic_id = $1)",
+				[comicId]
+			);
+
+			// Delete pages
+			await client.query("DELETE FROM pages WHERE comic_id = $1", [comicId]);
+
+			// Delete the comic itself
+			await client.query("DELETE FROM comics WHERE comic_id = $1 AND user_id = $2", [comicId, internalUserId]);
+
+			await client.query('COMMIT');
+			
+			console.log(`Service: Successfully deleted comic ${comicId} for user ${internalUserId}`);
+			return true;
+		} catch (error: any) {
+			await client.query('ROLLBACK');
+			console.error("Error in deleteComic:", error.message);
+			throw error;
+		} finally {
+			client.release();
+		}
+	}
 
 	private async recordPanelUsage(
 		client: PoolClient,

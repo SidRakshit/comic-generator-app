@@ -23,6 +23,8 @@ import {
 	Globe,
 	Twitter,
 	Loader2,
+	Trash2,
+	X,
 } from "lucide-react";
 
 // Initial user data structure (consider fetching this too if needed)
@@ -57,6 +59,11 @@ export default function ProfilePage() {
 	const [showDeleteConfirmation, setShowDeleteConfirmation] = useState(false);
 	const [deleteConfirmationText, setDeleteConfirmationText] = useState("");
 	const [isDeletingAccount, setIsDeletingAccount] = useState(false);
+
+	// Delete comic state
+	const [showDeleteComicConfirmation, setShowDeleteComicConfirmation] = useState(false);
+	const [comicToDelete, setComicToDelete] = useState<ComicListItemResponse | null>(null);
+	const [isDeletingComic, setIsDeletingComic] = useState(false);
 
 	// Get auth state from context
 	const {
@@ -304,6 +311,44 @@ export default function ProfilePage() {
 	const handleCancelDelete = () => {
 		setShowDeleteConfirmation(false);
 		setDeleteConfirmationText("");
+	};
+
+	// Delete comic handlers
+	const handleDeleteComic = (comic: ComicListItemResponse) => {
+		setComicToDelete(comic);
+		setShowDeleteComicConfirmation(true);
+	};
+
+	const handleConfirmDeleteComic = async () => {
+		if (!comicToDelete) return;
+
+		setIsDeletingComic(true);
+		try {
+			await apiRequest(API_ENDPOINTS.COMIC_BY_ID(comicToDelete.comic_id), "DELETE");
+			
+			// Remove the comic from the local state
+			setMyComics(prev => prev.filter(comic => comic.comic_id !== comicToDelete.comic_id));
+			
+			// Update the created count
+			setProfileData((prev) => ({
+				...prev,
+				stats: { ...prev.stats, created: prev.stats.created - 1 },
+			}));
+			
+			// Close the confirmation dialog
+			setShowDeleteComicConfirmation(false);
+			setComicToDelete(null);
+		} catch (error) {
+			console.error("Failed to delete comic:", error);
+			alert("Failed to delete comic. Please try again.");
+		} finally {
+			setIsDeletingComic(false);
+		}
+	};
+
+	const handleCancelDeleteComic = () => {
+		setShowDeleteComicConfirmation(false);
+		setComicToDelete(null);
 	};
 
 	// Helper to format date
@@ -653,13 +698,24 @@ export default function ProfilePage() {
 													</div>
 												</div>
 											</Link>
-											<Button
-												variant="outline"
-												className="absolute top-2 right-2"
-												onClick={() => toggleFavorite(comic.comic_id)}
-											>
-												<Heart size={16} className={`${userFavoriteComics.some((fav) => fav.comic_id === comic.comic_id) ? "fill-red-500" : ""}`} />
-											</Button>
+											<div className="absolute top-2 right-2 flex gap-1">
+												<Button
+													variant="outline"
+													size="sm"
+													onClick={() => toggleFavorite(comic.comic_id)}
+													className="bg-white/90 hover:bg-white"
+												>
+													<Heart size={14} className={`${userFavoriteComics.some((fav) => fav.comic_id === comic.comic_id) ? "fill-red-500" : ""}`} />
+												</Button>
+												<Button
+													variant="outline"
+													size="sm"
+													onClick={() => handleDeleteComic(comic)}
+													className="bg-white/90 hover:bg-red-50 hover:border-red-300"
+												>
+													<Trash2 size={14} className="text-red-500" />
+												</Button>
+											</div>
 										</div>
 											);
 										})
@@ -846,6 +902,70 @@ export default function ProfilePage() {
 					</TabsContent>
 				</Tabs>
 			</div>
+
+			{/* Delete Comic Confirmation Modal */}
+			{showDeleteComicConfirmation && comicToDelete && (
+				<div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+					<div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+						<div className="flex items-center justify-between mb-4">
+							<h3 className="text-lg font-semibold text-gray-900">
+								Delete Comic
+							</h3>
+							<Button
+								variant="outline"
+								size="sm"
+								onClick={handleCancelDeleteComic}
+								disabled={isDeletingComic}
+							>
+								<X size={16} />
+							</Button>
+						</div>
+						
+						<div className="mb-6">
+							<p className="text-gray-600 mb-2">
+								Are you sure you want to delete this comic?
+							</p>
+							<div className="bg-gray-50 p-3 rounded-md">
+								<h4 className="font-medium text-gray-900">{comicToDelete.title}</h4>
+								<p className="text-sm text-gray-500">
+									Updated: {formatDate(comicToDelete.updated_at)}
+								</p>
+							</div>
+							<p className="text-sm text-red-600 mt-2">
+								This action cannot be undone. All pages, panels, and images will be permanently deleted.
+							</p>
+						</div>
+
+						<div className="flex gap-3 justify-end">
+							<Button
+								variant="outline"
+								onClick={handleCancelDeleteComic}
+								disabled={isDeletingComic}
+							>
+								Cancel
+							</Button>
+							<Button
+								variant="destructive"
+								onClick={handleConfirmDeleteComic}
+								disabled={isDeletingComic}
+								className="bg-red-600 hover:bg-red-700"
+							>
+								{isDeletingComic ? (
+									<>
+										<Loader2 size={16} className="mr-2 animate-spin" />
+										Deleting...
+									</>
+								) : (
+									<>
+										<Trash2 size={16} className="mr-2" />
+										Delete Comic
+									</>
+								)}
+							</Button>
+						</div>
+					</div>
+				</div>
+			)}
 		</div>
 	);
 }

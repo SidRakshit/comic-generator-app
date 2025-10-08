@@ -17,6 +17,7 @@ export class ComicController {
 		this.saveComic = this.saveComic.bind(this);
 		this.listComics = this.listComics.bind(this);
 		this.getComic = this.getComic.bind(this);
+		this.deleteComic = this.deleteComic.bind(this);
 	}
 
 	generateScript = asyncHandler(async (req: Request, res: Response): Promise<void> => {
@@ -152,6 +153,36 @@ export class ComicController {
 				.json({ error: error.message || "Failed to retrieve comic details." });
 		}
 	};
+
+	/**
+	 * Handles requests to delete a specific comic by ID for the authenticated user.
+	 */
+	deleteComic = asyncHandler(async (
+		req: AuthenticatedRequest,
+		res: Response
+	): Promise<void> => {
+		const internalUserId = req.internalUserId;
+		if (!internalUserId) {
+			throw ErrorFactory.unauthorized("User ID not found in request");
+		}
+
+		const { comicId } = req.params;
+		if (!comicId) {
+			throw ErrorFactory.invalidInput("Comic ID is required", "comicId");
+		}
+
+		console.log(
+			`Controller: deleteComic called by user ${internalUserId} for comic ${comicId}`
+		);
+
+		const success = await this.comicService.deleteComic(comicId, internalUserId);
+		
+		if (!success) {
+			throw ErrorFactory.notFound("Comic", comicId);
+		}
+
+		res.status(200).json({ message: "Comic deleted successfully" });
+	});
 
 }
 
