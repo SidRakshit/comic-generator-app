@@ -548,9 +548,21 @@ export default function ProfilePage() {
 												href={`/comics/${comic.comic_id}`}
 											>
 												<div className="${SEMANTIC_COLORS.BACKGROUND.PRIMARY} border ${UI_CONSTANTS.BORDER_RADIUS.LARGE} overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-													{/* Placeholder for Cover Image */}
-													<div className={`${UI_CONSTANTS.ASPECT_RATIOS.COMIC_COVER} ${SEMANTIC_COLORS.BACKGROUND.TERTIARY} relative flex items-center justify-center ${SEMANTIC_COLORS.TEXT.DISABLED}`}>
-														<ImageIcon size={48} />
+													{/* Cover Image */}
+													<div className={`${UI_CONSTANTS.ASPECT_RATIOS.COMIC_COVER} ${SEMANTIC_COLORS.BACKGROUND.TERTIARY} relative overflow-hidden`}>
+														{(comic as any).cover_image_url ? (
+															<Image
+																src={(comic as any).cover_image_url}
+																alt={comic.title}
+																fill
+																className="object-cover"
+																sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+															/>
+														) : (
+															<div className="flex items-center justify-center h-full">
+																<ImageIcon size={48} className={SEMANTIC_COLORS.TEXT.DISABLED} />
+															</div>
+														)}
 													</div>
 													<div className="p-4">
 														<h3 className="font-medium text-lg text-gray-900 mb-1 truncate">
@@ -590,17 +602,20 @@ export default function ProfilePage() {
 								{userFavoriteComics.map((fav) => (
 									<Link href={`/comics/${fav.comic.comic_id}`} key={fav.comic.comic_id}>
 										<div className="${SEMANTIC_COLORS.BACKGROUND.PRIMARY} border ${UI_CONSTANTS.BORDER_RADIUS.LARGE} overflow-hidden shadow-sm hover:shadow-md transition-shadow">
-											<div className={`${UI_CONSTANTS.ASPECT_RATIOS.COMIC_COVER} ${SEMANTIC_COLORS.BACKGROUND.TERTIARY} relative`}>
-												<Image
-													src={
-														fav.comic.coverImage ||
-														API_ENDPOINTS.PLACEHOLDER_IMAGE_WITH_SIZE(300, 400, '?text=Comic')
-													}
-													alt={fav.comic.title}
-													fill
-													style={{ objectFit: "cover" }}
-													sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 33vw"
-												/>
+											<div className={`${UI_CONSTANTS.ASPECT_RATIOS.COMIC_COVER} ${SEMANTIC_COLORS.BACKGROUND.TERTIARY} relative overflow-hidden`}>
+												{(fav.comic as any).cover_image_url ? (
+													<Image
+														src={(fav.comic as any).cover_image_url}
+														alt={fav.comic.title}
+														fill
+														className="object-cover"
+														sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
+													/>
+												) : (
+													<div className="flex items-center justify-center h-full">
+														<ImageIcon size={48} className={SEMANTIC_COLORS.TEXT.DISABLED} />
+													</div>
+												)}
 											</div>
 											<div className="p-4">
 												<h3 className="font-medium text-lg text-gray-900 mb-1">

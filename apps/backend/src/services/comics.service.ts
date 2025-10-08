@@ -77,6 +77,7 @@ interface Comic {
 	updated_at: string;
 	panel_count: number;
 	published: boolean;
+	cover_image_url?: string;
 }
 
 // Panel type for script generation (simpler than the full Panel interface)
@@ -594,7 +595,15 @@ Guidelines:
 					c.created_at, 
 					c.updated_at,
 					COUNT(pn.panel_id) as panel_count,
-					false as published
+					false as published,
+					-- Get the first panel's image as cover image
+					(SELECT pn2.image_url 
+					 FROM pages p2 
+					 LEFT JOIN panels pn2 ON p2.page_id = pn2.page_id 
+					 WHERE p2.comic_id = c.comic_id 
+					 AND pn2.image_url IS NOT NULL 
+					 ORDER BY p2.page_number ASC, pn2.panel_number ASC 
+					 LIMIT 1) as cover_image_url
 				FROM comics c
 				LEFT JOIN pages p ON c.comic_id = p.comic_id
 				LEFT JOIN panels pn ON p.page_id = pn.page_id

@@ -46,6 +46,7 @@ export interface ComicListItemResponse {
   updated_at: string;
   panel_count: number;
   published: boolean;
+  cover_image_url?: string;
 }
 
 // Image generation responses - using unified type
