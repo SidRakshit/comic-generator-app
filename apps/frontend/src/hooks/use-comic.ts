@@ -331,18 +331,21 @@ export function useComic(
 				setError(null);
 
 				// Create payload using shared API types for SSoT compliance
+				// Ensure prompts meet minimum length requirement (5 characters)
 				const finalPanelsPayload = comic.panels.map((panel, index) => ({
 					panel_number: panel.panelNumber ?? index + 1,
-					prompt: panel.prompt || "",
+					prompt: panel.prompt && panel.prompt.length >= 5 
+						? panel.prompt 
+						: `${panel.prompt || "Comic panel"} illustration`,
 					layout_position: panel.layoutPosition || {},
 					image_base64: panel.imageBase64 || "",
 				}));
 				const finalPagesData = [{ page_number: 1, panels: finalPanelsPayload }];
 				const comicPayload: CreateComicRequest = {
 					title: comic.title,
-					description: comic.description,
-					genre: comic.genre,
-					characters: comic.characters,
+					description: comic.description || "",
+					genre: comic.genre || "",
+					characters: comic.characters || [],
 					setting: {},
 					template: comic.template,
 					pages: finalPagesData,
@@ -506,20 +509,23 @@ export function useComic(
 						}
 
 						// Create payload using shared API types for SSoT compliance
+						// Ensure prompts meet minimum length requirement (5 characters)
 						const finalPanelsPayload = comic.panels.map((panel, index) => ({
 							panel_number: panel.panelNumber ?? index + 1,
-							prompt: panel.prompt || "",
+							prompt: panel.prompt && panel.prompt.length >= 5 
+								? panel.prompt 
+								: `${panel.prompt || "Comic panel"} illustration`,
 							layout_position: panel.layoutPosition || {},
 							image_base64: panel.imageBase64 || "",
 						}));
 						const finalPagesData = [{ page_number: 1, panels: finalPanelsPayload }];
 						const comicPayload: CreateComicRequest = {
 							title: comic.title,
-							description: comic.description,
-							genre: comic.genre,
-							characters: comic.characters,
+							description: comic.description || "",
+							genre: comic.genre || "",
+							characters: comic.characters || [],
 							setting: {},
-							template: comic.template,
+							template: comic.template, // This should be a valid template ID
 							pages: finalPagesData,
 						};
 
