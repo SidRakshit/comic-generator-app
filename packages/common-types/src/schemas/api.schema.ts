@@ -139,6 +139,7 @@ export const ComicListItemResponseSchema = z.object({
   updated_at: z.string(),
   panel_count: z.number().nonnegative(),
   published: z.boolean(),
+  cover_image_url: z.string().url().optional(),
 });
 
 // Use unified GeneratedImageData schema

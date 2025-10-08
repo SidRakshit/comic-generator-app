@@ -94,11 +94,36 @@ export default function ProfilePage() {
 		setErrorLoadingComics(null);
 		try {
 			const data = await apiRequest<ComicListItemResponse[]>(API_ENDPOINTS.COMICS, "GET");
-			setMyComics(data || []);
+			console.log("Raw comics data from API:", data);
+			console.log("Data type:", typeof data);
+			console.log("Is array:", Array.isArray(data));
+			console.log("Data length:", data?.length);
+			
+			// Check if data is what we expect
+			if (!Array.isArray(data)) {
+				console.error("API returned non-array data:", data);
+				setMyComics([]);
+				return;
+			}
+			
+			// Filter out any undefined/null comics and log them
+			const validComics = data.filter((comic, index) => {
+				console.log(`Comic ${index}:`, comic);
+				if (!comic || !comic.comic_id) {
+					console.warn(`Found invalid comic at index ${index}:`, comic);
+					return false;
+				}
+				return true;
+			});
+			
+			console.log(`Filtered ${data.length - validComics.length} invalid comics`);
+			console.log("Valid comics:", validComics);
+			setMyComics(validComics);
+			
 			// Update created count based on fetched data
 			setProfileData((prev) => ({
 				...prev,
-				stats: { ...prev.stats, created: data?.length || 0 },
+				stats: { ...prev.stats, created: validComics.length },
 			}));
 		} catch (err: unknown) {
 			console.error("Failed to fetch user comics:", err);
@@ -542,7 +567,7 @@ export default function ProfilePage() {
 							isAuthenticated &&
 							myComics.length > 0 && (
 								<div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-									{myComics.map((comic) => (
+									{myComics.filter(comic => comic && comic.comic_id).map((comic) => (
 										<div key={comic.comic_id} className="relative">
 											<Link
 												href={`/comics/${comic.comic_id}`}
