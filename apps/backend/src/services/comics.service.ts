@@ -5,6 +5,7 @@ import { PutObjectCommand, ObjectCannedACL } from "@aws-sdk/client-s3";
 import axios from "axios";
 import * as crypto from "crypto";
 import { PoolClient } from "pg";
+import { GoogleGenAI } from "@google/genai";
 import {
 	s3Client,
 	S3_BUCKET_NAME,
@@ -144,37 +145,31 @@ export class ComicService {
 		fullPrompt += `\n\n${AI_CONFIG.GEMINI.PROMPTS.IMAGE_STYLE_SUFFIX}`;
 
 		try {
-			// Generate image using Gemini API
-			const response = await axios.post(
-				`${EXTERNAL_APIS.GEMINI.GENERATE_CONTENT(GEMINI_IMAGE_MODEL)}?key=${GEMINI_API_KEY}`,
-				{
-					contents: [{
-						parts: [{
-							text: fullPrompt
-						}]
-					}],
-					generationConfig: {
-						responseModalities: ["image"],
-						imageGenerationConfig: {
-							numberOfImages: 1
-						}
-					}
-				},
-				{
-					headers: {
-						"Content-Type": "application/json",
-					},
-				}
-			);
+			// Initialize Gemini client (following official documentation)
+			const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
-			// Extract image data from Gemini response
-			// Gemini returns inline data in the response
-			const candidate = response.data?.candidates?.[0];
-			if (!candidate?.content?.parts?.[0]?.inlineData) {
+			// Call the Gemini 2.5 Flash Image model (following official documentation)
+			const response = await ai.models.generateContent({
+				model: "gemini-2.5-flash-image",
+				contents: fullPrompt,
+				// Optional: set aspect ratio
+				config: { 
+					imageConfig: { aspectRatio: "1:1" }
+				}
+			});
+
+			// The image data is returned as Base64 encoded string (following official documentation)
+			if (!response.candidates || !response.candidates[0]?.content?.parts) {
+				throw new Error("Invalid response structure from Gemini API.");
+			}
+
+			const imagePart = response.candidates[0].content.parts.find((p: any) => p.inlineData);
+
+			if (!imagePart?.inlineData) {
 				throw new Error("No image data received from Gemini API.");
 			}
 
-			const imageDataBase64 = candidate.content.parts[0].inlineData.data;
+			const imageDataBase64 = imagePart.inlineData.data;
 
 			if (!imageDataBase64) {
 				throw new Error("Failed to get image data from Gemini response.");
@@ -193,6 +188,9 @@ export class ComicService {
 			console.error("❌ Error generating panel image with Gemini:", error.message);
 			if (error.response?.data) {
 				console.error("Gemini API error details:", JSON.stringify(error.response.data, null, 2));
+			}
+			if (error.stack) {
+				console.error("Error stack:", error.stack);
 			}
 			throw error;
 		}
