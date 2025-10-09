@@ -87,7 +87,7 @@ export const AI_CONFIG = {
 		},
 		IMAGE: {
 			// Gemini 2.5 Flash generates 1024x1024 by default
-			// Output tokens per image: ~1,290 ($0.039 per image at $30/1M tokens)
+			
 		},
 		PROMPTS: {
 			IMAGE_STYLE_SUFFIX: 'Style: vibrant, detailed comic book art, clear line work, professional quality.',

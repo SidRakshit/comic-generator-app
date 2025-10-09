@@ -3,6 +3,9 @@ import { S3Client } from '@aws-sdk/client-s3';
 import { DEFAULT_PORTS, ENV_VARS, AI_CONFIG } from '@repo/common-types';
 
 // Use centralized environment variable names
+// Get the image generation provider first to determine which API key is required
+const imageProvider = process.env[ENV_VARS.IMAGE_GENERATION_PROVIDER] || 'gemini';
+
 const requiredEnvVars = [
   ENV_VARS.DATABASE_URL,
   ENV_VARS.AWS_REGION,
@@ -11,9 +14,8 @@ const requiredEnvVars = [
   ENV_VARS.S3_BUCKET_NAME,
   ENV_VARS.COGNITO_USER_POOL_ID,
   ENV_VARS.COGNITO_CLIENT_ID,
-  ENV_VARS.OPENAI_API_KEY,
-  ENV_VARS.GEMINI_API_KEY,
-  ENV_VARS.IMAGE_GENERATION_PROVIDER,
+  // Only require the API key for the selected provider
+  ...(imageProvider === 'openai' ? [ENV_VARS.OPENAI_API_KEY] : [ENV_VARS.GEMINI_API_KEY]),
   ENV_VARS.FRONTEND_URL,
   ENV_VARS.STRIPE_SECRET_KEY,
   ENV_VARS.STRIPE_WEBHOOK_SECRET,
@@ -26,6 +28,7 @@ if (missingEnvVars.length > 0) {
   console.error('===========================================');
   console.error('FATAL ERROR: Missing required environment variables');
   console.error('===========================================');
+  console.error(`Image Generation Provider: ${imageProvider.toUpperCase()}`);
   console.error('Missing variables:', missingEnvVars.join(', '));
   console.error('===========================================');
   console.error('Environment variable status:');
@@ -37,6 +40,11 @@ if (missingEnvVars.length > 0) {
   });
   console.error('===========================================');
   console.error('Please set the missing variables in your Railway deployment');
+  if (imageProvider === 'gemini') {
+    console.error('For Gemini: Set GEMINI_API_KEY (get from https://aistudio.google.com/)');
+  } else {
+    console.error('For OpenAI: Set OPENAI_API_KEY (get from https://platform.openai.com/api-keys)');
+  }
   console.error('===========================================');
   process.exit(1);
 }
@@ -48,12 +56,12 @@ export const AWS_REGION = process.env[ENV_VARS.AWS_REGION]!;
 export const S3_BUCKET_NAME = process.env[ENV_VARS.S3_BUCKET_NAME]!;
 export const COGNITO_USER_POOL_ID = process.env[ENV_VARS.COGNITO_USER_POOL_ID]!;
 export const COGNITO_CLIENT_ID = process.env[ENV_VARS.COGNITO_CLIENT_ID]!;
-export const OPENAI_API_KEY = process.env[ENV_VARS.OPENAI_API_KEY]!;
+export const OPENAI_API_KEY = process.env[ENV_VARS.OPENAI_API_KEY] || '';
 export const OPENAI_CHAT_MODEL = process.env.OPENAI_CHAT_MODEL || AI_CONFIG.OPENAI.MODELS.CHAT;
 export const OPENAI_IMAGE_MODEL = process.env.OPENAI_IMAGE_MODEL || AI_CONFIG.OPENAI.MODELS.IMAGE;
-export const GEMINI_API_KEY = process.env[ENV_VARS.GEMINI_API_KEY]!;
+export const GEMINI_API_KEY = process.env[ENV_VARS.GEMINI_API_KEY] || '';
 export const GEMINI_IMAGE_MODEL = process.env.GEMINI_IMAGE_MODEL || AI_CONFIG.GEMINI.MODELS.IMAGE;
-export const IMAGE_GENERATION_PROVIDER = process.env[ENV_VARS.IMAGE_GENERATION_PROVIDER] || 'gemini'; // Default to 'gemini', can be 'openai' or 'gemini'
+export const IMAGE_GENERATION_PROVIDER = imageProvider; // Use the variable we defined above
 export const FRONTEND_URL = process.env[ENV_VARS.FRONTEND_URL]!;
 export const STRIPE_SECRET_KEY = process.env[ENV_VARS.STRIPE_SECRET_KEY]!;
 export const STRIPE_WEBHOOK_SECRET = process.env[ENV_VARS.STRIPE_WEBHOOK_SECRET]!;
