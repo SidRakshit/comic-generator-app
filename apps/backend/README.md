@@ -22,7 +22,9 @@ Ensure the following environment variables are configured:
 - `AWS_REGION`, `AWS_ACCESS_KEY_ID`, `AWS_SECRET_ACCESS_KEY`
 - `S3_BUCKET_NAME`
 - `COGNITO_USER_POOL_ID`, `COGNITO_CLIENT_ID`
-- `OPENAI_API_KEY`
+- `OPENAI_API_KEY` (required if using OpenAI for image generation)
+- `GEMINI_API_KEY` (required if using Gemini for image generation)
+- `IMAGE_GENERATION_PROVIDER` (defaults to 'gemini', can be 'openai' or 'gemini')
 - `FRONTEND_URL`
 - `STRIPE_SECRET_KEY`, `STRIPE_WEBHOOK_SECRET`
 - `STRIPE_SUCCESS_URL`, `STRIPE_CANCEL_URL` (optional overrides)

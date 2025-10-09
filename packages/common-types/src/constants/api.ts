@@ -48,6 +48,10 @@ export const EXTERNAL_APIS = {
 		CHAT_COMPLETIONS: 'https://api.openai.com/v1/chat/completions',
 		IMAGE_GENERATIONS: 'https://api.openai.com/v1/images/generations',
 	},
+	GEMINI: {
+		BASE_URL: 'https://generativelanguage.googleapis.com/v1beta/models',
+		GENERATE_CONTENT: (model: string) => `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+	},
 	AWS: {
 		S3_URL_TEMPLATE: (bucketName: string, region: string, key: string) => 
 			`https://${bucketName}.s3.${region}.amazonaws.com/${key}`,
@@ -77,6 +81,18 @@ export const AI_CONFIG = {
 			IMAGE_STYLE_SUFFIX: 'Style: vibrant, detailed comic book art, clear line work, professional quality.',
 		},
 	},
+	GEMINI: {
+		MODELS: {
+			IMAGE: 'gemini-2.5-flash-preview-04-29',
+		},
+		IMAGE: {
+			// Gemini 2.5 Flash generates 1024x1024 by default
+			// Output tokens per image: ~1,290 ($0.039 per image at $30/1M tokens)
+		},
+		PROMPTS: {
+			IMAGE_STYLE_SUFFIX: 'Style: vibrant, detailed comic book art, clear line work, professional quality.',
+		},
+	},
 } as const;
 
 /**
@@ -91,6 +107,8 @@ export const ENV_VARS = {
 	COGNITO_USER_POOL_ID: 'COGNITO_USER_POOL_ID',
 	COGNITO_CLIENT_ID: 'COGNITO_CLIENT_ID',
 	OPENAI_API_KEY: 'OPENAI_API_KEY',
+	GEMINI_API_KEY: 'GEMINI_API_KEY',
+	IMAGE_GENERATION_PROVIDER: 'IMAGE_GENERATION_PROVIDER',
 	FRONTEND_URL: 'FRONTEND_URL',
 	PORT: 'PORT',
 	NODE_ENV: 'NODE_ENV',

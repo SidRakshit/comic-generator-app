@@ -11,6 +11,9 @@ import {
 	OPENAI_API_KEY,
 	OPENAI_CHAT_MODEL,
 	OPENAI_IMAGE_MODEL,
+	GEMINI_API_KEY,
+	GEMINI_IMAGE_MODEL,
+	IMAGE_GENERATION_PROVIDER,
 	AWS_REGION,
 } from "../config";
 import pool from "../database";
@@ -98,23 +101,110 @@ export class ComicService {
 
 
 	/**
-	 * Generates an image for a comic panel using OpenAI DALL-E API.
-	 * RESTORED: Original working version that returns base64 data, no S3 upload
+	 * Generates an image for a comic panel using either Gemini or OpenAI DALL-E API.
+	 * @param userId - User ID for billing
 	 * @param panelDescription - Description of the panel to generate image for.
 	 * @param characterContext - Character information for visual consistency
 	 * @param dialogue - Dialogue text to include in the panel
 	 * @returns Object containing base64 image data and prompt used.
 	 */
 	async generatePanelImage(userId: string, panelDescription: string, characterContext?: string, dialogue?: string): Promise<GeneratedImageData> {
-		if (!OPENAI_API_KEY) {
-			throw new Error("OpenAI API key is not configured.");
-		}
-		
 		if (!panelDescription || panelDescription.trim() === "") {
 			throw new Error("Panel description cannot be empty.");
 		}
 
-		console.log(`🎨 Generating image for description: "${panelDescription}"`);
+		console.log(`🎨 Generating image using ${IMAGE_GENERATION_PROVIDER.toUpperCase()} for description: "${panelDescription}"`);
+
+		if (IMAGE_GENERATION_PROVIDER === 'gemini') {
+			return this.generateWithGemini(userId, panelDescription, characterContext, dialogue);
+		} else {
+			return this.generateWithOpenAI(userId, panelDescription, characterContext, dialogue);
+		}
+	}
+
+	/**
+	 * Generates an image using Google Gemini 2.5 Flash Image (Nano Banana).
+	 */
+	private async generateWithGemini(userId: string, panelDescription: string, characterContext?: string, dialogue?: string): Promise<GeneratedImageData> {
+		if (!GEMINI_API_KEY) {
+			throw new Error("Gemini API key is not configured.");
+		}
+
+		// Build enhanced prompt with character context for visual consistency
+		let fullPrompt = `Comic book panel illustration: ${panelDescription}`;
+		
+		if (characterContext) {
+			fullPrompt += `\n\n${characterContext}`;
+		}
+		
+		if (dialogue) {
+			fullPrompt += `\n\nDialogue Instructions:\n- Use EXACTLY this dialogue text in a speech bubble: "${dialogue}"\n- Do not add any other text, words, or dialogue\n- Only the exact dialogue provided should appear in the speech bubble\n- No additional text, captions, or random letters should be generated`;
+		}
+		
+		fullPrompt += `\n\n${AI_CONFIG.GEMINI.PROMPTS.IMAGE_STYLE_SUFFIX}`;
+
+		try {
+			// Generate image using Gemini API
+			const response = await axios.post(
+				`${EXTERNAL_APIS.GEMINI.GENERATE_CONTENT(GEMINI_IMAGE_MODEL)}?key=${GEMINI_API_KEY}`,
+				{
+					contents: [{
+						parts: [{
+							text: fullPrompt
+						}]
+					}],
+					generationConfig: {
+						responseModalities: ["image"],
+						imageGenerationConfig: {
+							numberOfImages: 1
+						}
+					}
+				},
+				{
+					headers: {
+						"Content-Type": "application/json",
+					},
+				}
+			);
+
+			// Extract image data from Gemini response
+			// Gemini returns inline data in the response
+			const candidate = response.data?.candidates?.[0];
+			if (!candidate?.content?.parts?.[0]?.inlineData) {
+				throw new Error("No image data received from Gemini API.");
+			}
+
+			const imageDataBase64 = candidate.content.parts[0].inlineData.data;
+
+			if (!imageDataBase64) {
+				throw new Error("Failed to get image data from Gemini response.");
+			}
+
+			console.log(`✅ Image generated successfully with Gemini (${imageDataBase64.length} chars base64)`);
+
+			await stripeService.decrementPanelBalance(userId);
+
+			return {
+				imageData: imageDataBase64,
+				promptUsed: fullPrompt,
+			};
+
+		} catch (error: any) {
+			console.error("❌ Error generating panel image with Gemini:", error.message);
+			if (error.response?.data) {
+				console.error("Gemini API error details:", JSON.stringify(error.response.data, null, 2));
+			}
+			throw error;
+		}
+	}
+
+	/**
+	 * Generates an image using OpenAI DALL-E API.
+	 */
+	private async generateWithOpenAI(userId: string, panelDescription: string, characterContext?: string, dialogue?: string): Promise<GeneratedImageData> {
+		if (!OPENAI_API_KEY) {
+			throw new Error("OpenAI API key is not configured.");
+		}
 
 		// Build enhanced prompt with character context for visual consistency
 		let fullPrompt = `Comic book panel illustration: ${panelDescription}`;
@@ -171,7 +261,7 @@ export class ComicService {
 				throw new Error("Failed to get image data from OpenAI response.");
 			}
 
-			console.log(`✅ Image generated successfully (${imageDataBase64.length} chars base64)`);
+			console.log(`✅ Image generated successfully with OpenAI (${imageDataBase64.length} chars base64)`);
 
 			await stripeService.decrementPanelBalance(userId);
 
@@ -182,7 +272,7 @@ export class ComicService {
 			};
 
 		} catch (error: any) {
-			console.error("❌ Error generating panel image:", error.message);
+			console.error("❌ Error generating panel image with OpenAI:", error.message);
 			throw error;
 		}
 	}

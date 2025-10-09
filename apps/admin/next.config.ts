@@ -10,6 +10,14 @@ const nextConfig = {
         protocol: "https",
         hostname: "comic-gen-app-images-prod-us-east-1.s3.us-east-1.amazonaws.com",
       },
+      {
+        protocol: "https",
+        hostname: "generativelanguage.googleapis.com",
+      },
+      {
+        protocol: "https",
+        hostname: "*.googleapis.com",
+      },
     ],
   },
 };

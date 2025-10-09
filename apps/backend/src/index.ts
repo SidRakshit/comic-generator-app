@@ -194,7 +194,9 @@ app.get(API_ROUTES.HEALTH, async (req: any, res: any) => {
       S3_BUCKET_NAME: process.env.S3_BUCKET_NAME ? 'SET' : 'NOT SET',
       COGNITO_USER_POOL_ID: process.env.COGNITO_USER_POOL_ID ? 'SET' : 'NOT SET',
       COGNITO_CLIENT_ID: process.env.COGNITO_CLIENT_ID ? 'SET' : 'NOT SET',
+      IMAGE_GENERATION_PROVIDER: process.env.IMAGE_GENERATION_PROVIDER || 'gemini',
       OPENAI_API_KEY: process.env.OPENAI_API_KEY ? 'SET' : 'NOT SET',
+      GEMINI_API_KEY: process.env.GEMINI_API_KEY ? 'SET' : 'NOT SET',
       AWS_ACCESS_KEY_ID: process.env.AWS_ACCESS_KEY_ID ? 'SET' : 'NOT SET',
       AWS_SECRET_ACCESS_KEY: process.env.AWS_SECRET_ACCESS_KEY ? 'SET' : 'NOT SET'
     }

@@ -23,6 +23,7 @@ export enum ErrorCode {
 	
 	// External Services
 	OPENAI_ERROR = 'OPENAI_ERROR',
+	GEMINI_ERROR = 'GEMINI_ERROR',
 	S3_ERROR = 'S3_ERROR',
 	DATABASE_ERROR = 'DATABASE_ERROR',
 	
@@ -137,6 +138,10 @@ export const ErrorFactory = {
 	// External service errors
 	openAiError(message = 'OpenAI service error', details?: Record<string, unknown>): AppError {
 		return new AppError(message, ErrorCode.OPENAI_ERROR, 502, details);
+	},
+
+	geminiError(message = 'Gemini service error', details?: Record<string, unknown>): AppError {
+		return new AppError(message, ErrorCode.GEMINI_ERROR, 502, details);
 	},
 
 	s3Error(message = 'S3 storage error', details?: Record<string, unknown>): AppError {
