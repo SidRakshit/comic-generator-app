@@ -19,7 +19,7 @@ import {
 } from "../config";
 import pool from "../database";
 import { stripeService } from "./stripe.service";
-import { CreateComicRequest, ComicPageRequest, ComicPanelRequest, ComicResponse, ComicPageResponse, EXTERNAL_APIS, AI_CONFIG, FILE_FORMATS, CONTENT_TYPES, S3_CONFIG } from "@repo/common-types";
+import { CreateComicRequest, ComicPageRequest, ComicPanelRequest, ComicResponse, ComicPageResponse, EXTERNAL_APIS, AI_CONFIG, FILE_FORMATS, CONTENT_TYPES, S3_CONFIG, DialogueBubble } from "@repo/common-types";
 
 // Use shared types from @repo/common-types
 // Map the shared API types to our internal naming for easier migration:
@@ -741,5 +741,75 @@ export class ComicService {
 		if (result.rowCount === 0) {
 			throw new Error("Insufficient panel balance during save operation");
 		}
+	}
+
+	/**
+	 * Update panel with bubble annotations
+	 */
+	async updatePanelBubbles(comicId: string, panelId: string, bubbles: DialogueBubble[]): Promise<any> {
+		const query = `
+			UPDATE panels 
+			SET layout_position = COALESCE(layout_position, '{}'::jsonb) || $1::jsonb, 
+				updated_at = CURRENT_TIMESTAMP
+			WHERE panel_id = $2 AND page_id IN (
+				SELECT page_id FROM pages WHERE comic_id = $3
+			)
+			RETURNING *
+		`;
+		
+		const bubblesData = { bubbles: bubbles };
+		const result = await pool.query(query, [JSON.stringify(bubblesData), panelId, comicId]);
+		
+		if (result.rowCount === 0) {
+			throw new Error("Panel not found or access denied");
+		}
+		
+		return result.rows[0];
+	}
+
+	/**
+	 * Get panel with bubbles from layout_position
+	 */
+	async getPanelWithBubbles(comicId: string, panelId: string): Promise<any> {
+		const query = `
+			SELECT p.*, pg.comic_id
+			FROM panels p
+			JOIN pages pg ON p.page_id = pg.page_id
+			WHERE p.panel_id = $1 AND pg.comic_id = $2
+		`;
+		
+		const result = await pool.query(query, [panelId, comicId]);
+		
+		if (result.rowCount === 0) {
+			throw new Error("Panel not found or access denied");
+		}
+		
+		const panel = result.rows[0];
+		
+		// Extract bubbles from layout_position
+		panel.bubbles = panel.layout_position?.bubbles || [];
+		
+		return panel;
+	}
+
+	/**
+	 * Upload processed image with text injection to S3
+	 */
+	async uploadProcessedImage(imageBuffer: Buffer, comicId: string, panelId: string): Promise<string> {
+		const key = `comics/${comicId}/panels/${panelId}/processed.png`;
+		
+		const command = new PutObjectCommand({
+			Bucket: S3_BUCKET_NAME,
+			Key: key,
+			Body: imageBuffer,
+			ContentType: 'image/png',
+			ACL: ObjectCannedACL.public_read,
+		});
+
+		if (!s3Client) {
+			throw new Error('S3 client not initialized');
+		}
+		await s3Client.send(command);
+		return `https://${S3_BUCKET_NAME}.s3.${AWS_REGION}.amazonaws.com/${key}`;
 	}
 }

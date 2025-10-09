@@ -2,6 +2,18 @@
 
 export type PanelStatus = "empty" | "loading" | "complete" | "error";
 
+export interface DialogueBubble {
+  id: string;
+  type: 'speech' | 'thought' | 'caption';
+  x: number; // percentage of panel width
+  y: number; // percentage of panel height
+  width: number; // percentage of panel width
+  height: number; // percentage of panel height
+  text: string;
+  characterId?: string;
+  characterName?: string;
+}
+
 export interface Panel {
   id: string;
   status: PanelStatus;
@@ -11,7 +23,12 @@ export interface Panel {
   imageBase64?: string; // Holds the raw base64 from generation, used for saving
   error?: string;
   panelNumber?: number;
-  layoutPosition?: Record<string, unknown>;
+  layoutPosition?: {
+    bubbles?: DialogueBubble[];
+    [key: string]: unknown;
+  };
+  // Computed property for easy access to bubbles
+  bubbles?: DialogueBubble[];
 }
 
 export interface ComicCharacter {

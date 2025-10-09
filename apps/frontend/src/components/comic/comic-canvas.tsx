@@ -3,12 +3,13 @@
 
 import Image from "next/image";
 import { Panel, UI_CONSTANTS, SEMANTIC_COLORS, INTERACTIVE_STYLES } from "@repo/common-types";
-import { Loader2, ImageOff, Plus, Edit } from "lucide-react";
+import { Loader2, ImageOff, Plus, Edit, MessageSquare } from "lucide-react";
 
 interface ComicCanvasProps {
 	panels: Panel[];
 	onPanelClick: (index: number) => void;
 	onEditPanelClick: (index: number) => void;
+	onAnnotatePanelClick?: (index: number) => void;
 	layout: string | null;
 }
 
@@ -38,6 +39,7 @@ export default function ComicCanvas({
 	panels,
 	onPanelClick,
 	onEditPanelClick,
+	onAnnotatePanelClick,
 	layout,
 }: ComicCanvasProps) {
 	const gridClass = getGridClass(layout, panels);
@@ -52,6 +54,7 @@ export default function ComicCanvas({
 						panelNumber={index + 1}
 						onClick={() => onPanelClick(index)}
 						onEditClick={() => onEditPanelClick(index)}
+						onAnnotateClick={() => onAnnotatePanelClick?.(index)}
 					/>
 				))}
 			</div>
@@ -64,6 +67,7 @@ interface ComicPanelProps {
 	panelNumber: number;
 	onClick: () => void;
 	onEditClick: () => void;
+	onAnnotateClick?: () => void;
 }
 
 function ComicPanel({
@@ -71,6 +75,7 @@ function ComicPanel({
 	panelNumber,
 	onClick,
 	onEditClick,
+	onAnnotateClick,
 }: ComicPanelProps) {
 	return (
 		<div
@@ -115,18 +120,34 @@ function ComicPanel({
 							unoptimized={true}
 						/>
 					</div>
-					<button
-						type="button"
-						className={`absolute top-1 right-1 md:top-2 md:right-2 z-10 p-1 md:p-1.5 ${SEMANTIC_COLORS.BACKGROUND.OVERLAY} ${SEMANTIC_COLORS.TEXT.INVERTED} ${UI_CONSTANTS.BORDER_RADIUS.FULL} opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity hover:bg-opacity-75`}
-						onClick={(e) => {
-							e.stopPropagation();
-							onEditClick();
-						}}
-						aria-label={`Edit Panel ${panelNumber}`}
-						title={`Edit Panel ${panelNumber}`}
-					>
-						<Edit className="h-3 w-3 md:h-4 md:w-4" />
-					</button>
+					<div className="absolute top-1 right-1 md:top-2 md:right-2 z-10 flex gap-1">
+						{onAnnotateClick && (
+							<button
+								type="button"
+								className={`p-1 md:p-1.5 ${SEMANTIC_COLORS.BACKGROUND.OVERLAY} ${SEMANTIC_COLORS.TEXT.INVERTED} ${UI_CONSTANTS.BORDER_RADIUS.FULL} opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity hover:bg-opacity-75`}
+								onClick={(e) => {
+									e.stopPropagation();
+									onAnnotateClick();
+								}}
+								aria-label={`Annotate Panel ${panelNumber}`}
+								title={`Annotate Panel ${panelNumber}`}
+							>
+								<MessageSquare className="h-3 w-3 md:h-4 md:w-4" />
+							</button>
+						)}
+						<button
+							type="button"
+							className={`p-1 md:p-1.5 ${SEMANTIC_COLORS.BACKGROUND.OVERLAY} ${SEMANTIC_COLORS.TEXT.INVERTED} ${UI_CONSTANTS.BORDER_RADIUS.FULL} opacity-0 group-hover:opacity-100 focus:opacity-100 transition-opacity hover:bg-opacity-75`}
+							onClick={(e) => {
+								e.stopPropagation();
+								onEditClick();
+							}}
+							aria-label={`Edit Panel ${panelNumber}`}
+							title={`Edit Panel ${panelNumber}`}
+						>
+							<Edit className="h-3 w-3 md:h-4 md:w-4" />
+						</button>
+					</div>
 				</>
 			) : (
 				<div className="flex flex-col items-center justify-center h-full">

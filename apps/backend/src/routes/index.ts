@@ -9,6 +9,7 @@ import billingRoutes from "./billing";
 import webhookRoutes from "./webhooks";
 import impersonationRoutes from "./impersonation";
 import favoritesRoutes from "./favorites";
+import textInjectionRoutes from "./text-injection";
 
 const router = express.Router();
 
@@ -19,6 +20,7 @@ router.use(API_ROUTES.ROOT, comicRoutes);
 router.use(API_ROUTES.ROOT, userRoutes);
 router.use(API_ROUTES.WEBHOOKS.BASE, webhookRoutes);
 router.use(API_ROUTES.ROOT, favoritesRoutes);
+router.use(API_ROUTES.ROOT, textInjectionRoutes);
 
 router.get(API_ROUTES.ROOT, (req, res) => {
 	res.json({ message: "API is running!" });
