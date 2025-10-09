@@ -6,6 +6,7 @@ import Link from "next/link";
 import ComicCanvas from "@/components/comic/comic-canvas";
 import PanelPromptModal from "@/components/comic/panel-prompt";
 import ImageZoomModal from "@/components/comic/image-zoom-modal";
+import PanelAnnotation from "@/components/comic/panel-annotation";
 import { CreditBalanceBanner } from "@/components/billing/credit-balance-banner";
 import { useComicContext } from "@/context/comic-context";
 import { COMIC_TEMPLATES as templates } from "@repo/common-types";
@@ -58,6 +59,11 @@ function NewComicEditorContent() {
 	const [isPromptModalOpen, setIsPromptModalOpen] = useState(false);
 	const [isZoomModalOpen, setIsZoomModalOpen] = useState(false);
 	const [zoomedImageUrl, setZoomedImageUrl] = useState<string | null>(null);
+	
+	// Annotation state
+	const [isAnnotating, setIsAnnotating] = useState(false);
+	const [annotatingPanelIndex, setAnnotatingPanelIndex] = useState<number | null>(null);
+	const [panelBubbles, setPanelBubbles] = useState<any[]>([]);
 
 	const {
 		comic,
@@ -113,6 +119,64 @@ function NewComicEditorContent() {
 			return;
 		setActivePanel(panelIndex);
 		setIsPromptModalOpen(true);
+	};
+
+	const handleAnnotatePanelClick = (panelIndex: number) => {
+		if (
+			isSaving ||
+			isLoading ||
+			!comic ||
+			!comic.panels ||
+			comic.panels[panelIndex]?.status !== "complete"
+		)
+			return;
+		setAnnotatingPanelIndex(panelIndex);
+		setIsAnnotating(true);
+		// Load existing bubbles for this panel
+		const panel = comic.panels[panelIndex];
+		setPanelBubbles(panel.bubbles || []);
+	};
+
+	const handleBubblesChange = (bubbles: any[]) => {
+		setPanelBubbles(bubbles);
+	};
+
+	const handleSaveAnnotations = async () => {
+		if (annotatingPanelIndex === null || !comic.id) return;
+		
+		const panel = comic.panels[annotatingPanelIndex];
+		if (!panel?.id) return;
+
+		try {
+			const response = await apiRequest<{ success: boolean }>(
+				`/api/comics/${comic.id}/panels/${panel.id}/annotate`,
+				'POST',
+				{ bubbles: panelBubbles }
+			);
+
+			if (response.success) {
+				// Update the panel with new bubbles
+				updatePanelContent(annotatingPanelIndex, {
+					bubbles: panelBubbles,
+					layoutPosition: {
+						...panel.layoutPosition,
+						bubbles: panelBubbles
+					}
+				});
+				setIsAnnotating(false);
+				setAnnotatingPanelIndex(null);
+				console.log('✅ Annotations saved successfully');
+			}
+		} catch (error) {
+			console.error('❌ Failed to save annotations:', error);
+			alert('Failed to save annotations. Please try again.');
+		}
+	};
+
+	const handleCancelAnnotations = () => {
+		setIsAnnotating(false);
+		setAnnotatingPanelIndex(null);
+		setPanelBubbles([]);
 	};
 
 	const handlePromptSubmit = async (prompt: string, dialogue?: string) => {
@@ -271,13 +335,14 @@ function NewComicEditorContent() {
 				</h2>
 				<p className={`${SEMANTIC_COLORS.TEXT.SECONDARY} mb-6 text-sm`}>
 					Click empty panels to generate, click images to zoom, use ✏️ to
-					regenerate.
+					regenerate, use 💬 to add dialogue bubbles.
 				</p>
 				{comic.template && comic.panels ? (
 					<ComicCanvas
 						panels={comic.panels}
 						onPanelClick={handlePanelClick}
 						onEditPanelClick={handleEditPanelClick}
+						onAnnotatePanelClick={handleAnnotatePanelClick}
 						layout={comic.template}
 					/>
 				) : (
@@ -306,6 +371,19 @@ function NewComicEditorContent() {
 			onClose={() => setIsZoomModalOpen(false)}
 			imageUrl={zoomedImageUrl}
 			/>
+			
+			{/* Panel Annotation Modal */}
+			{isAnnotating && annotatingPanelIndex !== null && comic.panels?.[annotatingPanelIndex]?.imageUrl && (
+				<PanelAnnotation
+					panelId={comic.panels[annotatingPanelIndex].id}
+					imageUrl={comic.panels[annotatingPanelIndex].imageUrl!}
+					bubbles={panelBubbles}
+					onBubblesChange={handleBubblesChange}
+					onSave={handleSaveAnnotations}
+					onCancel={handleCancelAnnotations}
+					characters={comic.characters || []}
+				/>
+			)}
 		</div>
 	);
 }
