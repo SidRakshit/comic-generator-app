@@ -299,6 +299,7 @@ function NewComicEditorContent() {
 				activePanel !== null &&
 				comic.panels?.[activePanel]?.status === "complete"
 			}
+			characters={comic.characters || []}
 			/>
 			<ImageZoomModal
 				isOpen={isZoomModalOpen}
