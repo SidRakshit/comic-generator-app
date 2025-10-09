@@ -120,11 +120,11 @@ export class ComicService {
 		let fullPrompt = `Comic book panel illustration: ${panelDescription}`;
 		
 		if (characterContext) {
-			fullPrompt += `\n\nCharacter consistency requirements:\n${characterContext}\n\nMaintain consistent character appearance, clothing, and visual style across all panels.`;
+			fullPrompt += `\n\n${characterContext}`;
 		}
 		
 		if (dialogue) {
-			fullPrompt += `\n\nDIALOGUE REQUIREMENTS:\n- Include ONLY this exact dialogue in speech bubbles: "${dialogue}"\n- Do not add any other text, gibberish, placeholder words, or random letters\n- Do not include any text that is not part of the provided dialogue\n- Make sure the dialogue is clearly visible and readable in speech bubbles\n- No additional text should appear in the image\n- Avoid Lorem ipsum, placeholder text, or any random character sequences`;
+			fullPrompt += `\n\nDialogue Instructions:\n- Use EXACTLY this dialogue text in a speech bubble: "${dialogue}"\n- Do not add any other text, words, or dialogue\n- Only the exact dialogue provided should appear in the speech bubble\n- No additional text, captions, or random letters should be generated`;
 		}
 		
 		fullPrompt += `\n\n${AI_CONFIG.OPENAI.PROMPTS.IMAGE_STYLE_SUFFIX}`;

@@ -122,12 +122,13 @@ function NewComicEditorContent() {
 		// Build character context for visual consistency
 		let characterContext = "";
 		if (comic.characters && comic.characters.length > 0) {
-			characterContext = "CHARACTERS:\n";
+			characterContext = "CHARACTER CONSISTENCY REQUIREMENTS:\n";
 			comic.characters.forEach((char: ComicCharacter) => {
 				if (char.name && char.description) {
 					characterContext += `- ${char.name}: ${char.description}\n`;
 				}
 			});
+			characterContext += "\nMaintain consistent character appearance, clothing, facial features, and visual style across all panels. Each character should look identical in every panel they appear.";
 		}
 
 		// Build metadata prefix for the prompt
