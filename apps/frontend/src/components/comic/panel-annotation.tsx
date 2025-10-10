@@ -105,6 +105,7 @@ export default function PanelAnnotation({
     const deltaX = x - dragStart.x;
     const deltaY = y - dragStart.y;
 
+    // Reposition the bubble (only when dragging from canvas)
     updateBubble(selectedBubble, {
       x: Math.max(0, Math.min(90, bubbles.find(b => b.id === selectedBubble)!.x + deltaX)),
       y: Math.max(0, Math.min(90, bubbles.find(b => b.id === selectedBubble)!.y + deltaY))
@@ -217,6 +218,43 @@ export default function PanelAnnotation({
                     e.stopPropagation();
                     setSelectedBubble(bubble.id);
                   }}
+                  onMouseDown={(e) => {
+                    e.stopPropagation();
+                    setSelectedBubble(bubble.id);
+                    setIsDrawing(true);
+                    setDragStart({ 
+                      x: ((e.clientX - e.currentTarget.getBoundingClientRect().left) / e.currentTarget.getBoundingClientRect().width) * 100,
+                      y: ((e.clientY - e.currentTarget.getBoundingClientRect().top) / e.currentTarget.getBoundingClientRect().height) * 100
+                    });
+                  }}
+                  onMouseMove={(e) => {
+                    if (!isDrawing || !dragStart || selectedBubble !== bubble.id) return;
+                    e.stopPropagation();
+                    
+                    const rect = e.currentTarget.getBoundingClientRect();
+                    const x = ((e.clientX - rect.left) / rect.width) * 100;
+                    const y = ((e.clientY - rect.top) / rect.height) * 100;
+                    
+                    const deltaX = x - dragStart.x;
+                    const deltaY = y - dragStart.y;
+                    
+                    updateBubble(bubble.id, {
+                      x: Math.max(0, Math.min(90, bubble.x + deltaX)),
+                      y: Math.max(0, Math.min(90, bubble.y + deltaY))
+                    });
+                    
+                    setDragStart({ x, y });
+                  }}
+                  onMouseUp={(e) => {
+                    e.stopPropagation();
+                    setIsDrawing(false);
+                    setDragStart(null);
+                  }}
+                  onMouseLeave={(e) => {
+                    e.stopPropagation();
+                    setIsDrawing(false);
+                    setDragStart(null);
+                  }}
                 >
                   <div className="text-xs p-1 truncate h-full flex items-center justify-center">
                     {bubble.text || 'Empty'}
@@ -239,15 +277,24 @@ export default function PanelAnnotation({
                       
                       {/* Resize handles */}
                       <div
-                        className="absolute -right-1 -top-1 w-3 h-3 bg-blue-500 rounded-full cursor-se-resize"
+                        className="absolute -left-1 -top-1 w-3 h-3 bg-blue-500 rounded-full cursor-nw-resize"
                         onMouseDown={(e) => {
                           e.stopPropagation();
                           const startX = e.clientX;
+                          const startY = e.clientY;
                           const startWidth = bubble.width;
+                          const startHeight = bubble.height;
                           
                           const handleMouseMove = (e: MouseEvent) => {
-                            const delta = ((e.clientX - startX) / 600) * 100;
-                            resizeBubble(bubble.id, 'width', delta);
+                            const deltaX = ((e.clientX - startX) / 600) * 100;
+                            const deltaY = ((e.clientY - startY) / 400) * 100;
+                            
+                            // Only resize, no repositioning
+                            const widthDelta = -deltaX; // Negative because we're resizing from left
+                            const heightDelta = -deltaY; // Negative because we're resizing from top
+                            
+                            resizeBubble(bubble.id, 'width', widthDelta);
+                            resizeBubble(bubble.id, 'height', heightDelta);
                           };
                           
                           const handleMouseUp = () => {
@@ -263,12 +310,16 @@ export default function PanelAnnotation({
                         className="absolute -right-1 -bottom-1 w-3 h-3 bg-blue-500 rounded-full cursor-se-resize"
                         onMouseDown={(e) => {
                           e.stopPropagation();
+                          const startX = e.clientX;
                           const startY = e.clientY;
-                          const startHeight = bubble.height;
                           
                           const handleMouseMove = (e: MouseEvent) => {
-                            const delta = ((e.clientY - startY) / 400) * 100;
-                            resizeBubble(bubble.id, 'height', delta);
+                            const deltaX = ((e.clientX - startX) / 600) * 100;
+                            const deltaY = ((e.clientY - startY) / 400) * 100;
+                            
+                            // Use resizeBubble function for both width and height
+                            resizeBubble(bubble.id, 'width', deltaX);
+                            resizeBubble(bubble.id, 'height', deltaY);
                           };
                           
                           const handleMouseUp = () => {
