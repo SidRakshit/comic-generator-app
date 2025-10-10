@@ -136,10 +136,8 @@ export default function PanelAnnotation({
   // Keyboard support for deleting bubbles
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
-      console.log('Key pressed:', event.key, 'Selected bubble:', selectedBubble);
-      if (event.key === 'Delete') {
+      if (event.key === 'Delete' || event.key === 'Backspace') {
         if (selectedBubble) {
-          console.log('Deleting bubble:', selectedBubble);
           event.preventDefault();
           deleteBubble(selectedBubble);
         }
