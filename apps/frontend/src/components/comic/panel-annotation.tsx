@@ -158,6 +158,11 @@ export default function PanelAnnotation({
   // Keyboard support for deleting bubbles
   useEffect(() => {
     const handleKeyDown = (event: KeyboardEvent) => {
+      // Don't delete bubble if user is typing in an input field
+      if (event.target instanceof HTMLInputElement || event.target instanceof HTMLTextAreaElement) {
+        return;
+      }
+      
       if (event.key === 'Delete' || event.key === 'Backspace') {
         if (selectedBubble) {
           event.preventDefault();
