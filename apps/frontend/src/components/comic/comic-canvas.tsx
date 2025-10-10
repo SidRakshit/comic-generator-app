@@ -131,43 +131,59 @@ function ComicPanel({
 								{panel.bubbles.map((bubble: DialogueBubble) => (
 									<div
 										key={bubble.id}
-										className="absolute pointer-events-none"
+										className="absolute pointer-events-none bg-white rounded-2xl border-2 border-black shadow-lg"
 										style={{
 											left: `${bubble.x}%`,
 											top: `${bubble.y}%`,
 											width: `${bubble.width}%`,
-											height: `${bubble.height}%`
+											height: `${bubble.height}%`,
+											backgroundColor: 'rgba(255, 255, 255, 0.95)',
+											borderRadius: bubble.type === 'thought' ? '50%' : '1rem'
 										}}
 									>
-										{/* Bubble background image */}
-										<img
-											src={
-												bubble.type === 'speech' ? '/speech-bubble.png' :
-												bubble.type === 'thought' ? '/thought-bubble.png' :
-												'/speech-bubble.png' // default fallback for caption
-											}
-											alt={`${bubble.type} bubble`}
-											className="w-full h-full object-contain"
-										/>
+										{/* Bubble tail for speech bubbles */}
+										{bubble.type === 'speech' && (
+											<div 
+												className="absolute w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-t-12 border-t-white"
+												style={{
+													bottom: '-10px',
+													left: '20%',
+													filter: 'drop-shadow(0 2px 0 black)'
+												}}
+											/>
+										)}
+										
+										{/* Thought bubble circles */}
+										{bubble.type === 'thought' && (
+											<>
+												<div 
+													className="absolute w-3 h-3 bg-white border-2 border-black rounded-full"
+													style={{
+														bottom: '-15px',
+														left: '25%'
+													}}
+												/>
+												<div 
+													className="absolute w-2 h-2 bg-white border-2 border-black rounded-full"
+													style={{
+														bottom: '-22px',
+														left: '20%'
+													}}
+												/>
+											</>
+										)}
 										
 										{/* Bubble text */}
 										<div 
-											className="absolute text-xs font-medium text-black"
+											className="absolute text-xs font-bold text-black flex items-center justify-center text-center p-2"
 											style={{
-												// Custom positioning for each bubble type
-												left: bubble.type === 'speech' ? '15%' : 
-													  bubble.type === 'thought' ? '20%' : '10%',
-												top: bubble.type === 'speech' ? '25%' : 
-													 bubble.type === 'thought' ? '30%' : '20%',
-												width: bubble.type === 'speech' ? '70%' : 
-													   bubble.type === 'thought' ? '60%' : '80%',
-												height: bubble.type === 'speech' ? '50%' : 
-														bubble.type === 'thought' ? '40%' : '60%',
-												display: 'flex',
-												alignItems: 'center',
-												justifyContent: 'center',
-												textAlign: 'center',
-												lineHeight: '1.2'
+												left: '10%',
+												top: '20%',
+												width: '80%',
+												height: '60%',
+												lineHeight: '1.3',
+												wordWrap: 'break-word',
+												overflow: 'hidden'
 											}}
 										>
 											{bubble.text || 'Empty'}
