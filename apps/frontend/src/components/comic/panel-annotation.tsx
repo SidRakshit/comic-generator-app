@@ -46,6 +46,20 @@ export default function PanelAnnotation({
     }
   }, [imageUrl]);
 
+  // Keyboard support for deleting bubbles
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.key === 'Delete') {
+        if (selectedBubble) {
+          deleteBubble(selectedBubble);
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [selectedBubble]);
+
   const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
     if (isDrawing) return;
     
@@ -207,9 +221,22 @@ export default function PanelAnnotation({
                     {bubble.text || 'Empty'}
                   </div>
                   
-                  {/* Resize handles */}
+                  {/* Resize handles and delete button */}
                   {selectedBubble === bubble.id && (
                     <>
+                      {/* Delete button */}
+                      <div
+                        className="absolute -top-2 -right-2 w-5 h-5 bg-red-500 rounded-full cursor-pointer flex items-center justify-center text-white text-xs font-bold hover:bg-red-600"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          deleteBubble(bubble.id);
+                        }}
+                        title="Delete bubble"
+                      >
+                        ×
+                      </div>
+                      
+                      {/* Resize handles */}
                       <div
                         className="absolute -right-1 -top-1 w-3 h-3 bg-blue-500 rounded-full cursor-se-resize"
                         onMouseDown={(e) => {
@@ -344,6 +371,7 @@ export default function PanelAnnotation({
                 </div>
               </div>
             )}
+
 
             <div className="flex gap-2 pt-4">
               <Button onClick={onSave} className="flex-1">
