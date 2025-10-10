@@ -229,16 +229,24 @@ export default function PanelAnnotation({
               {bubbles.map(bubble => (
                 <div
                   key={bubble.id}
-                  className={`absolute border-2 ${
+                  className={`absolute ${
                     selectedBubble === bubble.id 
-                      ? 'border-blue-500 bg-blue-100 bg-opacity-50' 
-                      : 'border-blue-300 bg-blue-50 bg-opacity-30'
+                      ? 'border-2 border-blue-500' 
+                      : 'border-2 border-transparent'
                   } cursor-pointer group`}
                   style={{
                     left: `${bubble.x}%`,
                     top: `${bubble.y}%`,
                     width: `${bubble.width}%`,
-                    height: `${bubble.height}%`
+                    height: `${bubble.height}%`,
+                    backgroundImage: `url(${
+                      bubble.type === 'speech' ? '/speech-bubble.png' :
+                      bubble.type === 'thought' ? '/thought-bubble.png' :
+                      '/speech-bubble.png' // default fallback for caption
+                    })`,
+                    backgroundSize: 'contain',
+                    backgroundRepeat: 'no-repeat',
+                    backgroundPosition: 'center'
                   }}
                   onClick={(e) => {
                     e.stopPropagation();
@@ -309,7 +317,7 @@ export default function PanelAnnotation({
                     setDragStart(null);
                   }}
                 >
-                  <div className="text-xs p-1 truncate h-full flex items-center justify-center">
+                  <div className="text-xs p-2 truncate h-full flex items-center justify-center text-black font-medium">
                     {bubble.text || 'Empty'}
                   </div>
                   
