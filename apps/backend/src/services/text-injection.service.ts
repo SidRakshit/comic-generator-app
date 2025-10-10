@@ -8,9 +8,13 @@ export class TextInjectionService {
     imageBuffer: Buffer,
     bubbles: DialogueBubble[]
   ): Promise<Buffer> {
+    console.log('🎨 Starting text injection with', bubbles.length, 'bubbles');
+    
     const image = sharp(imageBuffer);
     const metadata = await image.metadata();
     const { width: imageWidth, height: imageHeight } = metadata;
+
+    console.log('📐 Image dimensions:', { width: imageWidth, height: imageHeight });
 
     if (!imageWidth || !imageHeight) {
       throw new Error('Could not determine image dimensions');
@@ -19,22 +23,54 @@ export class TextInjectionService {
     const compositeOperations = [];
 
     for (const bubble of bubbles) {
+      console.log(`🔍 Processing bubble ${bubble.id} of type ${bubble.type}`);
+      
       // Use actual PNG bubble images instead of SVG
       const bubbleImagePath = this.getBubbleImagePath(bubble.type);
+      console.log('📁 Bubble image path:', bubbleImagePath);
+      
       const bubbleImage = await this.loadBubbleImage(bubbleImagePath);
+      console.log('📦 Loaded bubble image, size:', bubbleImage.length, 'bytes');
+      
+      // Check bubble image metadata
+      const bubbleMetadata = await sharp(bubbleImage).metadata();
+      console.log('🖼️ Bubble image metadata:', {
+        width: bubbleMetadata.width,
+        height: bubbleMetadata.height,
+        channels: bubbleMetadata.channels,
+        hasAlpha: bubbleMetadata.hasAlpha,
+        format: bubbleMetadata.format
+      });
       
       // Resize the bubble image to match the bubble dimensions
       const bubbleWidth = Math.round((bubble.width / 100) * imageWidth);
       const bubbleHeight = Math.round((bubble.height / 100) * imageHeight);
+      
+      console.log('📏 Bubble dimensions:', { 
+        original: { width: bubbleMetadata.width, height: bubbleMetadata.height },
+        target: { width: bubbleWidth, height: bubbleHeight },
+        percentage: { width: bubble.width, height: bubble.height }
+      });
       
       const resizedBubble = await sharp(bubbleImage)
         .resize(bubbleWidth, bubbleHeight, { fit: 'contain' })
         .png()
         .toBuffer();
 
+      // Check resized bubble metadata
+      const resizedMetadata = await sharp(resizedBubble).metadata();
+      console.log('🔄 Resized bubble metadata:', {
+        width: resizedMetadata.width,
+        height: resizedMetadata.height,
+        channels: resizedMetadata.channels,
+        hasAlpha: resizedMetadata.hasAlpha,
+        format: resizedMetadata.format
+      });
+
       // Create text overlay
       const textSvg = this.createTextOverlay(bubble, bubbleWidth, bubbleHeight);
       const textBuffer = Buffer.from(textSvg);
+      console.log('📝 Created text overlay SVG:', textSvg.substring(0, 100) + '...');
       
       // Composite text onto bubble
       const bubbleWithText = await sharp(resizedBubble)
@@ -44,19 +80,50 @@ export class TextInjectionService {
         }])
         .png()
         .toBuffer();
+
+      // Check final bubble metadata
+      const finalMetadata = await sharp(bubbleWithText).metadata();
+      console.log('✅ Final bubble metadata:', {
+        width: finalMetadata.width,
+        height: finalMetadata.height,
+        channels: finalMetadata.channels,
+        hasAlpha: finalMetadata.hasAlpha,
+        format: finalMetadata.format
+      });
       
-      compositeOperations.push({
+      const compositeOp = {
         input: bubbleWithText,
         top: Math.round((bubble.y / 100) * imageHeight),
         left: Math.round((bubble.x / 100) * imageWidth),
         blend: 'over' as const
+      };
+      
+      console.log('🎯 Composite operation:', {
+        position: { top: compositeOp.top, left: compositeOp.left },
+        blend: compositeOp.blend,
+        bubbleText: bubble.text
       });
+      
+      compositeOperations.push(compositeOp);
     }
 
-    return image
+    console.log('🔧 Applying', compositeOperations.length, 'composite operations');
+    
+    const result = await image
       .composite(compositeOperations)
       .png()
       .toBuffer();
+
+    const resultMetadata = await sharp(result).metadata();
+    console.log('🎉 Final result metadata:', {
+      width: resultMetadata.width,
+      height: resultMetadata.height,
+      channels: resultMetadata.channels,
+      hasAlpha: resultMetadata.hasAlpha,
+      format: resultMetadata.format
+    });
+
+    return result;
   }
 
   private createBubbleSvg(bubble: DialogueBubble, imageWidth: number, imageHeight: number): string {
@@ -202,9 +269,24 @@ export class TextInjectionService {
 
   private async loadBubbleImage(imagePath: string): Promise<Buffer> {
     try {
-      return await fs.promises.readFile(imagePath);
+      console.log('🔍 Checking if file exists:', imagePath);
+      const fileExists = await fs.promises.access(imagePath).then(() => true).catch(() => false);
+      console.log('📁 File exists:', fileExists);
+      
+      if (!fileExists) {
+        throw new Error(`Bubble image file not found: ${imagePath}`);
+      }
+      
+      const buffer = await fs.promises.readFile(imagePath);
+      console.log('✅ Successfully loaded bubble image:', {
+        path: imagePath,
+        size: buffer.length,
+        firstBytes: buffer.slice(0, 8).toString('hex')
+      });
+      
+      return buffer;
     } catch (error) {
-      console.error(`Error loading bubble image from ${imagePath}:`, error);
+      console.error(`❌ Error loading bubble image from ${imagePath}:`, error);
       throw new Error(`Could not load bubble image: ${imagePath}`);
     }
   }
