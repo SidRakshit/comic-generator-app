@@ -68,7 +68,7 @@ export default function ComicEditorPage() {
 	};
 
 	// Submit prompt to generate/regenerate image via API
-	const handlePromptSubmit = async (prompt: string, dialogue?: string) => {
+	const handlePromptSubmit = async (prompt: string) => {
 		if (activePanelIndex === null || !comic) return; // Use activePanelIndex
 		const panelIndex = activePanelIndex; // Get index
 
@@ -79,7 +79,7 @@ export default function ComicEditorPage() {
 		updatePanelContent(panelIndex, {
 			status: "loading",
 			prompt: prompt,
-			dialogue: dialogue,
+			
 			error: undefined,
 		});
 
@@ -123,7 +123,7 @@ export default function ComicEditorPage() {
 				status: "complete",
 				imageUrl: response.imageUrl,
 				prompt: prompt,
-				dialogue: dialogue,
+				
 				error: undefined,
 			});
 			console.log(`Editor: Panel ${panelIndex} generation success.`);
@@ -135,7 +135,7 @@ export default function ComicEditorPage() {
 				error:
 					error instanceof Error ? error.message : "Image generation failed.",
 				prompt: prompt,
-				dialogue: dialogue,
+				
 				imageUrl: undefined,
 			});
 		}
@@ -301,11 +301,6 @@ export default function ComicEditorPage() {
 				initialPrompt={
 					activePanelIndex !== null
 						? comic?.panels[activePanelIndex]?.prompt || ""
-						: ""
-				}
-				initialDialogue={
-					activePanelIndex !== null
-						? comic?.panels[activePanelIndex]?.dialogue || ""
 						: ""
 				}
 				isRegenerating={
