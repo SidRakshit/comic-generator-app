@@ -160,7 +160,10 @@ function NewComicEditorContent() {
 		console.log('🎯 API endpoint:', `/api/comics/${comic.id}/panels/${panel.id}/annotate`);
 
 		try {
-			const response = await apiRequest<{ success: boolean }>(
+			const response = await apiRequest<{ 
+				success: boolean; 
+				panel?: any;
+			}>(
 				`/api/comics/${comic.id}/panels/${panel.id}/annotate`,
 				'POST',
 				{ bubbles: panelBubbles }
@@ -169,6 +172,10 @@ function NewComicEditorContent() {
 			console.log('📡 API response:', response);
 
 			if (response.success) {
+				console.log('🔄 Updating panel content with bubbles:', panelBubbles);
+				console.log('📍 Current panel before update:', panel);
+				console.log('📦 Response panel data:', response.panel);
+				
 				// Update the panel with new bubbles
 				updatePanelContent(annotatingPanelIndex, {
 					bubbles: panelBubbles,
@@ -177,6 +184,15 @@ function NewComicEditorContent() {
 						bubbles: panelBubbles
 					}
 				});
+				
+				console.log('✅ Panel content updated');
+				
+				// Wait a bit to ensure state update completes
+				setTimeout(() => {
+					console.log('🔍 Panel after update:', comic.panels[annotatingPanelIndex]);
+					console.log('🔍 All panels:', comic.panels);
+				}, 100);
+				
 				setIsAnnotating(false);
 				setAnnotatingPanelIndex(null);
 				setPanelBubbles([]); // Clear the annotation bubbles

@@ -77,6 +77,11 @@ function ComicPanel({
 	onEditClick,
 	onAnnotateClick,
 }: ComicPanelProps) {
+	// Debug logging
+	if (panel.bubbles && panel.bubbles.length > 0) {
+		console.log(`🎨 Panel ${panelNumber} has ${panel.bubbles.length} bubbles:`, panel.bubbles);
+	}
+	
 	return (
 		<div
 			className={`

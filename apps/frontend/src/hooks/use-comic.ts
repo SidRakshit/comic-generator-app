@@ -244,10 +244,18 @@ export function useComic(
 	// --- Update Panel Content ---
 	const updatePanelContent = useCallback(
 		(panelIndex: number, updates: Partial<Panel> & { imageData?: string }) => {
+			console.log('🔧 updatePanelContent called:', { panelIndex, updates });
+			
 			setComic((prev) => {
-				if (!prev || !prev.panels[panelIndex]) return prev;
+				if (!prev || !prev.panels[panelIndex]) {
+					console.log('⚠️ Panel not found or invalid:', { panelIndex, hasPrev: !!prev, panelExists: !!prev?.panels[panelIndex] });
+					return prev;
+				}
+				
 				const updatedPanels = [...prev.panels];
 				const currentPanel = updatedPanels[panelIndex];
+				console.log('📋 Current panel before update:', currentPanel);
+				
 				const newPanelData = { ...currentPanel, ...updates };
 
 				if (updates.status === "complete" && updates.imageData) {
@@ -261,23 +269,39 @@ export function useComic(
 					newPanelData.imageUrl = undefined;
 					newPanelData.imageBase64 = undefined;
 				}
-				if (updates.status !== "complete") {
+				if (updates.status !== "complete" && updates.status !== undefined) {
 					newPanelData.imageBase64 = undefined;
 				}
 
 				// Handle bubbles property specifically
 				if (updates.bubbles !== undefined) {
+					console.log('💬 Setting bubbles:', updates.bubbles);
 					newPanelData.bubbles = updates.bubbles;
 				}
 
 				// Handle layoutPosition updates
 				if (updates.layoutPosition !== undefined) {
+					console.log('📐 Updating layoutPosition:', updates.layoutPosition);
 					newPanelData.layoutPosition = {
 						...currentPanel.layoutPosition,
 						...updates.layoutPosition
 					};
 				}
 
+				// IMPORTANT: Preserve critical panel properties
+				// Make sure imageUrl and status are not accidentally cleared
+				if (!newPanelData.imageUrl && currentPanel.imageUrl) {
+					console.log('⚠️ WARNING: imageUrl was cleared, restoring it');
+					newPanelData.imageUrl = currentPanel.imageUrl;
+				}
+				if (!newPanelData.status || newPanelData.status === "empty") {
+					if (currentPanel.status === "complete") {
+						console.log('⚠️ WARNING: status was changed from complete, restoring it');
+						newPanelData.status = "complete";
+					}
+				}
+
+				console.log('✨ New panel data:', newPanelData);
 				updatedPanels[panelIndex] = newPanelData;
 				return { ...prev, panels: updatedPanels };
 			});
@@ -511,11 +535,13 @@ export function useComic(
 	useEffect(() => {
 		// Auto-save to backend ONLY when comic has generated images but no ID yet
 		// This ensures we only save to backend after image generation, not for text-only drafts
+		// IMPORTANT: This should NOT trigger for comics that already have an ID (already saved)
 		if (!comic.id && comic.template && comic.panels?.some(panel => panel.status === "complete" && panel.imageBase64)) {
 			const timeoutId = setTimeout(async () => {
 				if (!isMountedRef.current) return;
 				
-				console.log("Image detected, auto-saving to backend...");
+				console.log("⚠️ Image detected, auto-saving to backend...");
+				console.log("⚠️ This should only happen for NEW comics without ID");
 				
 				try {
 					if (!comic || !comic.template) {
