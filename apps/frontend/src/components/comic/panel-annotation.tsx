@@ -238,15 +238,7 @@ export default function PanelAnnotation({
                     left: `${bubble.x}%`,
                     top: `${bubble.y}%`,
                     width: `${bubble.width}%`,
-                    height: `${bubble.height}%`,
-                    backgroundImage: `url(${
-                      bubble.type === 'speech' ? '/speech-bubble.png' :
-                      bubble.type === 'thought' ? '/thought-bubble.png' :
-                      '/speech-bubble.png' // default fallback for caption
-                    })`,
-                    backgroundSize: 'contain',
-                    backgroundRepeat: 'no-repeat',
-                    backgroundPosition: 'center'
+                    height: `${bubble.height}%`
                   }}
                   onClick={(e) => {
                     e.stopPropagation();
@@ -317,7 +309,37 @@ export default function PanelAnnotation({
                     setDragStart(null);
                   }}
                 >
-                  <div className="text-xs p-2 truncate h-full flex items-center justify-center text-black font-medium">
+                  {/* Background image */}
+                  <img
+                    src={
+                      bubble.type === 'speech' ? '/speech-bubble.png' :
+                      bubble.type === 'thought' ? '/thought-bubble.png' :
+                      '/speech-bubble.png' // default fallback for caption
+                    }
+                    alt={`${bubble.type} bubble`}
+                    className="w-full h-full object-contain"
+                  />
+                  
+                  {/* Text positioned exactly where it should be for each bubble type */}
+                  <div 
+                    className="absolute text-xs font-medium text-black"
+                    style={{
+                      // Custom positioning for each bubble type
+                      left: bubble.type === 'speech' ? '15%' : 
+                            bubble.type === 'thought' ? '20%' : '10%',
+                      top: bubble.type === 'speech' ? '25%' : 
+                           bubble.type === 'thought' ? '30%' : '20%',
+                      width: bubble.type === 'speech' ? '70%' : 
+                             bubble.type === 'thought' ? '60%' : '80%',
+                      height: bubble.type === 'speech' ? '50%' : 
+                              bubble.type === 'thought' ? '40%' : '60%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      textAlign: 'center',
+                      lineHeight: '1.2'
+                    }}
+                  >
                     {bubble.text || 'Empty'}
                   </div>
                   
