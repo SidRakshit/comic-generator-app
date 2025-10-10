@@ -179,6 +179,7 @@ function NewComicEditorContent() {
 				});
 				setIsAnnotating(false);
 				setAnnotatingPanelIndex(null);
+				setPanelBubbles([]); // Clear the annotation bubbles
 				console.log('✅ Annotations saved successfully');
 			}
 		} catch (error) {

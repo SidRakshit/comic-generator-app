@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useMemo, useRef } from "react";
 import { generateId } from "@repo/utils";
 import { apiRequest, GeneratedImageDataResponse } from "@/lib/api";
-import { PanelStatus, Panel, ComicCharacter, Comic, TemplateDefinition, CreateComicRequest, ComicResponse, ComicPanelResponse, ComicPageResponse, COMIC_TEMPLATES, API_ENDPOINTS } from "@repo/common-types";
+import { PanelStatus, Panel, ComicCharacter, Comic, TemplateDefinition, CreateComicRequest, ComicResponse, ComicPanelResponse, ComicPageResponse, COMIC_TEMPLATES, API_ENDPOINTS, DialogueBubble } from "@repo/common-types";
 
 // Import our Phase 1 hooks
 import { useAutoSave } from "./use-auto-save";
@@ -134,16 +134,22 @@ export function useComic(
 
 				// CORRECTED: Add ?? [] before .map and type 'p' - using consolidated types
 				const loadedPanels: Panel[] =
-					(data.pages?.[0]?.panels ?? []).map((p: ComicPanelResponse) => ({
-						id: p.panel_id,
-						status: p.image_url ? "complete" : "empty",
-						prompt: p.prompt || "",
-						imageUrl: p.image_url || undefined,
-						imageBase64: undefined, // Ensure base64 is not stored for loaded comics
-						error: undefined,
-						panelNumber: p.panel_number,
-						layoutPosition: (p.layout_position as Record<string, unknown>) || {},
-					})) || []; // Fallback to empty array if map fails (less likely now)
+					(data.pages?.[0]?.panels ?? []).map((p: ComicPanelResponse) => {
+						const layoutPosition = (p.layout_position as Record<string, unknown>) || {};
+						const bubbles = (layoutPosition.bubbles as DialogueBubble[]) || [];
+						
+						return {
+							id: p.panel_id,
+							status: p.image_url ? "complete" : "empty",
+							prompt: p.prompt || "",
+							imageUrl: p.image_url || undefined,
+							imageBase64: undefined, // Ensure base64 is not stored for loaded comics
+							error: undefined,
+							panelNumber: p.panel_number,
+							layoutPosition: layoutPosition,
+							bubbles: bubbles, // Extract bubbles from layoutPosition
+						};
+					}) || []; // Fallback to empty array if map fails (less likely now)
 
 				const loadedTemplateKey =
 					data.template ||
@@ -257,6 +263,19 @@ export function useComic(
 				}
 				if (updates.status !== "complete") {
 					newPanelData.imageBase64 = undefined;
+				}
+
+				// Handle bubbles property specifically
+				if (updates.bubbles !== undefined) {
+					newPanelData.bubbles = updates.bubbles;
+				}
+
+				// Handle layoutPosition updates
+				if (updates.layoutPosition !== undefined) {
+					newPanelData.layoutPosition = {
+						...currentPanel.layoutPosition,
+						...updates.layoutPosition
+					};
 				}
 
 				updatedPanels[panelIndex] = newPanelData;
@@ -385,16 +404,22 @@ export function useComic(
 				const panelsToMap: ComicPanelResponse[] = panelsArray ?? [];
 
 				const savedPanels: Panel[] =
-					panelsToMap.map((p: ComicPanelResponse) => ({
-						id: p.panel_id,
-						status: p.image_url ? "complete" : "empty",
-						prompt: p.prompt || "",
-						imageUrl: p.image_url || undefined,
-						imageBase64: undefined,
-						error: undefined,
-						panelNumber: p.panel_number,
-						layoutPosition: (p.layout_position as Record<string, unknown>) || {},
-					})) || comic.panels; // Keep fallback
+					panelsToMap.map((p: ComicPanelResponse) => {
+						const layoutPosition = (p.layout_position as Record<string, unknown>) || {};
+						const bubbles = (layoutPosition.bubbles as DialogueBubble[]) || [];
+						
+						return {
+							id: p.panel_id,
+							status: p.image_url ? "complete" : "empty",
+							prompt: p.prompt || "",
+							imageUrl: p.image_url || undefined,
+							imageBase64: undefined,
+							error: undefined,
+							panelNumber: p.panel_number,
+							layoutPosition: layoutPosition,
+							bubbles: bubbles, // Extract bubbles from layoutPosition
+						};
+					}) || comic.panels; // Keep fallback
 
 				const finalComicState: Comic = {
 					id: responseData.comic_id,
@@ -519,11 +544,15 @@ export function useComic(
 						};
 					});
 					const finalPagesData = [{ page_number: 1, panels: finalPanelsPayload }];
+					// Filter out characters with empty names to avoid validation errors
+					const validCharacters = (comic.characters || []).filter(char => 
+						char.name && char.name.trim().length > 0
+					);
+
 					const comicPayload: CreateComicRequest = {
 						title: comic.title,
 						description: comic.description || "",
-						genre: comic.genre || "",
-						characters: comic.characters || [],
+						characters: validCharacters,
 						setting: {},
 						template: comic.template,
 						pages: finalPagesData,
@@ -588,16 +617,22 @@ export function useComic(
 					const panelsArray: ComicPanelResponse[] | undefined = firstPage?.panels;
 					const panelsToMap: ComicPanelResponse[] = panelsArray ?? [];
 
-					const savedPanels: Panel[] = panelsToMap.map((p: ComicPanelResponse) => ({
-						id: p.panel_id,
-						status: p.image_url ? "complete" : "empty",
-						prompt: p.prompt || "",
-						imageUrl: p.image_url || undefined,
-						imageBase64: undefined,
-						error: undefined,
-						panelNumber: p.panel_number,
-						layoutPosition: (p.layout_position as Record<string, unknown>) || {},
-					})) || comic.panels;
+					const savedPanels: Panel[] = panelsToMap.map((p: ComicPanelResponse) => {
+						const layoutPosition = (p.layout_position as Record<string, unknown>) || {};
+						const bubbles = (layoutPosition.bubbles as DialogueBubble[]) || [];
+						
+						return {
+							id: p.panel_id,
+							status: p.image_url ? "complete" : "empty",
+							prompt: p.prompt || "",
+							imageUrl: p.image_url || undefined,
+							imageBase64: undefined,
+							error: undefined,
+							panelNumber: p.panel_number,
+							layoutPosition: layoutPosition,
+							bubbles: bubbles, // Extract bubbles from layoutPosition
+						};
+					}) || comic.panels;
 
 					const finalComicState: Comic = {
 						id: responseData.comic_id,

@@ -2,7 +2,7 @@
 "use client";
 
 import Image from "next/image";
-import { Panel, UI_CONSTANTS, SEMANTIC_COLORS, INTERACTIVE_STYLES } from "@repo/common-types";
+import { Panel, UI_CONSTANTS, SEMANTIC_COLORS, INTERACTIVE_STYLES, DialogueBubble } from "@repo/common-types";
 import { Loader2, ImageOff, Plus, Edit, MessageSquare } from "lucide-react";
 
 interface ComicCanvasProps {
@@ -119,6 +119,58 @@ function ComicPanel({
 							className="pointer-events-none"
 							unoptimized={true}
 						/>
+						
+						{/* Render dialogue bubbles */}
+						{panel.bubbles && panel.bubbles.length > 0 && (
+							<div className="absolute inset-0 pointer-events-none">
+								{panel.bubbles.map((bubble: DialogueBubble) => (
+									<div
+										key={bubble.id}
+										className="absolute pointer-events-none"
+										style={{
+											left: `${bubble.x}%`,
+											top: `${bubble.y}%`,
+											width: `${bubble.width}%`,
+											height: `${bubble.height}%`
+										}}
+									>
+										{/* Bubble background image */}
+										<img
+											src={
+												bubble.type === 'speech' ? '/speech-bubble.png' :
+												bubble.type === 'thought' ? '/thought-bubble.png' :
+												'/speech-bubble.png' // default fallback for caption
+											}
+											alt={`${bubble.type} bubble`}
+											className="w-full h-full object-contain"
+										/>
+										
+										{/* Bubble text */}
+										<div 
+											className="absolute text-xs font-medium text-black"
+											style={{
+												// Custom positioning for each bubble type
+												left: bubble.type === 'speech' ? '15%' : 
+													  bubble.type === 'thought' ? '20%' : '10%',
+												top: bubble.type === 'speech' ? '25%' : 
+													 bubble.type === 'thought' ? '30%' : '20%',
+												width: bubble.type === 'speech' ? '70%' : 
+													   bubble.type === 'thought' ? '60%' : '80%',
+												height: bubble.type === 'speech' ? '50%' : 
+														bubble.type === 'thought' ? '40%' : '60%',
+												display: 'flex',
+												alignItems: 'center',
+												justifyContent: 'center',
+												textAlign: 'center',
+												lineHeight: '1.2'
+											}}
+										>
+											{bubble.text || 'Empty'}
+										</div>
+									</div>
+								))}
+							</div>
+						)}
 					</div>
 					<div className="absolute top-1 right-1 md:top-2 md:right-2 z-10 flex gap-1">
 						{onAnnotateClick && (
