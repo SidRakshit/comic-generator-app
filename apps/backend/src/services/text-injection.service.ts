@@ -1,5 +1,7 @@
 import sharp from 'sharp';
 import { DialogueBubble } from '@repo/common-types';
+import path from 'path';
+import fs from 'fs';
 
 export class TextInjectionService {
   async injectDialogueIntoPanel(
@@ -17,11 +19,34 @@ export class TextInjectionService {
     const compositeOperations = [];
 
     for (const bubble of bubbles) {
-      const bubbleSvg = this.createBubbleSvg(bubble, imageWidth, imageHeight);
-      const bubbleBuffer = Buffer.from(bubbleSvg);
+      // Use actual PNG bubble images instead of SVG
+      const bubbleImagePath = this.getBubbleImagePath(bubble.type);
+      const bubbleImage = await this.loadBubbleImage(bubbleImagePath);
+      
+      // Resize the bubble image to match the bubble dimensions
+      const bubbleWidth = Math.round((bubble.width / 100) * imageWidth);
+      const bubbleHeight = Math.round((bubble.height / 100) * imageHeight);
+      
+      const resizedBubble = await sharp(bubbleImage)
+        .resize(bubbleWidth, bubbleHeight, { fit: 'contain' })
+        .png()
+        .toBuffer();
+
+      // Create text overlay
+      const textSvg = this.createTextOverlay(bubble, bubbleWidth, bubbleHeight);
+      const textBuffer = Buffer.from(textSvg);
+      
+      // Composite text onto bubble
+      const bubbleWithText = await sharp(resizedBubble)
+        .composite([{
+          input: textBuffer,
+          blend: 'over'
+        }])
+        .png()
+        .toBuffer();
       
       compositeOperations.push({
-        input: bubbleBuffer,
+        input: bubbleWithText,
         top: Math.round((bubble.y / 100) * imageHeight),
         left: Math.round((bubble.x / 100) * imageWidth),
         blend: 'over' as const
@@ -162,5 +187,77 @@ export class TextInjectionService {
               font-weight="bold" fill="blue">${bubble.text || 'Empty'}</text>
       </svg>
     `;
+  }
+
+  private getBubbleImagePath(bubbleType: string): string {
+    const bubbleImages = {
+      'speech': 'speech-bubble.png',
+      'thought': 'thought-bubble.png',
+      'caption': 'speech-bubble.png' // fallback to speech bubble
+    };
+    
+    const fileName = bubbleImages[bubbleType as keyof typeof bubbleImages] || 'speech-bubble.png';
+    return path.join(process.cwd(), 'apps', 'frontend', 'public', fileName);
+  }
+
+  private async loadBubbleImage(imagePath: string): Promise<Buffer> {
+    try {
+      return await fs.promises.readFile(imagePath);
+    } catch (error) {
+      console.error(`Error loading bubble image from ${imagePath}:`, error);
+      throw new Error(`Could not load bubble image: ${imagePath}`);
+    }
+  }
+
+  private createTextOverlay(bubble: DialogueBubble, bubbleWidth: number, bubbleHeight: number): string {
+    const fontSize = Math.max(12, Math.min(24, bubbleHeight / 8));
+    
+    // Custom positioning for each bubble type (matching frontend positioning)
+    const textArea = this.getTextAreaForBubbleType(bubble.type, bubbleWidth, bubbleHeight);
+    
+    // Wrap text for long dialogue
+    const wrappedText = this.wrapText(bubble.text, textArea.width, fontSize);
+
+    return `
+      <svg width="${bubbleWidth}" height="${bubbleHeight}" xmlns="http://www.w3.org/2000/svg">
+        <text x="${textArea.x}" y="${textArea.y}" 
+              text-anchor="middle" dominant-baseline="middle" 
+              font-family="Arial, sans-serif" font-size="${fontSize}" 
+              font-weight="bold" fill="black">${wrappedText}</text>
+      </svg>
+    `;
+  }
+
+  private getTextAreaForBubbleType(bubbleType: string, bubbleWidth: number, bubbleHeight: number) {
+    switch (bubbleType) {
+      case 'speech':
+        return {
+          x: bubbleWidth * 0.5, // 50% (center)
+          y: bubbleHeight * 0.5, // 50% (center)
+          width: bubbleWidth * 0.7, // 70% width
+          height: bubbleHeight * 0.5 // 50% height
+        };
+      case 'thought':
+        return {
+          x: bubbleWidth * 0.5, // 50% (center)
+          y: bubbleHeight * 0.5, // 50% (center)
+          width: bubbleWidth * 0.6, // 60% width
+          height: bubbleHeight * 0.4 // 40% height
+        };
+      case 'caption':
+        return {
+          x: bubbleWidth * 0.5, // 50% (center)
+          y: bubbleHeight * 0.5, // 50% (center)
+          width: bubbleWidth * 0.8, // 80% width
+          height: bubbleHeight * 0.6 // 60% height
+        };
+      default:
+        return {
+          x: bubbleWidth * 0.5,
+          y: bubbleHeight * 0.5,
+          width: bubbleWidth * 0.7,
+          height: bubbleHeight * 0.5
+        };
+    }
   }
 }
