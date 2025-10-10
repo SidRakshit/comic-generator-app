@@ -244,18 +244,30 @@ export default function PanelAnnotation({
                     console.log('🖱️ Bubble mouse down:', bubble.id);
                     setSelectedBubble(bubble.id);
                     setIsDrawing(true);
-                    const startX = ((e.clientX - e.currentTarget.getBoundingClientRect().left) / e.currentTarget.getBoundingClientRect().width) * 100;
-                    const startY = ((e.clientY - e.currentTarget.getBoundingClientRect().top) / e.currentTarget.getBoundingClientRect().height) * 100;
+                    
+                    // Calculate mouse position relative to canvas, not bubble
+                    const canvas = canvasRef.current;
+                    if (!canvas) return;
+                    
+                    const canvasRect = canvas.getBoundingClientRect();
+                    const startX = ((e.clientX - canvasRect.left) / canvasRect.width) * 100;
+                    const startY = ((e.clientY - canvasRect.top) / canvasRect.height) * 100;
+                    
                     setDragStart({ x: startX, y: startY });
-                    console.log('📍 Drag start position:', { x: startX, y: startY });
+                    console.log('📍 Drag start position (canvas relative):', { x: startX, y: startY });
+                    console.log('📍 Current bubble position:', { x: bubble.x, y: bubble.y });
                   }}
                   onMouseMove={(e) => {
                     if (!isDrawing || !dragStart || selectedBubble !== bubble.id) return;
                     e.stopPropagation();
                     
-                    const rect = e.currentTarget.getBoundingClientRect();
-                    const x = ((e.clientX - rect.left) / rect.width) * 100;
-                    const y = ((e.clientY - rect.top) / rect.height) * 100;
+                    // Calculate mouse position relative to canvas, not bubble
+                    const canvas = canvasRef.current;
+                    if (!canvas) return;
+                    
+                    const canvasRect = canvas.getBoundingClientRect();
+                    const x = ((e.clientX - canvasRect.left) / canvasRect.width) * 100;
+                    const y = ((e.clientY - canvasRect.top) / canvasRect.height) * 100;
                     
                     const deltaX = x - dragStart.x;
                     const deltaY = y - dragStart.y;
