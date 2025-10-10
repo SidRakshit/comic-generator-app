@@ -17,14 +17,12 @@ import { ComicCharacter, Panel, SEMANTIC_COLORS, INTERACTIVE_STYLES, UI_CONSTANT
 
 async function generateImageAPI(
 	prompt: string,
-	characterContext?: string,
-	dialogue?: string
+	characterContext?: string
 ): Promise<GeneratedImageDataResponse> {
 	console.log(`Calling generateImageAPI with prompt: "${prompt}"`);
 	const requestBody = { 
 		panelDescription: prompt,
-		...(characterContext && { characterContext }),
-		...(dialogue && { dialogue })
+		...(characterContext && { characterContext })
 	};
 
 	try {
@@ -179,7 +177,7 @@ function NewComicEditorContent() {
 		setPanelBubbles([]);
 	};
 
-	const handlePromptSubmit = async (prompt: string, dialogue?: string) => {
+	const handlePromptSubmit = async (prompt: string) => {
 		if (activePanel === null || !comic || !comic.panels) return;
 		const panelIndex = activePanel;
 
@@ -209,7 +207,6 @@ function NewComicEditorContent() {
 		updatePanelContent(panelIndex, {
 			status: "loading",
 			prompt: prompt,
-			dialogue: dialogue,
 			error: undefined,
 			imageUrl: undefined,
 			imageBase64: undefined,
@@ -217,13 +214,12 @@ function NewComicEditorContent() {
 
 		try {
 			console.log("Generating image with character context for visual consistency...");
-			const imageResponse = await generateImageAPI(fullPrompt, characterContext, dialogue);
+			const imageResponse = await generateImageAPI(fullPrompt, characterContext);
 
 			updatePanelContent(panelIndex, {
 				status: "complete",
 				imageData: imageResponse.imageData,
 				prompt: prompt,
-				dialogue: dialogue,
 				error: undefined,
 			});
 			console.log(`Panel ${panelIndex + 1} generation success.`);
@@ -234,7 +230,6 @@ function NewComicEditorContent() {
 				error:
 					error instanceof Error ? error.message : "Image generation failed.",
 				prompt: prompt,
-				dialogue: dialogue,
 				imageUrl: undefined,
 				imageBase64: undefined,
 			});
@@ -356,9 +351,6 @@ function NewComicEditorContent() {
 			panelNumber={activePanel !== null ? activePanel + 1 : 0}
 			initialPrompt={
 				(activePanel !== null && comic.panels?.[activePanel]?.prompt) || ""
-			}
-			initialDialogue={
-				(activePanel !== null && comic.panels?.[activePanel]?.dialogue) || ""
 			}
 			isRegenerating={
 				activePanel !== null &&
