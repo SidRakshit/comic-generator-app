@@ -406,15 +406,56 @@ export default function PanelAnnotation({
           <div className="w-80 border-l p-4 space-y-4 overflow-y-auto">
             <div>
               <Label>Bubble Type</Label>
-              <select
-                value={bubbleType}
-                onChange={(e) => setBubbleType(e.target.value as any)}
-                className="w-full p-2 border rounded mt-1"
-              >
-                <option value="speech">Speech Bubble</option>
-                <option value="thought">Thought Bubble</option>
-                <option value="caption">Caption</option>
-              </select>
+              <div className="grid grid-cols-3 gap-2 mt-1">
+                <button
+                  type="button"
+                  onClick={() => setBubbleType('speech')}
+                  className={`p-2 border rounded-lg flex flex-col items-center space-y-1 ${
+                    bubbleType === 'speech' 
+                      ? 'border-blue-500 bg-blue-50' 
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                >
+                  <img 
+                    src="/speech-bubble.png" 
+                    alt="Speech Bubble" 
+                    className="w-8 h-8 object-contain"
+                  />
+                  <span className="text-xs">Speech</span>
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={() => setBubbleType('thought')}
+                  className={`p-2 border rounded-lg flex flex-col items-center space-y-1 ${
+                    bubbleType === 'thought' 
+                      ? 'border-blue-500 bg-blue-50' 
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                >
+                  <img 
+                    src="/thought-bubble.png" 
+                    alt="Thought Bubble" 
+                    className="w-8 h-8 object-contain"
+                  />
+                  <span className="text-xs">Thought</span>
+                </button>
+                
+                <button
+                  type="button"
+                  onClick={() => setBubbleType('caption')}
+                  className={`p-2 border rounded-lg flex flex-col items-center space-y-1 ${
+                    bubbleType === 'caption' 
+                      ? 'border-blue-500 bg-blue-50' 
+                      : 'border-gray-300 hover:border-gray-400'
+                  }`}
+                >
+                  <div className="w-8 h-8 border-2 border-gray-400 rounded flex items-center justify-center">
+                    <span className="text-xs font-bold">T</span>
+                  </div>
+                  <span className="text-xs">Caption</span>
+                </button>
+              </div>
             </div>
 
             <div>
