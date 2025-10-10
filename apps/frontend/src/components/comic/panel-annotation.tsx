@@ -79,6 +79,8 @@ export default function PanelAnnotation({
     const x = ((event.clientX - rect.left) / rect.width) * 100;
     const y = ((event.clientY - rect.top) / rect.height) * 100;
 
+    console.log('🖱️ Canvas mouse down at:', { x, y });
+
     // Check if clicking on existing bubble
     const clickedBubble = bubbles.find(bubble => 
       x >= bubble.x && x <= bubble.x + bubble.width &&
@@ -86,9 +88,12 @@ export default function PanelAnnotation({
     );
 
     if (clickedBubble) {
+      console.log('🎯 Clicked on bubble:', clickedBubble.id);
       setSelectedBubble(clickedBubble.id);
       setIsDrawing(true);
       setDragStart({ x, y });
+    } else {
+      console.log('📝 Clicked on empty canvas area');
     }
   };
 
@@ -105,16 +110,32 @@ export default function PanelAnnotation({
     const deltaX = x - dragStart.x;
     const deltaY = y - dragStart.y;
 
+    const bubble = bubbles.find(b => b.id === selectedBubble);
+    if (!bubble) return;
+
+    const newX = Math.max(0, Math.min(90, bubble.x + deltaX));
+    const newY = Math.max(0, Math.min(90, bubble.y + deltaY));
+
+    console.log('🔄 Canvas drag move:', {
+      selectedBubble,
+      currentPos: { x: bubble.x, y: bubble.y },
+      mousePos: { x, y },
+      dragStart: dragStart,
+      delta: { deltaX, deltaY },
+      newPos: { newX, newY }
+    });
+
     // Reposition the bubble (only when dragging from canvas)
     updateBubble(selectedBubble, {
-      x: Math.max(0, Math.min(90, bubbles.find(b => b.id === selectedBubble)!.x + deltaX)),
-      y: Math.max(0, Math.min(90, bubbles.find(b => b.id === selectedBubble)!.y + deltaY))
+      x: newX,
+      y: newY
     });
 
     setDragStart({ x, y });
   };
 
   const handleMouseUp = () => {
+    console.log('🛑 Canvas drag end');
     setIsDrawing(false);
     setDragStart(null);
   };
@@ -220,12 +241,13 @@ export default function PanelAnnotation({
                   }}
                   onMouseDown={(e) => {
                     e.stopPropagation();
+                    console.log('🖱️ Bubble mouse down:', bubble.id);
                     setSelectedBubble(bubble.id);
                     setIsDrawing(true);
-                    setDragStart({ 
-                      x: ((e.clientX - e.currentTarget.getBoundingClientRect().left) / e.currentTarget.getBoundingClientRect().width) * 100,
-                      y: ((e.clientY - e.currentTarget.getBoundingClientRect().top) / e.currentTarget.getBoundingClientRect().height) * 100
-                    });
+                    const startX = ((e.clientX - e.currentTarget.getBoundingClientRect().left) / e.currentTarget.getBoundingClientRect().width) * 100;
+                    const startY = ((e.clientY - e.currentTarget.getBoundingClientRect().top) / e.currentTarget.getBoundingClientRect().height) * 100;
+                    setDragStart({ x: startX, y: startY });
+                    console.log('📍 Drag start position:', { x: startX, y: startY });
                   }}
                   onMouseMove={(e) => {
                     if (!isDrawing || !dragStart || selectedBubble !== bubble.id) return;
@@ -238,20 +260,34 @@ export default function PanelAnnotation({
                     const deltaX = x - dragStart.x;
                     const deltaY = y - dragStart.y;
                     
+                    const newX = Math.max(0, Math.min(90, bubble.x + deltaX));
+                    const newY = Math.max(0, Math.min(90, bubble.y + deltaY));
+                    
+                    console.log('🔄 Bubble dragging:', {
+                      bubbleId: bubble.id,
+                      currentPos: { x: bubble.x, y: bubble.y },
+                      mousePos: { x, y },
+                      dragStart: dragStart,
+                      delta: { deltaX, deltaY },
+                      newPos: { newX, newY }
+                    });
+                    
                     updateBubble(bubble.id, {
-                      x: Math.max(0, Math.min(90, bubble.x + deltaX)),
-                      y: Math.max(0, Math.min(90, bubble.y + deltaY))
+                      x: newX,
+                      y: newY
                     });
                     
                     setDragStart({ x, y });
                   }}
                   onMouseUp={(e) => {
                     e.stopPropagation();
+                    console.log('🛑 Bubble drag end:', bubble.id);
                     setIsDrawing(false);
                     setDragStart(null);
                   }}
                   onMouseLeave={(e) => {
                     e.stopPropagation();
+                    console.log('🚪 Bubble mouse leave during drag:', bubble.id);
                     setIsDrawing(false);
                     setDragStart(null);
                   }}
@@ -289,12 +325,18 @@ export default function PanelAnnotation({
                             const deltaX = ((e.clientX - startX) / 600) * 100;
                             const deltaY = ((e.clientY - startY) / 400) * 100;
                             
-                            // Only resize, no repositioning
-                            const widthDelta = -deltaX; // Negative because we're resizing from left
-                            const heightDelta = -deltaY; // Negative because we're resizing from top
+                            // Resize both width and height, and adjust position
+                            const newX = Math.max(0, Math.min(90, bubble.x + deltaX));
+                            const newY = Math.max(0, Math.min(90, bubble.y + deltaY));
+                            const newWidth = Math.max(5, Math.min(50, bubble.width - deltaX));
+                            const newHeight = Math.max(5, Math.min(50, bubble.height - deltaY));
                             
-                            resizeBubble(bubble.id, 'width', widthDelta);
-                            resizeBubble(bubble.id, 'height', heightDelta);
+                            updateBubble(bubble.id, {
+                              x: newX,
+                              y: newY,
+                              width: newWidth,
+                              height: newHeight
+                            });
                           };
                           
                           const handleMouseUp = () => {
@@ -317,9 +359,14 @@ export default function PanelAnnotation({
                             const deltaX = ((e.clientX - startX) / 600) * 100;
                             const deltaY = ((e.clientY - startY) / 400) * 100;
                             
-                            // Use resizeBubble function for both width and height
-                            resizeBubble(bubble.id, 'width', deltaX);
-                            resizeBubble(bubble.id, 'height', deltaY);
+                            // Resize both width and height, keep position fixed
+                            const newWidth = Math.max(5, Math.min(50, bubble.width + deltaX));
+                            const newHeight = Math.max(5, Math.min(50, bubble.height + deltaY));
+                            
+                            updateBubble(bubble.id, {
+                              width: newWidth,
+                              height: newHeight
+                            });
                           };
                           
                           const handleMouseUp = () => {
