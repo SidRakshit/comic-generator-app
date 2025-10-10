@@ -7,8 +7,7 @@ import { COMIC_RULES, PASSWORD_RULES, USER_RULES } from '../constants/business-r
 // Request schemas
 export const CreateComicRequestSchema = z.object({
   title: z.string().min(COMIC_RULES.TITLE.MIN_LENGTH, 'Title is required').max(COMIC_RULES.TITLE.MAX_LENGTH, `Title must be less than ${COMIC_RULES.TITLE.MAX_LENGTH} characters`),
-  description: z.string().max(COMIC_RULES.DESCRIPTION.MAX_LENGTH, `Description must be less than ${COMIC_RULES.DESCRIPTION.MAX_LENGTH} characters`).optional(),
-  genre: z.string().max(COMIC_RULES.GENRE.MAX_LENGTH, `Genre must be less than ${COMIC_RULES.GENRE.MAX_LENGTH} characters`).optional(),
+  description: z.string().max(COMIC_RULES.DESCRIPTION.MAX_LENGTH, `Description must be less than ${COMIC_RULES.DESCRIPTION.MAX_LENGTH} characters`).optional().or(z.literal("")),
   characters: z.array(ComicCharacterSchema).optional(),
   setting: z.record(z.unknown()).optional(),
   template: z.string().min(1, 'Template is required'),
@@ -16,8 +15,10 @@ export const CreateComicRequestSchema = z.object({
     page_number: z.number().positive(),
     panels: z.array(z.object({
       panel_number: z.number().positive(),
-      prompt: z.string().min(COMIC_RULES.PANEL.PROMPT.MIN_LENGTH, `Prompt must be at least ${COMIC_RULES.PANEL.PROMPT.MIN_LENGTH} characters`).max(COMIC_RULES.PANEL.PROMPT.MAX_LENGTH, `Prompt must be less than ${COMIC_RULES.PANEL.PROMPT.MAX_LENGTH} characters`).optional(),
-      dialogue: z.string().max(COMIC_RULES.PANEL.DIALOGUE.MAX_LENGTH, `Dialogue must be less than ${COMIC_RULES.PANEL.DIALOGUE.MAX_LENGTH} characters`).optional(),
+      prompt: z.string().max(COMIC_RULES.PANEL.PROMPT.MAX_LENGTH, `Prompt must be less than ${COMIC_RULES.PANEL.PROMPT.MAX_LENGTH} characters`).optional().refine(
+        (val) => !val || val.length >= COMIC_RULES.PANEL.PROMPT.MIN_LENGTH,
+        { message: `Prompt must be at least ${COMIC_RULES.PANEL.PROMPT.MIN_LENGTH} characters when provided` }
+      ),
       layout_position: z.record(z.unknown()).optional(),
       image_base64: z.string().optional(),
     }))
@@ -26,15 +27,14 @@ export const CreateComicRequestSchema = z.object({
 
 export const UpdateComicRequestSchema = z.object({
   title: z.string().min(1, 'Title is required').optional(),
-  description: z.string().optional(),
+  description: z.string().optional().or(z.literal("")),
   characters: z.array(ComicCharacterSchema).optional(),
   setting: z.record(z.unknown()).optional(),
   pages: z.array(z.object({
     page_number: z.number().positive(),
     panels: z.array(z.object({
       panel_number: z.number().positive(),
-      prompt: z.string().optional(),
-      dialogue: z.string().optional(),
+      prompt: z.string().optional().or(z.literal("")),
       layout_position: z.record(z.unknown()).optional(),
     }))
   })).optional(),
@@ -45,7 +45,6 @@ export const ComicPageRequestSchema = z.object({
   panels: z.array(z.object({
     panel_number: z.number().positive(),
     prompt: z.string().optional(),
-    dialogue: z.string().optional(),
     layout_position: z.record(z.unknown()).optional(),
   }))
 });
@@ -53,7 +52,6 @@ export const ComicPageRequestSchema = z.object({
 export const ComicPanelRequestSchema = z.object({
   panel_number: z.number().positive(),
   prompt: z.string().optional(),
-  dialogue: z.string().optional(),
   layout_position: z.record(z.unknown()).optional(),
 });
 
@@ -64,7 +62,6 @@ export const GenerateImageRequestSchema = z.object({
 export const GeneratePanelImageRequestSchema = z.object({
   panelDescription: z.string().min(COMIC_RULES.PANEL.PROMPT.MIN_LENGTH, `Panel description must be at least ${COMIC_RULES.PANEL.PROMPT.MIN_LENGTH} characters`).max(COMIC_RULES.PANEL.PROMPT.MAX_LENGTH, `Panel description must be less than ${COMIC_RULES.PANEL.PROMPT.MAX_LENGTH} characters`),
   characterContext: z.string().optional(),
-  dialogue: z.string().max(COMIC_RULES.PANEL.DIALOGUE.MAX_LENGTH, `Dialogue must be less than ${COMIC_RULES.PANEL.DIALOGUE.MAX_LENGTH} characters`).optional(),
 });
 
 
@@ -111,7 +108,6 @@ export const ComicResponseSchema = z.object({
       panel_number: z.number(),
       image_url: z.string().url().optional(),
       prompt: z.string().optional(),
-      dialogue: z.string().optional(),
       layout_position: z.record(z.unknown()).optional(),
       created_at: z.string(),
       updated_at: z.string(),

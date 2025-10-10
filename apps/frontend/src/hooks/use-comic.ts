@@ -501,14 +501,23 @@ export function useComic(
 					}
 
 					// Create payload using shared API types for SSoT compliance
-					const finalPanelsPayload = comic.panels.map((panel, index) => ({
-						panel_number: panel.panelNumber ?? index + 1,
-						prompt: panel.prompt && panel.prompt.length >= 5 
-							? panel.prompt 
-							: `${panel.prompt || "Comic panel"} illustration`,
-						layout_position: panel.layoutPosition || {},
-						image_base64: panel.imageBase64 || "",
-					}));
+					const finalPanelsPayload = comic.panels.map((panel, index) => {
+						// Ensure prompt meets minimum length requirement or is omitted
+						let prompt = panel.prompt;
+						if (prompt && prompt.length < 5) {
+							prompt = `${prompt} illustration`;
+						}
+						if (!prompt || prompt.length < 5) {
+							prompt = `Comic panel ${index + 1} illustration`;
+						}
+						
+						return {
+							panel_number: panel.panelNumber ?? index + 1,
+							prompt: prompt,
+							layout_position: panel.layoutPosition || {},
+							image_base64: panel.imageBase64 || "",
+						};
+					});
 					const finalPagesData = [{ page_number: 1, panels: finalPanelsPayload }];
 					const comicPayload: CreateComicRequest = {
 						title: comic.title,

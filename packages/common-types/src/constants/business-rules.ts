@@ -56,11 +56,6 @@ export const COMIC_RULES = {
 	
 	GENRE: {
 		MAX_LENGTH: 50,
-		ALLOWED_GENRES: [
-			'Action', 'Adventure', 'Comedy', 'Drama', 'Fantasy', 
-			'Horror', 'Mystery', 'Romance', 'Sci-Fi', 'Slice of Life',
-			'Superhero', 'Thriller', 'Western', 'Other'
-		] as const,
 	},
 	
 	// Panel constraints
@@ -68,10 +63,6 @@ export const COMIC_RULES = {
 		PROMPT: {
 			MIN_LENGTH: 5,
 			MAX_LENGTH: 750,
-		},
-		DIALOGUE: {
-			MIN_LENGTH: 0,
-			MAX_LENGTH: 200,
 		},
 		MAX_PANELS_PER_COMIC: 20, // Reasonable limit for performance
 	},
@@ -190,7 +181,6 @@ export const SEARCH_RULES = {
 	},
 	
 	FILTERS: {
-		GENRES: COMIC_RULES.GENRE.ALLOWED_GENRES,
 		SORT_OPTIONS: ['newest', 'oldest', 'popular', 'trending'] as const,
 	},
 } as const;
