@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { DialogueBubble } from '@repo/common-types';
 import { Button } from '@repo/ui/button';
 import { Input } from '@repo/ui/input';
@@ -45,20 +45,6 @@ export default function PanelAnnotation({
       }
     }
   }, [imageUrl]);
-
-  // Keyboard support for deleting bubbles
-  useEffect(() => {
-    const handleKeyDown = (event: KeyboardEvent) => {
-      if (event.key === 'Delete') {
-        if (selectedBubble) {
-          deleteBubble(selectedBubble);
-        }
-      }
-    };
-
-    document.addEventListener('keydown', handleKeyDown);
-    return () => document.removeEventListener('keydown', handleKeyDown);
-  }, [selectedBubble]);
 
   const handleCanvasClick = (event: React.MouseEvent<HTMLCanvasElement>) => {
     if (isDrawing) return;
@@ -140,12 +126,29 @@ export default function PanelAnnotation({
     );
   };
 
-  const deleteBubble = (bubbleId: string) => {
+  const deleteBubble = useCallback((bubbleId: string) => {
     onBubblesChange(bubbles.filter(bubble => bubble.id !== bubbleId));
     if (selectedBubble === bubbleId) {
       setSelectedBubble(null);
     }
-  };
+  }, [bubbles, selectedBubble, onBubblesChange]);
+
+  // Keyboard support for deleting bubbles
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      console.log('Key pressed:', event.key, 'Selected bubble:', selectedBubble);
+      if (event.key === 'Delete') {
+        if (selectedBubble) {
+          console.log('Deleting bubble:', selectedBubble);
+          event.preventDefault();
+          deleteBubble(selectedBubble);
+        }
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
+  }, [selectedBubble, deleteBubble]);
 
   const resizeBubble = (bubbleId: string, direction: 'width' | 'height', delta: number) => {
     const bubble = bubbles.find(b => b.id === bubbleId);
