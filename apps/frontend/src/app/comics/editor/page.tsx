@@ -140,10 +140,24 @@ function NewComicEditorContent() {
 	};
 
 	const handleSaveAnnotations = async () => {
-		if (annotatingPanelIndex === null || !comic.id) return;
+		console.log('💾 Starting to save annotations...');
+		console.log('📊 Annotating panel index:', annotatingPanelIndex);
+		console.log('🆔 Comic ID:', comic.id);
+		console.log('📦 Panel bubbles:', panelBubbles);
+		
+		if (annotatingPanelIndex === null || !comic.id) {
+			console.log('❌ Missing required data for saving');
+			return;
+		}
 		
 		const panel = comic.panels[annotatingPanelIndex];
-		if (!panel?.id) return;
+		if (!panel?.id) {
+			console.log('❌ Panel not found or missing ID');
+			return;
+		}
+
+		console.log('📝 Panel ID:', panel.id);
+		console.log('🎯 API endpoint:', `/api/comics/${comic.id}/panels/${panel.id}/annotate`);
 
 		try {
 			const response = await apiRequest<{ success: boolean }>(
@@ -151,6 +165,8 @@ function NewComicEditorContent() {
 				'POST',
 				{ bubbles: panelBubbles }
 			);
+
+			console.log('📡 API response:', response);
 
 			if (response.success) {
 				// Update the panel with new bubbles
@@ -175,6 +191,41 @@ function NewComicEditorContent() {
 		setIsAnnotating(false);
 		setAnnotatingPanelIndex(null);
 		setPanelBubbles([]);
+	};
+
+	const handleInjectText = async () => {
+		if (annotatingPanelIndex === null || !comic.id) return;
+		
+		const panel = comic.panels[annotatingPanelIndex];
+		if (!panel?.id) return;
+
+		console.log('🎨 Starting text injection...');
+		console.log('📊 Panel index:', annotatingPanelIndex);
+		console.log('🆔 Comic ID:', comic.id);
+		console.log('📝 Panel ID:', panel.id);
+		console.log('📦 Bubbles to inject:', panelBubbles);
+
+		try {
+			const response = await apiRequest<{ success: boolean; processedImageUrl: string }>(
+				`/api/comics/${comic.id}/panels/${panel.id}/inject-text`,
+				'POST',
+				{}
+			);
+
+			console.log('📡 Text injection response:', response);
+
+			if (response.success && response.processedImageUrl) {
+				// Update the panel with the processed image
+				updatePanelContent(annotatingPanelIndex, {
+					imageUrl: response.processedImageUrl
+				});
+				console.log('✅ Text injection successful');
+				alert('Text injected successfully!');
+			}
+		} catch (error) {
+			console.error('❌ Failed to inject text:', error);
+			alert('Failed to inject text. Please try again.');
+		}
 	};
 
 	const handlePromptSubmit = async (prompt: string) => {
@@ -375,6 +426,18 @@ function NewComicEditorContent() {
 					onCancel={handleCancelAnnotations}
 					characters={comic.characters || []}
 				/>
+			)}
+			
+			{/* Inject Text Button - only show when not annotating but have saved bubbles */}
+			{!isAnnotating && annotatingPanelIndex !== null && panelBubbles.length > 0 && (
+				<div className="fixed bottom-4 right-4 z-50">
+					<Button
+						onClick={handleInjectText}
+						className="bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg shadow-lg"
+					>
+						🎨 Inject Text
+					</Button>
+				</div>
 			)}
 		</div>
 	);
