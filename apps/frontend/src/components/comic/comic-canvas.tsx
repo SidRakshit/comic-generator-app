@@ -131,62 +131,93 @@ function ComicPanel({
 								{panel.bubbles.map((bubble: DialogueBubble) => (
 									<div
 										key={bubble.id}
-										className="absolute pointer-events-none bg-white rounded-2xl border-2 border-black shadow-lg"
+										className="absolute pointer-events-none"
 										style={{
 											left: `${bubble.x}%`,
 											top: `${bubble.y}%`,
 											width: `${bubble.width}%`,
-											height: `${bubble.height}%`,
-											backgroundColor: 'rgba(255, 255, 255, 0.95)',
-											borderRadius: bubble.type === 'thought' ? '50%' : '1rem'
+											height: `${bubble.height}%`
 										}}
 									>
-										{/* Bubble tail for speech bubbles */}
-										{bubble.type === 'speech' && (
-											<div 
-												className="absolute w-0 h-0 border-l-8 border-l-transparent border-r-8 border-r-transparent border-t-12 border-t-white"
-												style={{
-													bottom: '-10px',
-													left: '20%',
-													filter: 'drop-shadow(0 2px 0 black)'
-												}}
-											/>
-										)}
-										
-										{/* Thought bubble circles */}
-										{bubble.type === 'thought' && (
-											<>
-												<div 
-													className="absolute w-3 h-3 bg-white border-2 border-black rounded-full"
-													style={{
-														bottom: '-15px',
-														left: '25%'
-													}}
-												/>
-												<div 
-													className="absolute w-2 h-2 bg-white border-2 border-black rounded-full"
-													style={{
-														bottom: '-22px',
-														left: '20%'
-													}}
-												/>
-											</>
-										)}
-										
-										{/* Bubble text */}
-										<div 
-											className="absolute text-xs font-bold text-black flex items-center justify-center text-center p-2"
+										{/* Main bubble container */}
+										<div
+											className="relative w-full h-full"
 											style={{
-												left: '10%',
-												top: '20%',
-												width: '80%',
-												height: '60%',
-												lineHeight: '1.3',
-												wordWrap: 'break-word',
-												overflow: 'hidden'
+												backgroundColor: 'rgba(255, 255, 255, 0.95)',
+												borderRadius: bubble.type === 'thought' ? '50%' : '1rem',
+												border: '2px solid black',
+												boxShadow: '0 2px 4px rgba(0,0,0,0.3)'
 											}}
 										>
-											{bubble.text || 'Empty'}
+											{/* Speech bubble tail */}
+											{bubble.type === 'speech' && (
+												<div 
+													className="absolute"
+													style={{
+														bottom: '-8px',
+														left: '20%',
+														width: '0',
+														height: '0',
+														borderLeft: '8px solid transparent',
+														borderRight: '8px solid transparent',
+														borderTop: '12px solid rgba(255, 255, 255, 0.95)',
+														filter: 'drop-shadow(0 2px 0 black)'
+													}}
+												/>
+											)}
+											
+											{/* Speech bubble tail border */}
+											{bubble.type === 'speech' && (
+												<div 
+													className="absolute"
+													style={{
+														bottom: '-10px',
+														left: '18%',
+														width: '0',
+														height: '0',
+														borderLeft: '10px solid transparent',
+														borderRight: '10px solid transparent',
+														borderTop: '14px solid black',
+														zIndex: -1
+													}}
+												/>
+											)}
+											
+											{/* Thought bubble circles */}
+											{bubble.type === 'thought' && (
+												<>
+													<div 
+														className="absolute w-3 h-3 bg-white border-2 border-black rounded-full"
+														style={{
+															bottom: '-15px',
+															left: '25%'
+														}}
+													/>
+													<div 
+														className="absolute w-2 h-2 bg-white border-2 border-black rounded-full"
+														style={{
+															bottom: '-22px',
+															left: '20%'
+														}}
+													/>
+												</>
+											)}
+											
+											{/* Bubble text */}
+											<div 
+												className="absolute text-xs font-bold text-black flex items-center justify-center text-center p-2"
+												style={{
+													left: '10%',
+													top: '20%',
+													width: '80%',
+													height: '60%',
+													lineHeight: '1.3',
+													wordWrap: 'break-word',
+													overflow: 'hidden'
+												}}
+											>
+												{bubble.text || 'Empty'}
+											</div>
 										</div>
 									</div>
 								))}
