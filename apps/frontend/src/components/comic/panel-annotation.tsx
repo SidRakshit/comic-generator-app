@@ -5,7 +5,7 @@ import { DialogueBubble } from '@repo/common-types';
 import { Button } from '@repo/ui/button';
 import { Input } from '@repo/ui/input';
 import { Label } from '@repo/ui/label';
-import { MessageSquare, X, Trash2 } from 'lucide-react';
+import { MessageSquare, X, Trash2, Cloud, Type } from 'lucide-react';
 
 interface PanelAnnotationProps {
   panelId: string;
@@ -185,10 +185,10 @@ export default function PanelAnnotation({
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg max-w-6xl max-h-[90vh] w-full overflow-hidden flex flex-col">
-        <div className="flex items-center justify-between p-4 border-b">
-          <h2 className="text-xl font-bold">Annotate Panel</h2>
-          <Button onClick={onCancel} variant="ghost" size="sm">
+      <div className="bg-black rounded-lg max-w-6xl max-h-[90vh] w-full overflow-hidden flex flex-col border border-gray-700">
+        <div className="flex items-center justify-between p-4 border-b border-gray-700">
+          <h2 className="text-xl font-bold text-white">Annotate Panel</h2>
+          <Button onClick={onCancel} variant="ghost" size="sm" className="text-white hover:bg-gray-800">
             <X className="h-4 w-4" />
           </Button>
         </div>
@@ -196,12 +196,12 @@ export default function PanelAnnotation({
         <div className="flex flex-1 overflow-hidden">
           {/* Canvas Area */}
           <div className="flex-1 p-4">
-            <div className="relative border border-gray-300 rounded-lg overflow-hidden">
+            <div className="relative border border-gray-600 rounded-lg overflow-hidden">
               <canvas
                 ref={canvasRef}
                 className="cursor-crosshair w-full h-auto"
-                width={600}
-                height={400}
+                width={1024}
+                height={1024}
                 onClick={handleCanvasClick}
                 onMouseDown={handleMouseDown}
                 onMouseMove={handleMouseMove}
@@ -309,16 +309,14 @@ export default function PanelAnnotation({
                     setDragStart(null);
                   }}
                 >
-                  {/* Background image */}
-                  <img
-                    src={
-                      bubble.type === 'speech' ? '/speech-bubble.png' :
-                      bubble.type === 'thought' ? '/thought-bubble.png' :
-                      '/speech-bubble.png' // default fallback for caption
-                    }
-                    alt={`${bubble.type} bubble`}
-                    className="w-full h-full object-contain"
-                  />
+                  {/* Bubble background */}
+                  <div className={`w-full h-full rounded-lg flex items-center justify-center ${
+                    bubble.type === 'speech' ? 'bg-white border-2 border-black' :
+                    bubble.type === 'thought' ? 'bg-white border-2 border-black rounded-full' :
+                    'bg-gray-200 border-2 border-gray-400' // caption
+                  }`}>
+                    <div className="w-2 h-2 bg-black rounded-full"></div>
+                  </div>
                   
                   {/* Text positioned exactly where it should be for each bubble type */}
                   <div 
@@ -369,8 +367,8 @@ export default function PanelAnnotation({
                           const startHeight = bubble.height;
                           
                           const handleMouseMove = (e: MouseEvent) => {
-                            const deltaX = ((e.clientX - startX) / 600) * 100;
-                            const deltaY = ((e.clientY - startY) / 400) * 100;
+                            const deltaX = ((e.clientX - startX) / 1024) * 100;
+                            const deltaY = ((e.clientY - startY) / 1024) * 100;
                             
                             // Resize both width and height, and adjust position
                             const newX = Math.max(0, Math.min(90, bubble.x + deltaX));
@@ -403,8 +401,8 @@ export default function PanelAnnotation({
                           const startY = e.clientY;
                           
                           const handleMouseMove = (e: MouseEvent) => {
-                            const deltaX = ((e.clientX - startX) / 600) * 100;
-                            const deltaY = ((e.clientY - startY) / 400) * 100;
+                            const deltaX = ((e.clientX - startX) / 1024) * 100;
+                            const deltaY = ((e.clientY - startY) / 1024) * 100;
                             
                             // Resize both width and height, keep position fixed
                             const newWidth = Math.max(5, Math.min(50, bubble.width + deltaX));
@@ -433,25 +431,21 @@ export default function PanelAnnotation({
           </div>
 
           {/* Controls */}
-          <div className="w-80 border-l p-4 space-y-4 overflow-y-auto">
+          <div className="w-80 border-l border-gray-700 p-4 space-y-4 overflow-y-auto">
             <div>
-              <Label>Bubble Type</Label>
+              <Label className="text-white">Bubble Type</Label>
               <div className="grid grid-cols-3 gap-2 mt-1">
                 <button
                   type="button"
                   onClick={() => setBubbleType('speech')}
                   className={`p-2 border rounded-lg flex flex-col items-center space-y-1 ${
                     bubbleType === 'speech' 
-                      ? 'border-blue-500 bg-blue-50' 
-                      : 'border-gray-300 hover:border-gray-400'
+                      ? 'border-blue-500 bg-blue-900' 
+                      : 'border-gray-600 hover:border-gray-500 bg-gray-800'
                   }`}
                 >
-                  <img 
-                    src="/speech-bubble.png" 
-                    alt="Speech Bubble" 
-                    className="w-8 h-8 object-contain"
-                  />
-                  <span className="text-xs">Speech</span>
+                  <MessageSquare className="w-8 h-8 text-white" />
+                  <span className="text-xs text-white">Speech</span>
                 </button>
                 
                 <button
@@ -459,16 +453,12 @@ export default function PanelAnnotation({
                   onClick={() => setBubbleType('thought')}
                   className={`p-2 border rounded-lg flex flex-col items-center space-y-1 ${
                     bubbleType === 'thought' 
-                      ? 'border-blue-500 bg-blue-50' 
-                      : 'border-gray-300 hover:border-gray-400'
+                      ? 'border-blue-500 bg-blue-900' 
+                      : 'border-gray-600 hover:border-gray-500 bg-gray-800'
                   }`}
                 >
-                  <img 
-                    src="/thought-bubble.png" 
-                    alt="Thought Bubble" 
-                    className="w-8 h-8 object-contain"
-                  />
-                  <span className="text-xs">Thought</span>
+                  <Cloud className="w-8 h-8 text-white" />
+                  <span className="text-xs text-white">Thought</span>
                 </button>
                 
                 <button
@@ -476,29 +466,29 @@ export default function PanelAnnotation({
                   onClick={() => setBubbleType('caption')}
                   className={`p-2 border rounded-lg flex flex-col items-center space-y-1 ${
                     bubbleType === 'caption' 
-                      ? 'border-blue-500 bg-blue-50' 
-                      : 'border-gray-300 hover:border-gray-400'
+                      ? 'border-blue-500 bg-blue-900' 
+                      : 'border-gray-600 hover:border-gray-500 bg-gray-800'
                   }`}
                 >
                   <div className="w-8 h-8 border-2 border-gray-400 rounded flex items-center justify-center">
-                    <span className="text-xs font-bold">T</span>
+                    <span className="text-xs font-bold text-white">T</span>
                   </div>
-                  <span className="text-xs">Caption</span>
+                  <span className="text-xs text-white">Caption</span>
                 </button>
               </div>
             </div>
 
             <div>
-              <Label>Instructions</Label>
-              <p className="text-sm text-gray-600 mt-1">
+              <Label className="text-white">Instructions</Label>
+              <p className="text-sm text-gray-300 mt-1">
                 Click on the image to place bubbles. Drag to move, use handles to resize.
               </p>
             </div>
 
             {selectedBubble && (
-              <div className="space-y-3 p-3 border rounded-lg bg-gray-50">
+              <div className="space-y-3 p-3 border border-gray-600 rounded-lg bg-gray-800">
                 <div className="flex items-center justify-between">
-                  <Label className="text-sm font-medium">Selected Bubble</Label>
+                  <Label className="text-sm font-medium text-white">Selected Bubble</Label>
                   <Button
                     onClick={() => deleteBubble(selectedBubble)}
                     variant="destructive"
@@ -509,51 +499,28 @@ export default function PanelAnnotation({
                 </div>
                 
                 <div>
-                  <Label className="text-sm">Text</Label>
+                  <Label className="text-sm text-white">Text</Label>
                   <Input
                     value={bubbles.find(b => b.id === selectedBubble)?.text || ''}
                     onChange={(e) => updateBubble(selectedBubble, { text: e.target.value })}
                     placeholder="Enter dialogue..."
-                    className="mt-1"
+                    className="mt-1 bg-gray-700 border-gray-600 text-white placeholder-gray-400"
                   />
                 </div>
                 
-                {characters.length > 0 && (
-                  <div>
-                    <Label className="text-sm">Character</Label>
-                    <select
-                      value={bubbles.find(b => b.id === selectedBubble)?.characterId || ''}
-                      onChange={(e) => {
-                        const character = characters.find(c => c.id === e.target.value);
-                        updateBubble(selectedBubble, { 
-                          characterId: e.target.value,
-                          characterName: character?.name || ''
-                        });
-                      }}
-                      className="w-full p-2 border rounded mt-1"
-                    >
-                      <option value="">Select character...</option>
-                      {characters.map((char) => (
-                        <option key={char.id} value={char.id}>
-                          {char.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                )}
 
                 <div className="grid grid-cols-2 gap-2 text-xs">
                   <div>
-                    <Label className="text-xs">X: {bubbles.find(b => b.id === selectedBubble)?.x.toFixed(1)}%</Label>
+                    <Label className="text-xs text-gray-300">X: {bubbles.find(b => b.id === selectedBubble)?.x.toFixed(1)}%</Label>
                   </div>
                   <div>
-                    <Label className="text-xs">Y: {bubbles.find(b => b.id === selectedBubble)?.y.toFixed(1)}%</Label>
+                    <Label className="text-xs text-gray-300">Y: {bubbles.find(b => b.id === selectedBubble)?.y.toFixed(1)}%</Label>
                   </div>
                   <div>
-                    <Label className="text-xs">W: {bubbles.find(b => b.id === selectedBubble)?.width.toFixed(1)}%</Label>
+                    <Label className="text-xs text-gray-300">W: {bubbles.find(b => b.id === selectedBubble)?.width.toFixed(1)}%</Label>
                   </div>
                   <div>
-                    <Label className="text-xs">H: {bubbles.find(b => b.id === selectedBubble)?.height.toFixed(1)}%</Label>
+                    <Label className="text-xs text-gray-300">H: {bubbles.find(b => b.id === selectedBubble)?.height.toFixed(1)}%</Label>
                   </div>
                 </div>
               </div>
@@ -561,10 +528,10 @@ export default function PanelAnnotation({
 
 
             <div className="flex gap-2 pt-4">
-              <Button onClick={onSave} className="flex-1">
+              <Button onClick={onSave} className="flex-1 bg-black text-white hover:bg-gray-800 border border-gray-600">
                 Save Annotations
               </Button>
-              <Button onClick={onCancel} variant="outline" className="flex-1">
+              <Button onClick={onCancel} variant="outline" className="flex-1 border-gray-600 text-white hover:bg-gray-800">
                 Cancel
               </Button>
             </div>
