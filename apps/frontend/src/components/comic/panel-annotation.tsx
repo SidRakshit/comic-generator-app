@@ -310,12 +310,19 @@ export default function PanelAnnotation({
                   }}
                 >
                   {/* Bubble background */}
-                  <div className={`w-full h-full rounded-lg flex items-center justify-center ${
-                    bubble.type === 'speech' ? 'bg-white border-2 border-black' :
+                  <div className={`w-full h-full ${
+                    bubble.type === 'speech' ? 'bg-white border-2 border-black rounded-lg' :
                     bubble.type === 'thought' ? 'bg-white border-2 border-black rounded-full' :
-                    'bg-gray-200 border-2 border-gray-400' // caption
-                  }`}>
-                    <div className="w-2 h-2 bg-black rounded-full"></div>
+                    'bg-gray-200 border-2 border-gray-400 rounded-lg' // caption
+                  }`} style={{
+                    ...(bubble.type === 'thought' && {
+                      borderRadius: '50% 50% 50% 50% / 60% 60% 40% 40%',
+                      position: 'relative'
+                    })
+                  }}>
+                    {bubble.type === 'thought' && (
+                      <div className="absolute -bottom-1 left-1/2 transform -translate-x-1/2 w-2 h-2 bg-white border-2 border-black rounded-full"></div>
+                    )}
                   </div>
                   
                   {/* Text positioned exactly where it should be for each bubble type */}
