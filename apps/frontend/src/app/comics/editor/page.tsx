@@ -19,14 +19,16 @@ async function generateImageAPI(
 	prompt: string,
 	characterContext?: string,
 	imageBase64?: string,
-	imageMimeType?: string
+	imageMimeType?: string,
+	imageUrl?: string
 ): Promise<GeneratedImageDataResponse> {
 	console.log(`Calling generateImageAPI with prompt: "${prompt}"`);
 	const requestBody = { 
 		panelDescription: prompt,
 		...(characterContext && { characterContext }),
 		...(imageBase64 && { imageFile: imageBase64 }),
-		...(imageMimeType && { imageMimeType })
+		...(imageMimeType && { imageMimeType }),
+		...(imageUrl && { imageUrl })
 	};
 
 	try {
@@ -249,7 +251,7 @@ function NewComicEditorContent() {
 		}
 	};
 
-	const handlePromptSubmit = async (prompt: string, imageFile?: File, imageBase64?: string, imageMimeType?: string) => {
+	const handlePromptSubmit = async (prompt: string, imageFile?: File, imageBase64?: string, imageMimeType?: string, imageUrl?: string) => {
 		if (activePanel === null || !comic || !comic.panels) return;
 		const panelIndex = activePanel;
 
@@ -286,7 +288,7 @@ function NewComicEditorContent() {
 
 		try {
 			console.log("Generating image with character context for visual consistency...");
-			const imageResponse = await generateImageAPI(fullPrompt, characterContext, imageBase64, imageMimeType);
+			const imageResponse = await generateImageAPI(fullPrompt, characterContext, imageBase64, imageMimeType, imageUrl);
 
 			updatePanelContent(panelIndex, {
 				status: "complete",

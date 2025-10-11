@@ -44,6 +44,7 @@ export interface GeneratePanelImageRequest {
   characterContext?: string;
   imageFile?: string; // Base64 encoded image file
   imageMimeType?: string; // MIME type of the image
+  imageUrl?: string; // Public URL to image
 }
 
 // User profile requests

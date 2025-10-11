@@ -5,12 +5,13 @@ import { Button } from '@repo/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@repo/ui/dialog';
 import { Textarea } from '@repo/ui/textarea';
 import { Label } from '@repo/ui/label';
-import { Sparkles, Camera, RefreshCw, Upload, X, Image as ImageIcon } from 'lucide-react';
+import { Input } from '@repo/ui/input';
+import { Sparkles, Camera, RefreshCw, Upload, X, Image as ImageIcon, Link } from 'lucide-react';
 
 interface PanelPromptModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (prompt: string, imageFile?: File, imageBase64?: string, imageMimeType?: string) => void;
+  onSubmit: (prompt: string, imageFile?: File, imageBase64?: string, imageMimeType?: string, imageUrl?: string) => void;
   panelNumber: number;
   initialPrompt: string;
   isRegenerating?: boolean;
@@ -29,6 +30,7 @@ export default function PanelPromptModal({
   const [prompt, setPrompt] = useState(initialPrompt || '');
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [imageUrl, setImageUrl] = useState<string>('');
   const [isDragOver, setIsDragOver] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -49,13 +51,14 @@ export default function PanelPromptModal({
       setPrompt(initialPrompt || '');
       setImageFile(null);
       setImagePreview(null);
+      setImageUrl('');
       setIsSubmitting(false);
     }
   }, [isOpen, initialPrompt]);
 
 
   const handleSubmit = async () => {
-    if (!prompt.trim() && !imageFile) return;
+    if (!prompt.trim() && !imageFile && !imageUrl.trim()) return;
     
     setIsSubmitting(true);
     
@@ -68,7 +71,7 @@ export default function PanelPromptModal({
         imageMimeType = imageFile.type;
       }
       
-      await onSubmit(prompt, imageFile || undefined, imageBase64, imageMimeType);
+      await onSubmit(prompt, imageFile || undefined, imageBase64, imageMimeType, imageUrl.trim() || undefined);
     } catch (error) {
       console.error('Error submitting prompt:', error);
     } finally {
@@ -85,16 +88,6 @@ export default function PanelPromptModal({
     setPrompt(promptSuggestions[randomIndex]);
   };
 
-  const handleFileSelect = (file: File) => {
-    if (file && file.type.startsWith('image/')) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onload = (e) => {
-        setImagePreview(e.target?.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
 
   const convertFileToBase64 = (file: File): Promise<string> => {
     return new Promise((resolve, reject) => {
@@ -146,6 +139,21 @@ export default function PanelPromptModal({
 
   const openFileDialog = () => {
     fileInputRef.current?.click();
+  };
+
+  const handleUrlChange = (url: string) => {
+    setImageUrl(url);
+  };
+
+  const handleFileSelect = (file: File) => {
+    if (file && file.type.startsWith('image/')) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
 
@@ -211,6 +219,24 @@ export default function PanelPromptModal({
               </Label>
             </div>
             
+            {/* URL Input */}
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <Link className="h-4 w-4 text-blue-500" />
+                <Label htmlFor="image-url" className="text-sm font-medium">
+                  Paste an image URL (optional)
+                </Label>
+              </div>
+              <Input
+                id="image-url"
+                type="url"
+                placeholder="https://example.com/image.jpg"
+                value={imageUrl}
+                onChange={(e) => handleUrlChange(e.target.value)}
+                className="w-full"
+              />
+            </div>
+            
             {/* Drag and Drop Area */}
             <div
               className={`relative border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
@@ -230,24 +256,35 @@ export default function PanelPromptModal({
                 className="hidden"
               />
               
-              {imagePreview ? (
+              {(imagePreview || imageUrl) ? (
                 <div className="space-y-3">
-                  <div className="relative inline-block group">
-                    <img
-                      src={imagePreview}
-                      alt="Preview"
-                      className="max-h-32 max-w-full rounded-lg object-cover"
-                    />
-                    <button
-                      className="absolute -top-3 -right-3 h-8 w-8 rounded-full p-0 shadow-lg border-2 border-red-500 bg-white hover:bg-red-50 hover:scale-110 transition-all flex items-center justify-center"
-                      onClick={removeImage}
-                    >
-                      <X className="h-4 w-4 text-red-500" />
-                    </button>
+                  {imagePreview && (
+                    <div className="relative inline-block group">
+                      <img
+                        src={imagePreview}
+                        alt="Preview"
+                        className="max-h-32 max-w-full rounded-lg object-cover"
+                      />
+                      <button
+                        className="absolute -top-3 -right-3 h-8 w-8 rounded-full p-0 shadow-lg border-2 border-red-500 bg-white hover:bg-red-50 hover:scale-110 transition-all flex items-center justify-center"
+                        onClick={removeImage}
+                      >
+                        <X className="h-4 w-4 text-red-500" />
+                      </button>
+                    </div>
+                  )}
+                  <div className="space-y-1">
+                    {imageFile?.name && (
+                      <p className="text-sm text-gray-600">
+                        📁 File: {imageFile.name}
+                      </p>
+                    )}
+                    {imageUrl && (
+                      <p className="text-sm text-gray-600">
+                        🔗 URL: {imageUrl.length > 50 ? imageUrl.substring(0, 50) + '...' : imageUrl}
+                      </p>
+                    )}
                   </div>
-                  <p className="text-sm text-gray-600">
-                    {imageFile?.name}
-                  </p>
                 </div>
               ) : (
                 <div className="space-y-3">
@@ -274,7 +311,7 @@ export default function PanelPromptModal({
             </div>
             
             <p className="text-sm text-gray-500">
-              Upload an image to use as a reference for this panel. This can be a sketch, photo, or any visual reference.
+              Upload an image file and/or provide a public URL to use as references for this panel. You can use both together for richer context. This can be a sketch, photo, or any visual reference.
             </p>
           </div>
         </div>
@@ -285,7 +322,7 @@ export default function PanelPromptModal({
           </Button>
           <Button 
             onClick={handleSubmit}
-            disabled={(!prompt.trim() && !imageFile) || isSubmitting}
+            disabled={(!prompt.trim() && !imageFile && !imageUrl.trim()) || isSubmitting}
           >
             {isSubmitting ? 'Generating...' : 'Generate Panel'}
           </Button>

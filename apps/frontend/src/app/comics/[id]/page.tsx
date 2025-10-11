@@ -68,7 +68,7 @@ export default function ComicEditorPage() {
 	};
 
 	// Submit prompt to generate/regenerate image via API
-	const handlePromptSubmit = async (prompt: string, imageFile?: File, imageBase64?: string, imageMimeType?: string, dialogue?: string) => {
+	const handlePromptSubmit = async (prompt: string, imageFile?: File, imageBase64?: string, imageMimeType?: string, imageUrl?: string, dialogue?: string) => {
 		if (activePanelIndex === null || !comic) return; // Use activePanelIndex
 		const panelIndex = activePanelIndex; // Get index
 
@@ -112,7 +112,8 @@ export default function ComicEditorPage() {
 					panelDescription: fullPrompt,
 					characterContext: characterContext,
 					...(imageBase64 && { imageFile: imageBase64 }),
-					...(imageMimeType && { imageMimeType })
+					...(imageMimeType && { imageMimeType }),
+					...(imageUrl && { imageUrl })
 				}
 			);
 

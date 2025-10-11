@@ -64,6 +64,7 @@ export const GeneratePanelImageRequestSchema = z.object({
   characterContext: z.string().optional(),
   imageFile: z.string().optional(), // Base64 encoded image file
   imageMimeType: z.string().optional(), // MIME type of the image
+  imageUrl: z.string().url().optional(), // Public URL to image
 });
 
 

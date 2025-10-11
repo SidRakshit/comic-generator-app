@@ -109,18 +109,19 @@ export class ComicService {
 	 * @param dialogue - Dialogue text to include in the panel
 	 * @param imageFile - Base64 encoded image file for reference
 	 * @param imageMimeType - MIME type of the image file
+	 * @param imageUrl - Public URL to image for reference
 	 * @returns Object containing base64 image data and prompt used.
 	 */
-	async generatePanelImage(userId: string, panelDescription?: string, characterContext?: string, dialogue?: string, imageFile?: string, imageMimeType?: string): Promise<GeneratedImageData> {
-		if (!panelDescription && !imageFile) {
-			throw new Error("Either panel description or image file must be provided.");
+	async generatePanelImage(userId: string, panelDescription?: string, characterContext?: string, dialogue?: string, imageFile?: string, imageMimeType?: string, imageUrl?: string): Promise<GeneratedImageData> {
+		if (!panelDescription && !imageFile && !imageUrl) {
+			throw new Error("Either panel description, image file, or image URL must be provided.");
 		}
 
 		const description = panelDescription || "Generate a comic panel based on the provided reference image";
 		console.log(`🎨 Generating image using ${IMAGE_GENERATION_PROVIDER.toUpperCase()} for description: "${description}"`);
 
 		if (IMAGE_GENERATION_PROVIDER === 'gemini') {
-			return this.generateWithGemini(userId, description, characterContext, dialogue, imageFile, imageMimeType);
+			return this.generateWithGemini(userId, description, characterContext, dialogue, imageFile, imageMimeType, imageUrl);
 		} else {
 			return this.generateWithOpenAI(userId, description, characterContext, dialogue);
 		}
@@ -129,7 +130,7 @@ export class ComicService {
 	/**
 	 * Generates an image using Google Gemini 2.5 Flash Image (Nano Banana).
 	 */
-	private async generateWithGemini(userId: string, panelDescription: string, characterContext?: string, dialogue?: string, imageFile?: string, imageMimeType?: string): Promise<GeneratedImageData> {
+	private async generateWithGemini(userId: string, panelDescription: string, characterContext?: string, dialogue?: string, imageFile?: string, imageMimeType?: string, imageUrl?: string): Promise<GeneratedImageData> {
 		if (!GEMINI_API_KEY) {
 			throw new Error("Gemini API key is not configured.");
 		}
@@ -139,10 +140,6 @@ export class ComicService {
 		
 		if (characterContext) {
 			fullPrompt += `\n\n${characterContext}`;
-		}
-		
-		if (dialogue) {
-			fullPrompt += `\n\nDialogue Instructions:\n- Use EXACTLY this dialogue text in a speech bubble: "${dialogue}"\n- Do not add any other text, words, or dialogue\n- Only the exact dialogue provided should appear in the speech bubble\n- No additional text, captions, or random letters should be generated`;
 		}
 		
 		fullPrompt += `\n\n${AI_CONFIG.GEMINI.PROMPTS.IMAGE_STYLE_SUFFIX}`;
@@ -159,12 +156,22 @@ export class ComicService {
 				text: fullPrompt
 			});
 
-			// Add image if provided
+			// Add image files if provided
 			if (imageFile && imageMimeType) {
 				contents.push({
 					inlineData: {
 						data: imageFile,
 						mimeType: imageMimeType
+					}
+				});
+			}
+			
+			// Add image URL if provided
+			if (imageUrl) {
+				contents.push({
+					fileData: {
+						mimeType: "image/jpeg", // Default to JPEG for URLs
+						fileUri: imageUrl
 					}
 				});
 			}
@@ -230,10 +237,6 @@ export class ComicService {
 		
 		if (characterContext) {
 			fullPrompt += `\n\n${characterContext}`;
-		}
-		
-		if (dialogue) {
-			fullPrompt += `\n\nDialogue Instructions:\n- Use EXACTLY this dialogue text in a speech bubble: "${dialogue}"\n- Do not add any other text, words, or dialogue\n- Only the exact dialogue provided should appear in the speech bubble\n- No additional text, captions, or random letters should be generated`;
 		}
 		
 		fullPrompt += `\n\n${AI_CONFIG.OPENAI.PROMPTS.IMAGE_STYLE_SUFFIX}`;
