@@ -109,19 +109,18 @@ export class ComicService {
 	 * @param dialogue - Dialogue text to include in the panel
 	 * @param imageFile - Base64 encoded image file for reference
 	 * @param imageMimeType - MIME type of the image file
-	 * @param imageUrl - Public URL to image for reference
 	 * @returns Object containing base64 image data and prompt used.
 	 */
-	async generatePanelImage(userId: string, panelDescription?: string, characterContext?: string, dialogue?: string, imageFile?: string, imageMimeType?: string, imageUrl?: string): Promise<GeneratedImageData> {
-		if (!panelDescription && !imageFile && !imageUrl) {
-			throw new Error("Either panel description, image file, or image URL must be provided.");
+	async generatePanelImage(userId: string, panelDescription?: string, characterContext?: string, dialogue?: string, imageFiles?: string[], imageMimeTypes?: string[]): Promise<GeneratedImageData> {
+		if (!panelDescription && (!imageFiles || imageFiles.length === 0)) {
+			throw new Error("Either panel description or image files must be provided.");
 		}
 
 		const description = panelDescription || "Generate a comic panel based on the provided reference image";
 		console.log(`🎨 Generating image using ${IMAGE_GENERATION_PROVIDER.toUpperCase()} for description: "${description}"`);
 
 		if (IMAGE_GENERATION_PROVIDER === 'gemini') {
-			return this.generateWithGemini(userId, description, characterContext, dialogue, imageFile, imageMimeType, imageUrl);
+			return this.generateWithGemini(userId, description, characterContext, dialogue, imageFiles, imageMimeTypes);
 		} else {
 			return this.generateWithOpenAI(userId, description, characterContext, dialogue);
 		}
@@ -130,7 +129,7 @@ export class ComicService {
 	/**
 	 * Generates an image using Google Gemini 2.5 Flash Image (Nano Banana).
 	 */
-	private async generateWithGemini(userId: string, panelDescription: string, characterContext?: string, dialogue?: string, imageFile?: string, imageMimeType?: string, imageUrl?: string): Promise<GeneratedImageData> {
+	private async generateWithGemini(userId: string, panelDescription: string, characterContext?: string, dialogue?: string, imageFiles?: string[], imageMimeTypes?: string[]): Promise<GeneratedImageData> {
 		if (!GEMINI_API_KEY) {
 			throw new Error("Gemini API key is not configured.");
 		}
@@ -156,24 +155,16 @@ export class ComicService {
 				text: fullPrompt
 			});
 
-			// Add image files if provided
-			if (imageFile && imageMimeType) {
-				contents.push({
-					inlineData: {
-						data: imageFile,
-						mimeType: imageMimeType
-					}
-				});
-			}
-			
-			// Add image URL if provided
-			if (imageUrl) {
-				contents.push({
-					fileData: {
-						mimeType: "image/jpeg", // Default to JPEG for URLs
-						fileUri: imageUrl
-					}
-				});
+			// Add images if provided
+			if (imageFiles && imageMimeTypes && imageFiles.length > 0) {
+				for (let i = 0; i < imageFiles.length; i++) {
+					contents.push({
+						inlineData: {
+							data: imageFiles[i],
+							mimeType: imageMimeTypes[i]
+						}
+					});
+				}
 			}
 
 			// Call the Gemini 2.5 Flash Image model (following official documentation)

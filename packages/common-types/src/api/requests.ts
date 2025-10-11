@@ -42,9 +42,8 @@ export interface GenerateImageRequest {
 export interface GeneratePanelImageRequest {
   panelDescription?: string;
   characterContext?: string;
-  imageFile?: string; // Base64 encoded image file
-  imageMimeType?: string; // MIME type of the image
-  imageUrl?: string; // Public URL to image
+  imageFiles?: string[]; // Array of base64 encoded image files
+  imageMimeTypes?: string[]; // Array of MIME types of the images
 }
 
 // User profile requests
