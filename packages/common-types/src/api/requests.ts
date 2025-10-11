@@ -39,6 +39,13 @@ export interface GenerateImageRequest {
   prompt: string;
 }
 
+export interface GeneratePanelImageRequest {
+  panelDescription?: string;
+  characterContext?: string;
+  imageFile?: string; // Base64 encoded image file
+  imageMimeType?: string; // MIME type of the image
+}
+
 // User profile requests
 export interface UpdateUserProfileRequest {
   display_name?: string;

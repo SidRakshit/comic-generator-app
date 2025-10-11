@@ -17,12 +17,16 @@ import { ComicCharacter, Panel, SEMANTIC_COLORS, INTERACTIVE_STYLES, UI_CONSTANT
 
 async function generateImageAPI(
 	prompt: string,
-	characterContext?: string
+	characterContext?: string,
+	imageBase64?: string,
+	imageMimeType?: string
 ): Promise<GeneratedImageDataResponse> {
 	console.log(`Calling generateImageAPI with prompt: "${prompt}"`);
 	const requestBody = { 
 		panelDescription: prompt,
-		...(characterContext && { characterContext })
+		...(characterContext && { characterContext }),
+		...(imageBase64 && { imageFile: imageBase64 }),
+		...(imageMimeType && { imageMimeType })
 	};
 
 	try {
@@ -245,7 +249,7 @@ function NewComicEditorContent() {
 		}
 	};
 
-	const handlePromptSubmit = async (prompt: string) => {
+	const handlePromptSubmit = async (prompt: string, imageFile?: File, imageBase64?: string, imageMimeType?: string) => {
 		if (activePanel === null || !comic || !comic.panels) return;
 		const panelIndex = activePanel;
 
@@ -282,7 +286,7 @@ function NewComicEditorContent() {
 
 		try {
 			console.log("Generating image with character context for visual consistency...");
-			const imageResponse = await generateImageAPI(fullPrompt, characterContext);
+			const imageResponse = await generateImageAPI(fullPrompt, characterContext, imageBase64, imageMimeType);
 
 			updatePanelContent(panelIndex, {
 				status: "complete",

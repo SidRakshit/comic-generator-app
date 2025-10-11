@@ -107,26 +107,29 @@ export class ComicService {
 	 * @param panelDescription - Description of the panel to generate image for.
 	 * @param characterContext - Character information for visual consistency
 	 * @param dialogue - Dialogue text to include in the panel
+	 * @param imageFile - Base64 encoded image file for reference
+	 * @param imageMimeType - MIME type of the image file
 	 * @returns Object containing base64 image data and prompt used.
 	 */
-	async generatePanelImage(userId: string, panelDescription: string, characterContext?: string, dialogue?: string): Promise<GeneratedImageData> {
-		if (!panelDescription || panelDescription.trim() === "") {
-			throw new Error("Panel description cannot be empty.");
+	async generatePanelImage(userId: string, panelDescription?: string, characterContext?: string, dialogue?: string, imageFile?: string, imageMimeType?: string): Promise<GeneratedImageData> {
+		if (!panelDescription && !imageFile) {
+			throw new Error("Either panel description or image file must be provided.");
 		}
 
-		console.log(`🎨 Generating image using ${IMAGE_GENERATION_PROVIDER.toUpperCase()} for description: "${panelDescription}"`);
+		const description = panelDescription || "Generate a comic panel based on the provided reference image";
+		console.log(`🎨 Generating image using ${IMAGE_GENERATION_PROVIDER.toUpperCase()} for description: "${description}"`);
 
 		if (IMAGE_GENERATION_PROVIDER === 'gemini') {
-			return this.generateWithGemini(userId, panelDescription, characterContext, dialogue);
+			return this.generateWithGemini(userId, description, characterContext, dialogue, imageFile, imageMimeType);
 		} else {
-			return this.generateWithOpenAI(userId, panelDescription, characterContext, dialogue);
+			return this.generateWithOpenAI(userId, description, characterContext, dialogue);
 		}
 	}
 
 	/**
 	 * Generates an image using Google Gemini 2.5 Flash Image (Nano Banana).
 	 */
-	private async generateWithGemini(userId: string, panelDescription: string, characterContext?: string, dialogue?: string): Promise<GeneratedImageData> {
+	private async generateWithGemini(userId: string, panelDescription: string, characterContext?: string, dialogue?: string, imageFile?: string, imageMimeType?: string): Promise<GeneratedImageData> {
 		if (!GEMINI_API_KEY) {
 			throw new Error("Gemini API key is not configured.");
 		}
@@ -148,10 +151,28 @@ export class ComicService {
 			// Initialize Gemini client (following official documentation)
 			const ai = new GoogleGenAI({ apiKey: GEMINI_API_KEY });
 
+			// Prepare content for multimodal input
+			const contents: any[] = [];
+			
+			// Add text prompt
+			contents.push({
+				text: fullPrompt
+			});
+
+			// Add image if provided
+			if (imageFile && imageMimeType) {
+				contents.push({
+					inlineData: {
+						data: imageFile,
+						mimeType: imageMimeType
+					}
+				});
+			}
+
 			// Call the Gemini 2.5 Flash Image model (following official documentation)
 			const response = await ai.models.generateContent({
 				model: "gemini-2.5-flash-image",
-				contents: fullPrompt,
+				contents: contents,
 				// Optional: set aspect ratio
 				config: { 
 					imageConfig: { aspectRatio: "1:1" }

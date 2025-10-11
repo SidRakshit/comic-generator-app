@@ -60,8 +60,10 @@ export const GenerateImageRequestSchema = z.object({
 });
 
 export const GeneratePanelImageRequestSchema = z.object({
-  panelDescription: z.string().min(COMIC_RULES.PANEL.PROMPT.MIN_LENGTH, `Panel description must be at least ${COMIC_RULES.PANEL.PROMPT.MIN_LENGTH} characters`).max(COMIC_RULES.PANEL.PROMPT.MAX_LENGTH, `Panel description must be less than ${COMIC_RULES.PANEL.PROMPT.MAX_LENGTH} characters`),
+  panelDescription: z.string().min(COMIC_RULES.PANEL.PROMPT.MIN_LENGTH, `Panel description must be at least ${COMIC_RULES.PANEL.PROMPT.MIN_LENGTH} characters`).max(COMIC_RULES.PANEL.PROMPT.MAX_LENGTH, `Panel description must be less than ${COMIC_RULES.PANEL.PROMPT.MAX_LENGTH} characters`).optional(),
   characterContext: z.string().optional(),
+  imageFile: z.string().optional(), // Base64 encoded image file
+  imageMimeType: z.string().optional(), // MIME type of the image
 });
 
 

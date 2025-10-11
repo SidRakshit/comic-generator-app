@@ -1,18 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Button } from '@repo/ui/button';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@repo/ui/dialog';
 import { Textarea } from '@repo/ui/textarea';
 import { Label } from '@repo/ui/label';
-import { Input } from '@repo/ui/input';
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@repo/ui/tabs';
-import { Sparkles, Camera, RefreshCw, Plus } from 'lucide-react';
+import { Sparkles, Camera, RefreshCw, Upload, X, Image as ImageIcon } from 'lucide-react';
 
 interface PanelPromptModalProps {
   isOpen: boolean;
   onClose: () => void;
-  onSubmit: (prompt: string) => void;
+  onSubmit: (prompt: string, imageFile?: File, imageBase64?: string, imageMimeType?: string) => void;
   panelNumber: number;
   initialPrompt: string;
   isRegenerating?: boolean;
@@ -29,8 +27,11 @@ export default function PanelPromptModal({
   characters = []
 }: PanelPromptModalProps) {
   const [prompt, setPrompt] = useState(initialPrompt || '');
-  const [promptType, setPromptType] = useState<'text' | 'image'>('text');
+  const [imageFile, setImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [isDragOver, setIsDragOver] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   
   // Predefined prompt suggestions
   const promptSuggestions = [
@@ -46,18 +47,28 @@ export default function PanelPromptModal({
   useEffect(() => {
     if (isOpen) {
       setPrompt(initialPrompt || '');
+      setImageFile(null);
+      setImagePreview(null);
       setIsSubmitting(false);
     }
   }, [isOpen, initialPrompt]);
 
 
   const handleSubmit = async () => {
-    if (!prompt.trim()) return;
+    if (!prompt.trim() && !imageFile) return;
     
     setIsSubmitting(true);
     
     try {
-      await onSubmit(prompt);
+      let imageBase64: string | undefined;
+      let imageMimeType: string | undefined;
+      
+      if (imageFile) {
+        imageBase64 = await convertFileToBase64(imageFile);
+        imageMimeType = imageFile.type;
+      }
+      
+      await onSubmit(prompt, imageFile || undefined, imageBase64, imageMimeType);
     } catch (error) {
       console.error('Error submitting prompt:', error);
     } finally {
@@ -74,44 +85,96 @@ export default function PanelPromptModal({
     setPrompt(promptSuggestions[randomIndex]);
   };
 
+  const handleFileSelect = (file: File) => {
+    if (file && file.type.startsWith('image/')) {
+      setImageFile(file);
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setImagePreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const convertFileToBase64 = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => {
+        const result = reader.result as string;
+        // Remove the data URL prefix (e.g., "data:image/jpeg;base64,")
+        const base64 = result.split(',')[1];
+        resolve(base64);
+      };
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleFileInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      handleFileSelect(file);
+    }
+  };
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(true);
+  };
+
+  const handleDragLeave = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+  };
+
+  const handleDrop = (e: React.DragEvent) => {
+    e.preventDefault();
+    setIsDragOver(false);
+    const file = e.dataTransfer.files[0];
+    if (file) {
+      handleFileSelect(file);
+    }
+  };
+
+  const removeImage = () => {
+    setImageFile(null);
+    setImagePreview(null);
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+  };
+
+  const openFileDialog = () => {
+    fileInputRef.current?.click();
+  };
+
 
   return (
     <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="sm:max-w-[500px]">
+      <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>Generate Panel {panelNumber}</DialogTitle>
         </DialogHeader>
         
-        <Tabs defaultValue="text" className="w-full mt-4">
-          <TabsList className="w-full mb-4">
-            <TabsTrigger value="text" className="flex-1" onClick={() => setPromptType('text')}>
-              <span>
-                <Sparkles className="h-4 w-4 mr-2" />
-                Text Prompt
-              </span>
-            </TabsTrigger>
-            <TabsTrigger value="image" className="flex-1" onClick={() => setPromptType('image')}>
-              <span>
-                <Camera className="h-4 w-4 mr-2" />
-                Upload Image
-              </span>
-            </TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="text" className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="prompt">Describe what you want in this panel</Label>
-              <Textarea
-                id="prompt"
-                placeholder="Enter your prompt here..."
-                value={prompt}
-                onChange={(e) => setPrompt(e.target.value)}
-                rows={4}
-                className="resize-none"
-              />
+        <div className="space-y-6 mt-4">
+          {/* Text Prompt Section */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Sparkles className="h-4 w-4 text-blue-500" />
+              <Label htmlFor="prompt" className="text-base font-medium">
+                Describe what you want in this panel
+              </Label>
             </div>
+            <Textarea
+              id="prompt"
+              placeholder="Enter your prompt here..."
+              value={prompt}
+              onChange={(e) => setPrompt(e.target.value)}
+              rows={3}
+              className="resize-none"
+            />
             
-            
+            {/* Prompt Suggestions */}
             <div>
               <Label className="text-sm text-gray-500">Prompt suggestions</Label>
               <div className="flex flex-wrap gap-2 mt-2">
@@ -137,31 +200,92 @@ export default function PanelPromptModal({
                 </Button>
               </div>
             </div>
-          </TabsContent>
-          
-          <TabsContent value="image" className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="image-upload">Upload a reference image</Label>
-              <Input
-                id="image-upload"
+          </div>
+
+          {/* Image Upload Section */}
+          <div className="space-y-3">
+            <div className="flex items-center gap-2">
+              <Camera className="h-4 w-4 text-green-500" />
+              <Label className="text-base font-medium">
+                Upload a reference image
+              </Label>
+            </div>
+            
+            {/* Drag and Drop Area */}
+            <div
+              className={`relative border-2 border-dashed rounded-lg p-6 text-center transition-colors ${
+                isDragOver
+                  ? 'border-blue-400 bg-blue-50 dark:bg-blue-950'
+                  : 'border-gray-300 hover:border-gray-400'
+              }`}
+              onDragOver={handleDragOver}
+              onDragLeave={handleDragLeave}
+              onDrop={handleDrop}
+            >
+              <input
+                ref={fileInputRef}
                 type="file"
                 accept="image/*"
+                onChange={handleFileInputChange}
+                className="hidden"
               />
+              
+              {imagePreview ? (
+                <div className="space-y-3">
+                  <div className="relative inline-block group">
+                    <img
+                      src={imagePreview}
+                      alt="Preview"
+                      className="max-h-32 max-w-full rounded-lg object-cover"
+                    />
+                    <button
+                      className="absolute -top-3 -right-3 h-8 w-8 rounded-full p-0 shadow-lg border-2 border-red-500 bg-white hover:bg-red-50 hover:scale-110 transition-all flex items-center justify-center"
+                      onClick={removeImage}
+                    >
+                      <X className="h-4 w-4 text-red-500" />
+                    </button>
+                  </div>
+                  <p className="text-sm text-gray-600">
+                    {imageFile?.name}
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-3">
+                  <div className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-gray-100">
+                    <Upload className="h-6 w-6 text-gray-400" />
+                  </div>
+                  <div className="space-y-1">
+                    <p className="text-sm font-medium text-gray-700">
+                      Drop an image here, or{' '}
+                      <button
+                        type="button"
+                        onClick={openFileDialog}
+                        className="text-blue-600 hover:text-blue-500"
+                      >
+                        browse
+                      </button>
+                    </p>
+                    <p className="text-xs text-gray-500">
+                      PNG, JPG, GIF up to 10MB
+                    </p>
+                  </div>
+                </div>
+              )}
             </div>
+            
             <p className="text-sm text-gray-500">
-              Upload an image to use as a reference for this panel.
-              This can be a sketch, photo, or any visual reference.
+              Upload an image to use as a reference for this panel. This can be a sketch, photo, or any visual reference.
             </p>
-          </TabsContent>
-        </Tabs>
+          </div>
+        </div>
 
-        <DialogFooter className="mt-4">
+        <DialogFooter className="mt-6">
           <Button variant="outline" onClick={onClose}>
             Cancel
           </Button>
           <Button 
             onClick={handleSubmit}
-            disabled={!prompt.trim() || isSubmitting}
+            disabled={(!prompt.trim() && !imageFile) || isSubmitting}
           >
             {isSubmitting ? 'Generating...' : 'Generate Panel'}
           </Button>
